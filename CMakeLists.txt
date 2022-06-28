@@ -190,8 +190,8 @@ SET(TARGET_SRC
      )
 
 # Set the include directories and the name of the project
-INCLUDE_DIRECTORIES(include)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/include)
+SET(EXADG_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/include ${CMAKE_CURRENT_BINARY_DIR}/include)
+INCLUDE_DIRECTORIES(${EXADG_INCLUDE_DIRS})
 
 SET(DEAL_II_HAVE_TESTS_DIRECTORY TRUE)
 
@@ -288,4 +288,36 @@ ADD_SUBDIRECTORY(tests)
 
 ADD_SUBDIRECTORY(doc/doxygen)
 
+####################################################
+# Export EXADG for easy interfacing: After a FIND_PACKAGE call in CMake you will have access to
+# EXADG_CMAKE_DIR, EXADG_INCLUDE_DIRS and EXADG_VERSION (which might be helpful in the future
+# once EXADG has a version number).
+
+INCLUDE(CMakePackageConfigHelpers)
+SET(EXADG_MACRO_DIR ${CMAKE_SOURCE_DIR}/cmake/macros)
+
+# EXADGConfig.cmake.in serves as a template. Running CMake will create EXADGConfig.cmake and
+# EXADGTargets.cmake from it in the build folder. These files are needed to use the
+# FIND_PACKAGE command in other projects.
+CONFIGURE_PACKAGE_CONFIG_FILE(EXADGConfig.cmake.in EXADGConfig.cmake
+  INSTALL_DESTINATION .
+  PATH_VARS 
+  EXADG_INCLUDE_DIRS
+  EXADG_MACRO_DIR
+  )
+
+EXPORT(TARGETS
+  exadg
+  NAMESPACE EXADG::
+  FILE EXADGTargets.cmake
+  )
+
+SET(CMAKE_EXPORT_PACKAGE_REGISTRY ON)
+
+EXPORT(PACKAGE EXADG)
+
+# To link against EXADG use:
+# FIND_PACKAGE(EXADG REQUIRED HINTS $ENV{EXADG_DIR})
+# TARGET_LINK_LIBRARIES(<target_which_links_to_exadg> EXADG::exadg)
+# TARGET_INCLUDE_DIRECTORIES(<target_which_links_to_exadg> ${EXADG_INCLUDE_DIRS})
 
