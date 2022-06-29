@@ -189,12 +189,9 @@ SET(TARGET_SRC
      include/exadg/fluid_structure_interaction/driver.cpp
      )
 
-# Set the include directories and the name of the project
-SET(EXADG_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/include ${CMAKE_CURRENT_BINARY_DIR}/include)
-INCLUDE_DIRECTORIES(${EXADG_INCLUDE_DIRS})
-
 SET(DEAL_II_HAVE_TESTS_DIRECTORY TRUE)
 
+# Set the name of the project
 PROJECT(exadg)
 
 OPTION(PICKUP_TESTS "Pick up ExaDG tests." ON)
@@ -215,6 +212,9 @@ CONFIGURE_FILE(
     )
 
 ADD_LIBRARY(exadg ${TARGET_SRC})
+# Set the include directories
+SET(EXADG_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/include ${CMAKE_CURRENT_BINARY_DIR}/include)
+TARGET_INCLUDE_DIRECTORIES(exadg PUBLIC ${EXADG_INCLUDE_DIRS})
 
 # FFTW
 OPTION(EXADG_WITH_FFTW "Use FFTW" OFF)
@@ -306,6 +306,10 @@ CONFIGURE_PACKAGE_CONFIG_FILE(EXADGConfig.cmake.in EXADGConfig.cmake
   EXADG_MACRO_DIR
   )
 
+# Within EXADGConfig.cmake we provide the options of the current build.
+# This is done by including the file EXADGOptions.cmake in which the options are stored.
+CONFIGURE_FILE(EXADGOptions.cmake.in EXADGOptions.cmake @ONLY)
+
 EXPORT(TARGETS
   exadg
   NAMESPACE EXADG::
@@ -317,7 +321,8 @@ SET(CMAKE_EXPORT_PACKAGE_REGISTRY ON)
 EXPORT(PACKAGE EXADG)
 
 # To link against EXADG use:
-# FIND_PACKAGE(EXADG REQUIRED HINTS $ENV{EXADG_DIR})
+# FIND_PACKAGE(EXADG REQUIRED HINTS ${EXADG_DIR})
 # TARGET_LINK_LIBRARIES(<target_which_links_to_exadg> EXADG::exadg)
-# TARGET_INCLUDE_DIRECTORIES(<target_which_links_to_exadg> ${EXADG_INCLUDE_DIRS})
+# To create an executable use:
+# EXADG_PICKUP_EXE(<file> <target> <targetname>)
 
