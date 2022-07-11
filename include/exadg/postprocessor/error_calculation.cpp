@@ -124,9 +124,10 @@ ErrorCalculator<dim, Number>::setup(dealii::DoFHandler<dim> const &   dof_handle
 
 template<int dim, typename Number>
 void
-ErrorCalculator<dim, Number>::evaluate(VectorType const & solution,
-                                       double const &     time,
-                                       int const &        time_step_number)
+ErrorCalculator<dim, Number>::evaluate(VectorType const &            solution,
+                                       double const &                time,
+                                       int const &                   time_step_number,
+                                       std::function<void()> const & preprocess_function)
 {
   dealii::ConditionalOStream pcout(std::cout,
                                    dealii::Utilities::MPI::this_mpi_process(mpi_comm) == 0);
@@ -155,6 +156,9 @@ ErrorCalculator<dim, Number>::evaluate(VectorType const & solution,
               << "Calculate error for " << error_data.name << " at time t = " << std::scientific
               << std::setprecision(4) << time << ":" << std::endl;
 
+        if(preprocess_function)
+          preprocess_function();
+
         do_evaluate(solution, time);
 
         ++error_counter;
@@ -165,6 +169,9 @@ ErrorCalculator<dim, Number>::evaluate(VectorType const & solution,
       pcout << std::endl
             << "Calculate error for " << error_data.name << " for "
             << (error_counter == 0 ? "initial" : "solution") << " data:" << std::endl;
+
+      if(preprocess_function)
+        preprocess_function();
 
       do_evaluate(solution, time);
 

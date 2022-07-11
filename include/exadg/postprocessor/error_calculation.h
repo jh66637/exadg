@@ -111,7 +111,10 @@ public:
         ErrorCalculationData<dim> const & error_data);
 
   void
-  evaluate(VectorType const & solution, double const & time, int const & time_step_number);
+  evaluate(VectorType const &            solution,
+           double const &                time,
+           int const &                   time_step_number,
+           std::function<void()> const & preprocess_function = {});
 
 private:
   void
