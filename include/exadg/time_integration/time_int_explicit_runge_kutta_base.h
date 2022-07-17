@@ -53,6 +53,15 @@ public:
   void
   set_current_time_step_size(double const & time_step_size) final;
 
+  void
+  do_timestep_pre_solve(bool const print_header) final;
+
+  void
+  do_timestep_post_solve() final;
+
+  virtual void
+  evaluate_next_runge_kutta_stage() = 0;
+
 protected:
   // solution vectors
   VectorType solution_n, solution_np;
@@ -64,12 +73,6 @@ protected:
   bool const adaptive_time_stepping;
 
 private:
-  void
-  do_timestep_pre_solve(bool const print_header) final;
-
-  void
-  do_timestep_post_solve() final;
-
   void
   prepare_vectors_for_next_timestep();
 

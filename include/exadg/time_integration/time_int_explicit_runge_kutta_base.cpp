@@ -61,12 +61,15 @@ void
 TimeIntExplRKBase<Number>::setup(bool const do_restart)
 {
   pcout << std::endl << "Setup time integrator ..." << std::endl;
+  pcout << std::endl << "!!!!!!!!!!!!!!!" << std::endl << std::flush;
 
   // initialize time integrator
   initialize_time_integrator();
+  pcout << std::endl << "!!!!!!!!!!!!!!!" << std::endl << std::flush;
 
   // initialize global solution vectors (allocation)
   initialize_vectors();
+  pcout << std::endl << "!!!!!!!!!!!!!!!" << std::endl << std::flush;
 
   if(do_restart)
   {

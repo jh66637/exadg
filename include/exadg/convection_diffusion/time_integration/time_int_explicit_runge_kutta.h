@@ -68,6 +68,7 @@ public:
   void
   extrapolate_solution(VectorType & vector);
 
+  
 private:
   void
   initialize_vectors();

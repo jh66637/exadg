@@ -39,6 +39,12 @@ public:
   virtual void
   solve_timestep(VectorType & dst, VectorType & src, double const time, double const time_step) = 0;
 
+  virtual void
+  evaluate_next_runge_kutta_stage(VectorType & dst,
+                                  VectorType & src,
+                                  double const time,
+                                  double const time_step) = 0;
+
   virtual unsigned int
   get_order() const = 0;
 
@@ -56,13 +62,19 @@ public:
   // Constructor
   ExplicitRungeKuttaTimeIntegrator(unsigned int                    order_time_integrator,
                                    std::shared_ptr<Operator> const operator_in)
-    : ExplicitTimeIntegrator<Operator, VectorType>(operator_in), order(order_time_integrator)
+    : ExplicitTimeIntegrator<Operator, VectorType>(operator_in),
+      order(order_time_integrator),
+      stage_counter(0)
   {
     // initialize vectors
     if(order >= 2)
       this->underlying_operator->initialize_dof_vector(vec_rhs);
     if(order >= 3)
       this->underlying_operator->initialize_dof_vector(vec_temp);
+
+    std::cout << "filling stages..." << std::endl << std::flush;
+    fill_stages();
+    std::cout << "filled stages..." << std::endl << std::flush;
   }
 
   void
@@ -71,114 +83,22 @@ public:
                  double const time,
                  double const time_step) final
   {
-    if(order == 1) // explicit Euler method
-    {
-      /*
-       * Butcher table
-       *
-       *   0 |
-       *  --------
-       *     | 1
-       *
-       */
+    for(unsigned int i = 0; i < stages.size(); ++i)
+      evaluate_next_runge_kutta_stage(dst, src, time, time_step);
+  }
 
-      this->underlying_operator->evaluate(dst, src, time);
-      dst.sadd(time_step, 1., src);
-    }
-    else if(order == 2) // Runge-Kutta method of order 2
-    {
-      /*
-       * Butcher table
-       *
-       *   0   |
-       *   1/2 | 1/2
-       *  ---------------
-       *       |  0   1
-       *
-       */
-
-      // stage 1
-      this->underlying_operator->evaluate(vec_rhs, src, time);
-
-      // stage 2
-      vec_rhs.sadd(time_step / 2., 1., src);
-      this->underlying_operator->evaluate(dst, vec_rhs, time + time_step / 2.);
-      dst.sadd(time_step, 1., src);
-    }
-    else if(order == 3) // Heun's method of order 3
-    {
-      /*
-       * Butcher table
-       *
-       *   0   |
-       *   1/3 | 1/3
-       *   2/3 |  0  2/3
-       *  -------------------
-       *       | 1/4  0  3/4
-       *
-       */
-
-      dst = src;
-
-      // stage 1
-      this->underlying_operator->evaluate(vec_temp, src, time);
-      dst.add(1. * time_step / 4., vec_temp);
-
-      // stage 2
-      vec_rhs.equ(1., src);
-      vec_rhs.add(time_step / 3., vec_temp);
-      this->underlying_operator->evaluate(vec_temp, vec_rhs, time + time_step / 3.);
-
-      // stage 3
-      vec_rhs.equ(1., src);
-      vec_rhs.add(2. * time_step / 3., vec_temp);
-      this->underlying_operator->evaluate(vec_temp, vec_rhs, time + 2. * time_step / 3.);
-      dst.add(3. * time_step / 4., vec_temp);
-    }
-    else if(order == 4) // classical 4th order Runge-Kutta method
-    {
-      /*
-       * Butcher table
-       *
-       *   0   |
-       *   1/2 | 1/2
-       *   1/2 |  0  1/2
-       *    1  |  0   0   1
-       *  -----------------------
-       *       | 1/6 2/6 2/6 1/6
-       *
-       */
-
-      dst = src;
-
-      // stage 1
-      this->underlying_operator->evaluate(vec_temp, src, time);
-      dst.add(time_step / 6., vec_temp);
-
-      // stage 2
-      vec_rhs.equ(1., src);
-      vec_rhs.add(time_step / 2., vec_temp);
-      this->underlying_operator->evaluate(vec_temp, vec_rhs, time + time_step / 2.);
-      dst.add(time_step / 3., vec_temp);
-
-      // stage 3
-      vec_rhs.equ(1., src);
-      vec_rhs.add(time_step / 2., vec_temp);
-      this->underlying_operator->evaluate(vec_temp, vec_rhs, time + time_step / 2.);
-      dst.add(time_step / 3., vec_temp);
-
-      // stage 4
-      vec_rhs.equ(1., src);
-      vec_rhs.add(time_step, vec_temp);
-      this->underlying_operator->evaluate(vec_temp, vec_rhs, time + time_step);
-      dst.add(time_step / 6., vec_temp);
-    }
-    else
-    {
-      AssertThrow(order <= 4,
-                  dealii::ExcMessage(
-                    "Explicit Runge-Kutta method only implemented for order <= 4!"));
-    }
+  void
+  evaluate_next_runge_kutta_stage(VectorType & dst,
+                                  VectorType & src,
+                                  double const time,
+                                  double const time_step)
+  {
+    std::cout << "entering solver region" << std::endl << std::flush;
+    std::cout << "entering solver region" << std::endl << std::flush;
+    std::cout << "entering solver region" << std::endl << std::flush;
+    std::cout << "entering solver region" << std::endl << std::flush;
+    stages[stage_counter](dst, src, time, time_step);
+    increment_stage_counter();
   }
 
   unsigned int
@@ -188,6 +108,178 @@ public:
   }
 
 private:
+  void
+  fill_stages()
+  {
+    if(order == 1)
+      fill_stages_explicit_euler();
+    else if(order == 2)
+      fill_stages_rk_order_2();
+    else if(order == 3)
+      fill_stages_rk_order_3();
+    else if(order == 4)
+      fill_stages_rk_order_4();
+    else
+      AssertThrow(order <= 4,
+                  dealii::ExcMessage(
+                    "Explicit Runge-Kutta method only implemented for order <= 4!"));
+  }
+
+  void
+  fill_stages_explicit_euler()
+  {
+    /*
+     * Butcher table
+     *  --------
+     *
+     *   0 |
+     *     | 1
+     *
+     */
+
+    stages.emplace_back(
+      [&](VectorType & dst, VectorType & src, double const time, double const time_step) {
+        this->underlying_operator->evaluate(dst, src, time);
+        dst.sadd(time_step, 1., src);
+      });
+  }
+
+  void
+  fill_stages_rk_order_2()
+  {
+    /*
+     * Butcher table
+     *
+     *   0   |
+     *   1/2 | 1/2
+     *  ---------------
+     *       |  0   1
+     *
+     */
+
+    // stage 1
+    stages.emplace_back(
+      [&](VectorType & dst, VectorType & src, double const time, double const time_step) {
+        this->underlying_operator->evaluate(vec_rhs, src, time);
+      });
+
+    // stage 2
+    stages.emplace_back(
+      [&](VectorType & dst, VectorType & src, double const time, double const time_step) {
+        vec_rhs.sadd(time_step / 2., 1., src);
+        this->underlying_operator->evaluate(dst, vec_rhs, time + time_step / 2.);
+        dst.sadd(time_step, 1., src);
+      });
+  }
+
+
+
+  void
+  fill_stages_rk_order_3()
+  {
+    /*
+     * Butcher table
+     *
+     *   0   |
+     *   1/3 | 1/3
+     *   2/3 |  0  2/3
+     *  -------------------
+     *       | 1/4  0  3/4
+     *
+     */
+
+    stages.emplace_back(
+      [&](VectorType & dst, VectorType & src, double const time, double const time_step) {
+        dst = src;
+        // stage 1
+        this->underlying_operator->evaluate(vec_temp, src, time);
+        dst.add(1. * time_step / 4., vec_temp);
+      });
+
+
+    // stage 2
+    stages.emplace_back(
+      [&](VectorType & dst, VectorType & src, double const time, double const time_step) {
+        vec_rhs.equ(1., src);
+        vec_rhs.add(time_step / 3., vec_temp);
+        this->underlying_operator->evaluate(vec_temp, vec_rhs, time + time_step / 3.);
+      });
+
+    // stage 3
+    stages.emplace_back(
+      [&](VectorType & dst, VectorType & src, double const time, double const time_step) {
+        vec_rhs.equ(1., src);
+        vec_rhs.add(2. * time_step / 3., vec_temp);
+        this->underlying_operator->evaluate(vec_temp, vec_rhs, time + 2. * time_step / 3.);
+        dst.add(3. * time_step / 4., vec_temp);
+      });
+  }
+
+  void
+  fill_stages_rk_order_4()
+  {
+    /*
+     * Butcher table
+     *
+     *   0   |
+     *   1/2 | 1/2
+     *   1/2 |  0  1/2
+     *    1  |  0   0   1
+     *  -----------------------
+     *       | 1/6 2/6 2/6 1/6
+     *
+     */
+
+    stages.emplace_back(
+      [&](VectorType & dst, VectorType & src, double const time, double const time_step) {
+        dst = src;
+        // stage 1
+        this->underlying_operator->evaluate(vec_temp, src, time);
+        dst.add(time_step / 6., vec_temp);
+      });
+
+    stages.emplace_back(
+      [&](VectorType & dst, VectorType & src, double const time, double const time_step) {
+        // stage 2
+        vec_rhs.equ(1., src);
+        vec_rhs.add(time_step / 2., vec_temp);
+        this->underlying_operator->evaluate(vec_temp, vec_rhs, time + time_step / 2.);
+        dst.add(time_step / 3., vec_temp);
+      });
+
+    stages.emplace_back(
+      [&](VectorType & dst, VectorType & src, double const time, double const time_step) {
+        // stage 3
+        vec_rhs.equ(1., src);
+        vec_rhs.add(time_step / 2., vec_temp);
+        this->underlying_operator->evaluate(vec_temp, vec_rhs, time + time_step / 2.);
+        dst.add(time_step / 3., vec_temp);
+      });
+
+    stages.emplace_back(
+      [&](VectorType & dst, VectorType & src, double const time, double const time_step) {
+        // stage 4
+        vec_rhs.equ(1., src);
+        vec_rhs.add(time_step, vec_temp);
+        this->underlying_operator->evaluate(vec_temp, vec_rhs, time + time_step);
+        dst.add(time_step / 6., vec_temp);
+      });
+  }
+
+  void
+  increment_stage_counter()
+  {
+    if(stage_counter < stages.size() - 1)
+      ++stage_counter;
+    else
+      stage_counter = 0;
+  }
+
+  unsigned int stage_counter;
+
+  std::vector<std::function<void(VectorType &, VectorType &, double const, double const)>> stages;
+
+
   unsigned int order;
 
   VectorType vec_rhs, vec_temp;
@@ -237,6 +329,15 @@ public:
   LowStorageRK3Stage4Reg2C(std::shared_ptr<Operator> const operator_in)
     : ExplicitTimeIntegrator<Operator, VectorType>(operator_in)
   {
+  }
+
+  void
+  evaluate_next_runge_kutta_stage(VectorType & dst,
+                                  VectorType & src,
+                                  double const time,
+                                  double const time_step) final
+  {
+    AssertThrow(false, dealii::ExcMessage("Not implemented"));
   }
 
   void
@@ -322,6 +423,15 @@ public:
   LowStorageRK4Stage5Reg2C(std::shared_ptr<Operator> const operator_in)
     : ExplicitTimeIntegrator<Operator, VectorType>(operator_in)
   {
+  }
+
+  void
+  evaluate_next_runge_kutta_stage(VectorType & dst,
+                                  VectorType & src,
+                                  double const time,
+                                  double const time_step) final
+  {
+    AssertThrow(false, dealii::ExcMessage("Not implemented"));
   }
 
   void
@@ -417,6 +527,15 @@ public:
   LowStorageRK4Stage5Reg3C(std::shared_ptr<Operator> const operator_in)
     : ExplicitTimeIntegrator<Operator, VectorType>(operator_in)
   {
+  }
+
+  void
+  evaluate_next_runge_kutta_stage(VectorType & dst,
+                                  VectorType & src,
+                                  double const time,
+                                  double const time_step) final
+  {
+    AssertThrow(false, dealii::ExcMessage("Not implemented"));
   }
 
   void
@@ -529,6 +648,15 @@ public:
   LowStorageRK5Stage9Reg2S(std::shared_ptr<Operator> const operator_in)
     : ExplicitTimeIntegrator<Operator, VectorType>(operator_in)
   {
+  }
+
+  void
+  evaluate_next_runge_kutta_stage(VectorType & dst,
+                                  VectorType & src,
+                                  double const time,
+                                  double const time_step) final
+  {
+    AssertThrow(false, dealii::ExcMessage("Not implemented"));
   }
 
   void
@@ -670,6 +798,15 @@ public:
                  unsigned int const              stages_in)
     : ExplicitTimeIntegrator<Operator, VectorType>(operator_in), order(order_in), stages(stages_in)
   {
+  }
+
+  void
+  evaluate_next_runge_kutta_stage(VectorType & dst,
+                                  VectorType & src,
+                                  double const time,
+                                  double const time_step) final
+  {
+    AssertThrow(false, dealii::ExcMessage("Not implemented"));
   }
 
   void
