@@ -44,10 +44,10 @@ public:
    * This function has to be called to apply the postprocessing tools.
    */
   virtual void
-  do_postprocessing(VectorType const & velocity,
-                    VectorType const & pressure,
-                    double const       time             = 0.0,
-                    int const          time_step_number = numbers::steady_timestep) = 0;
+  do_postprocessing(VectorType const &     velocity,
+                    VectorType const &     pressure,
+                    double const           time             = 0.0,
+                    types::time_step const time_step_number = numbers::steady_timestep) = 0;
 };
 
 } // namespace IncNS

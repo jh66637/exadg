@@ -37,10 +37,10 @@ namespace IncNS
 template<int dim>
 struct PostProcessorDataBFS
 {
-  PostProcessorData<dim>      pp_data;
-  TurbulentChannelData        turb_ch_data;
-  InflowData<dim>             inflow_data;
-  LinePlotDataStatistics<dim> line_plot_data;
+  PostProcessorData<dim> pp_data;
+  TurbulentChannelData   turb_ch_data;
+  InflowData<dim>        inflow_data;
+  LinePlotData<dim>      line_plot_data;
 };
 
 template<int dim, typename Number>
@@ -68,7 +68,7 @@ public:
     Base::setup(pde_operator);
 
     // turbulent channel statistics for precursor simulation
-    if(pp_data_bfs.turb_ch_data.calculate)
+    if(pp_data_bfs.turb_ch_data.time_control_data.is_active)
     {
       statistics_turb_ch.reset(new StatisticsManager<dim, Number>(pde_operator.get_dof_handler_u(),
                                                                   *pde_operator.get_mapping()));
@@ -85,7 +85,7 @@ public:
     }
 
     // evaluation of characteristic quantities along lines
-    if(pp_data_bfs.line_plot_data.statistics_data.calculate)
+    if(pp_data_bfs.line_plot_data.time_control_data.is_active)
     {
       line_plot_calculator_statistics.reset(
         new LinePlotCalculatorStatisticsHomogeneous<dim, Number>(pde_operator.get_dof_handler_u(),
@@ -98,19 +98,17 @@ public:
   }
 
   void
-  do_postprocessing(VectorType const & velocity,
-                    VectorType const & pressure,
-                    double const       time,
-                    int const          time_step_number)
+  do_postprocessing(VectorType const &     velocity,
+                    VectorType const &     pressure,
+                    double const           time,
+                    types::time_step const time_step_number)
   {
     Base::do_postprocessing(velocity, pressure, time, time_step_number);
 
 
     // turbulent channel statistics
-    if(pp_data_bfs.turb_ch_data.calculate)
-    {
-      statistics_turb_ch->evaluate(velocity, time, time_step_number);
-    }
+    if(statistics_turb_ch->time_control.needs_evaluation(time, time_step_number))
+      statistics_turb_ch->evaluate(velocity, Utilities::is_unsteady_timestep(time_step_number));
 
     // inflow data
     if(pp_data_bfs.inflow_data.write_inflow_data)
@@ -119,10 +117,8 @@ public:
     }
 
     // line plot statistics
-    if(pp_data_bfs.line_plot_data.statistics_data.calculate)
-    {
-      line_plot_calculator_statistics->evaluate(velocity, pressure, time, time_step_number);
-    }
+    if(line_plot_calculator_statistics->time_control.needs_evaluation(time, time_step_number))
+      line_plot_calculator_statistics->evaluate(velocity, pressure);
   }
 
   bool                                               write_final_output;

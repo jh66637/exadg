@@ -39,7 +39,7 @@ struct PostProcessorDataFDA
   PostProcessorData<dim>          pp_data;
   InflowData<dim>                 inflow_data;
   MeanVelocityCalculatorData<dim> mean_velocity_data;
-  LinePlotDataStatistics<dim>     line_plot_data;
+  LinePlotData<dim>               line_plot_data;
 };
 
 template<int dim, typename Number>
@@ -93,7 +93,7 @@ public:
     }
 
     // evaluation of results along lines
-    if(pp_data_fda.line_plot_data.statistics_data.calculate)
+    if(pp_data_fda.line_plot_data.time_control_data.is_active)
     {
       line_plot_calculator_statistics.reset(
         new LinePlotCalculatorStatistics<dim, Number>(pde_operator.get_dof_handler_u(),
@@ -106,10 +106,10 @@ public:
   }
 
   void
-  do_postprocessing(VectorType const & velocity,
-                    VectorType const & pressure,
-                    double const       time,
-                    int const          time_step_number)
+  do_postprocessing(VectorType const &     velocity,
+                    VectorType const &     pressure,
+                    double const           time,
+                    types::time_step const time_step_number)
   {
     Base::do_postprocessing(velocity, pressure, time, time_step_number);
 
@@ -141,10 +141,8 @@ public:
     }
 
     // evaluation of results along lines
-    if(pp_data_fda.line_plot_data.statistics_data.calculate)
-    {
-      line_plot_calculator_statistics->evaluate(velocity, pressure, time, time_step_number);
-    }
+    if(line_plot_calculator_statistics->time_control.needs_evaluation(time, time_step_number))
+      line_plot_calculator_statistics->evaluate(velocity, pressure);
   }
 
 private:

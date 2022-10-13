@@ -27,6 +27,7 @@
 #include <deal.II/lac/la_parallel_vector.h>
 
 // ExaDG
+#include <exadg/postprocessor/time_control.h>
 #include <exadg/utilities/print_functions.h>
 
 namespace ExaDG
@@ -36,11 +37,7 @@ namespace ExaDG
 struct TurbulentChannelData
 {
   TurbulentChannelData()
-    : calculate(false),
-      cells_are_stretched(false),
-      sample_start_time(0.0),
-      sample_end_time(1.0),
-      sample_every_timesteps(1),
+    : cells_are_stretched(false),
       viscosity(1.0),
       density(1.0),
       directory("output/"),
@@ -51,14 +48,15 @@ struct TurbulentChannelData
   void
   print(dealii::ConditionalOStream & pcout)
   {
-    if(calculate)
+    if(time_control_data.is_active)
     {
       pcout << "  Turbulent channel statistics:" << std::endl;
-      print_parameter(pcout, "Calculate statistics", calculate);
+
+      // only implemented for unsteady problem
+      pcout << "    Time control:" << std::endl;
+      time_control_data.print(pcout, true /*unsteady*/);
+
       print_parameter(pcout, "Cells are stretched", cells_are_stretched);
-      print_parameter(pcout, "Sample start time", sample_start_time);
-      print_parameter(pcout, "Sample end time", sample_end_time);
-      print_parameter(pcout, "Sample every timesteps", sample_every_timesteps);
       print_parameter(pcout, "Dynamic viscosity", viscosity);
       print_parameter(pcout, "Density", density);
       print_parameter(pcout, "Directory of output files", directory);
@@ -66,20 +64,10 @@ struct TurbulentChannelData
     }
   }
 
-  // calculate statistics?
-  bool calculate;
+  TimeControlData time_control_data;
 
   // are cells stretched, i.e., is a volume manifold applied?
   bool cells_are_stretched;
-
-  // start time for sampling
-  double sample_start_time;
-
-  // end time for sampling
-  double sample_end_time;
-
-  // perform sampling every ... timesteps
-  unsigned int sample_every_timesteps;
 
   // dynamic viscosity
   double viscosity;
@@ -109,7 +97,7 @@ public:
         TurbulentChannelData const &                  data);
 
   void
-  evaluate(VectorType const & velocity, double const & time, unsigned int const & time_step_number);
+  evaluate(VectorType const & velocity, bool const unsteady);
 
   void
   evaluate(VectorType const & velocity);
@@ -122,6 +110,8 @@ public:
 
   void
   reset();
+
+  TimeControl time_control;
 
 private:
   static unsigned int const n_points_y_per_cell_linear = 11;

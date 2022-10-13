@@ -32,6 +32,7 @@
 
 // ExaDG
 #include <exadg/incompressible_navier_stokes/postprocessor/line_plot_data.h>
+#include <exadg/postprocessor/time_control.h>
 
 namespace ExaDG
 {
@@ -74,13 +75,12 @@ public:
                                MPI_Comm const &                mpi_comm_in);
 
   void
-  setup(LinePlotDataStatistics<dim> const & line_plot_data_in);
+  setup(LinePlotData<dim> const & line_plot_data_in);
 
   void
-  evaluate(VectorType const &   velocity,
-           VectorType const &   pressure,
-           double const &       time,
-           unsigned int const & time_step_number);
+  evaluate(VectorType const & velocity, VectorType const & pressure);
+
+  TimeControl time_control;
 
 private:
   void
@@ -115,7 +115,7 @@ private:
   dealii::Mapping<dim> const &    mapping;
   MPI_Comm                        mpi_comm;
 
-  LinePlotDataStatistics<dim> data;
+  LinePlotData<dim> data;
 
   // Global points
   std::vector<std::vector<dealii::Point<dim>>> global_points;

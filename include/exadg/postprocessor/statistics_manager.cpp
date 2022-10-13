@@ -44,11 +44,9 @@ StatisticsManager<dim, Number>::StatisticsManager(
     mapping(mapping_in),
     mpi_comm(dof_handler_velocity.get_communicator()),
     number_of_samples(0),
-    write_final_output(true),
     data(TurbulentChannelData())
 {
 }
-
 
 template<int dim, typename Number>
 void
@@ -57,7 +55,13 @@ StatisticsManager<dim, Number>::setup(const std::function<double(double const &)
 {
   data = data_in;
 
-  if(data.calculate)
+  AssertThrow(
+    data_in.time_control_data.trigger_every_sub_time_step != dealii::numbers::invalid_unsigned_int,
+    dealii::ExcMessage(
+      "time_control_data.trigger_every_sub_time_step has to be set since output is generated at subtimesteps!"));
+  time_control.setup(data_in.time_control_data);
+
+  if(data_in.time_control_data.is_active)
   {
     // note: this code only works on structured meshes where the faces in
     // y-direction are faces 2 and 3
@@ -291,39 +295,18 @@ StatisticsManager<dim, Number>::setup(const std::function<double(double const &)
 
 template<int dim, typename Number>
 void
-StatisticsManager<dim, Number>::evaluate(VectorType const &   velocity,
-                                         double const &       time,
-                                         unsigned int const & time_step_number)
+StatisticsManager<dim, Number>::evaluate(VectorType const & velocity, bool const unsteady)
 {
-  if(data.calculate)
-  {
-    std::string filename = data.directory + data.filename;
+  AssertThrow(unsteady, dealii::ExcMessage("Only implemented for unsteady simulation."));
 
-    // EPSILON: small number which is much smaller than the time step size
-    double const EPSILON = 1.0e-10;
-    if((time > data.sample_start_time - EPSILON) && (time < data.sample_end_time + EPSILON) &&
-       (time_step_number % data.sample_every_timesteps == 0))
-    {
-      // evaluate statistics
-      this->evaluate(velocity);
+  std::string filename = data.directory + data.filename;
 
-      // write intermediate output
-      if(time_step_number % (data.sample_every_timesteps * 100) == 0)
-      {
-        this->write_output(filename, data.viscosity, data.density);
-      }
-    }
+  // evaluate statistics
+  this->evaluate(velocity);
 
-    // write final output
-    if((time > data.sample_end_time - EPSILON) && write_final_output)
-    {
-      this->write_output(filename, data.viscosity, data.density);
-
-      write_final_output = false;
-    }
-  }
+  if(time_control.sub_time_step_triggered())
+    this->write_output(filename, data.viscosity, data.density);
 }
-
 
 template<int dim, typename Number>
 void
