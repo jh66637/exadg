@@ -41,7 +41,8 @@ calculate_error(MPI_Comm const &                             mpi_comm,
                 std::shared_ptr<dealii::Function<dim>> const analytical_solution,
                 double const &                               time,
                 dealii::VectorTools::NormType const &        norm_type,
-                unsigned int const                           additional_quadrature_points = 3)
+                unsigned int const                           additional_quadrature_points = 3
+                ,    const std::set<dealii::types::material_id>& material_ids={})
 {
   double error = 1.0;
   analytical_solution->set_time(time);
@@ -52,6 +53,9 @@ calculate_error(MPI_Comm const &                             mpi_comm,
 
   // calculate error norm
   dealii::Vector<double> error_norm_per_cell(dof_handler.get_triangulation().n_active_cells());
+
+  dealii::Functions::ConstantFunction<dim> one(1.,dof_handler.get_fe().n_components());
+  
   dealii::VectorTools::integrate_difference(mapping,
                                             dof_handler,
                                             numerical_solution_double,
@@ -59,7 +63,10 @@ calculate_error(MPI_Comm const &                             mpi_comm,
                                             error_norm_per_cell,
                                             dealii::QGauss<dim>(dof_handler.get_fe().degree +
                                                                 additional_quadrature_points),
-                                            norm_type);
+                                            norm_type
+                                            ,&one
+                                            ,2., material_ids
+                                            );
 
   double error_norm =
     std::sqrt(dealii::Utilities::MPI::sum(error_norm_per_cell.norm_sqr(), mpi_comm));
@@ -72,6 +79,7 @@ calculate_error(MPI_Comm const &                             mpi_comm,
     zero_solution.reinit(numerical_solution);
     zero_solution.update_ghost_values();
 
+  dealii::Functions::ConstantFunction<dim> one(1.,dof_handler.get_fe().n_components());
     dealii::VectorTools::integrate_difference(mapping,
                                               dof_handler,
                                               zero_solution,
@@ -79,7 +87,10 @@ calculate_error(MPI_Comm const &                             mpi_comm,
                                               solution_norm_per_cell,
                                               dealii::QGauss<dim>(dof_handler.get_fe().degree +
                                                                   additional_quadrature_points),
-                                              norm_type);
+                                              norm_type
+                                              ,&one
+                                              ,2., material_ids
+                                              );
 
     double solution_norm =
       std::sqrt(dealii::Utilities::MPI::sum(solution_norm_per_cell.norm_sqr(), mpi_comm));
@@ -152,11 +163,24 @@ ErrorCalculator<dim, Number>::evaluate(VectorType const & solution,
                   error_counter * error_data.error_calc_interval_time - EPSILON)))
       {
         pcout << std::endl
-              << "Calculate error for " << error_data.name << " at time t = " << std::scientific
+              << "Calculate error for " << error_data.name << "Global at time t = " << std::scientific
               << std::setprecision(4) << time << ":" << std::endl;
 
-        do_evaluate(solution, time);
+        do_evaluate(solution, time,std::set<dealii::types::material_id>{0,1});
 
+        pcout << std::endl
+              << "Calculate error for " << error_data.name << "Outer at time t = " << std::scientific
+              << std::setprecision(4) << time << ":" << std::endl;
+
+        do_evaluate(solution, time,std::set<dealii::types::material_id>{0});
+
+        pcout << std::endl
+              << "Calculate error for " << error_data.name << "Inner at time t = " << std::scientific
+              << std::setprecision(4) << time << ":" << std::endl;
+
+        do_evaluate(solution, time,std::set<dealii::types::material_id>{1});
+
+        
         ++error_counter;
       }
     }
@@ -175,7 +199,7 @@ ErrorCalculator<dim, Number>::evaluate(VectorType const & solution,
 
 template<int dim, typename Number>
 void
-ErrorCalculator<dim, Number>::do_evaluate(VectorType const & solution_vector, double const time)
+ErrorCalculator<dim, Number>::do_evaluate(VectorType const & solution_vector, double const time                ,    const std::set<dealii::types::material_id>& material_ids)
 {
   bool relative = error_data.calculate_relative_errors;
 
@@ -186,7 +210,8 @@ ErrorCalculator<dim, Number>::do_evaluate(VectorType const & solution_vector, do
                                             solution_vector,
                                             error_data.analytical_solution,
                                             time,
-                                            dealii::VectorTools::L2_norm);
+                                            dealii::VectorTools::L2_norm,3,
+                                            material_ids);
 
   dealii::ConditionalOStream pcout(std::cout,
                                    dealii::Utilities::MPI::this_mpi_process(mpi_comm) == 0);
@@ -230,7 +255,8 @@ ErrorCalculator<dim, Number>::do_evaluate(VectorType const & solution_vector, do
                                               solution_vector,
                                               error_data.analytical_solution,
                                               time,
-                                              dealii::VectorTools::H1_seminorm);
+                                              dealii::VectorTools::H1_seminorm,3,
+                                            material_ids);
 
     dealii::ConditionalOStream pcout(std::cout,
                                      dealii::Utilities::MPI::this_mpi_process(mpi_comm) == 0);

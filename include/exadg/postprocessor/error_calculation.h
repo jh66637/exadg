@@ -115,7 +115,7 @@ public:
 
 private:
   void
-  do_evaluate(VectorType const & solution_vector, double const time);
+  do_evaluate(VectorType const & solution_vector, double const time  ,    const std::set<dealii::types::material_id>& material_ids={});
 
   MPI_Comm const mpi_comm;
 
