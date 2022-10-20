@@ -26,7 +26,7 @@
 #include <deal.II/base/point.h>
 
 // ExaDG
-#include <exadg/postprocessor/time_control.h>
+#include <exadg/postprocessor/time_control_statistics.h>
 #include <exadg/utilities/print_functions.h>
 
 #include <memory>
@@ -194,29 +194,21 @@ struct LineHomogeneousAveraging : Line<dim>
 };
 
 template<int dim>
-struct LinePlotData
+struct LinePlotDataBase
 {
-  LinePlotData() : directory("output/"), precision(10)
-
+  LinePlotDataBase() : directory("output/"), precision(10)
   {
   }
 
   void
-  print(dealii::ConditionalOStream & pcout)
+  print_base(dealii::ConditionalOStream & pcout)
   {
-    if(time_control_data.is_active)
-    {
-      pcout << "  Line plot data:" << std::endl;
-      // only makes sense in unsteady case
-      time_control_data.print(pcout, true);
-      print_parameter(pcout, "Directory", directory);
-      print_parameter(pcout, "Precision", precision);
-      print_parameter(pcout, "Line", lines.name);
-      print_parameter(pcout, "  Quantity", enum_to_string(lines.quantity));
-    }
+    pcout << "  Line plot data:" << std::endl;
+    print_parameter(pcout, "Directory", directory);
+    print_parameter(pcout, "Precision", precision);
+    print_parameter(pcout, "Line", lines.name);
+    print_parameter(pcout, "  Quantity", enum_to_string(lines.quantity));
   }
-
-  TimeControlData time_control_data;
 
   /*
    *  output folder
@@ -233,6 +225,42 @@ struct LinePlotData
    */
   std::vector<std::shared_ptr<Line<dim>>> lines;
 };
+
+
+template<int dim>
+struct LinePlotData : public LinePlotDataBase<dim>
+{
+  TimeControlData time_control_data;
+
+  void
+  print(dealii::ConditionalOStream & pcout)
+  {
+    if(time_control_data.is_active)
+    {
+      this->print_base();
+      // only makes sense in unsteady case
+      time_control_data.print(pcout, true);
+    }
+  }
+};
+
+template<int dim>
+struct LinePlotDataStatistics : public LinePlotDataBase<dim>
+{
+  TimeControlDataStatistics time_control_data_statistics;
+
+  void
+  print(dealii::ConditionalOStream & pcout)
+  {
+    if(time_control_data_statistics.time_control_data.is_active)
+    {
+      this->print_base();
+      // only makes sense in unsteady case
+      time_control_data_statistics.time_control_data.print(pcout, true);
+    }
+  }
+};
+
 
 } // namespace IncNS
 } // namespace ExaDG

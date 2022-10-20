@@ -35,9 +35,9 @@ TimeControlData::EvalType
 get_unsteady_evaluation_type(TimeControlData const & data)
 {
   bool const interval = (data.trigger_interval > 0.0);
-  bool const timestep = (data.trigger_every_time_steps != dealii::numbers::invalid_unsigned_int);
+  bool const timestep = Utilities::is_valid_timestep(data.trigger_every_time_steps);
 
-  // only one of bothe can be true
+  // only one of both can be true
   if(interval && timestep)
     return TimeControlData::EvalType::Invalid;
 
@@ -50,66 +50,38 @@ get_unsteady_evaluation_type(TimeControlData const & data)
   return TimeControlData::EvalType::Invalid;
 }
 
-void
-free_print(dealii::ConditionalOStream & pcout, bool const unsteady, TimeControlData const & data)
-{
-  if(unsteady || data.is_active)
-  {
-    print_parameter(pcout, "TimeControl start time", data.start_time);
-    print_parameter(pcout, "TimeControl end_time", data.end_time);
-    print_parameter(pcout, "Force final evaluation", data.force_final_evaluation);
-    if(data.counter_start != 0)
-      print_parameter(pcout, "Counter start", data.counter_start);
-    if(get_unsteady_evaluation_type(data) == TimeControlData::EvalType::Interval)
-      print_parameter(pcout, "TimeControl triggers every interval", data.trigger_interval);
-    if(get_unsteady_evaluation_type(data) == TimeControlData::EvalType::Timestep)
-    {
-      print_parameter(pcout, "TimeControl triggers every timestep", data.trigger_every_time_steps);
-      if(data.trigger_every_sub_time_step != dealii::numbers::invalid_unsigned_int)
-        print_parameter(pcout,
-                        "TimeControl triggers every sub timestep",
-                        data.trigger_every_sub_time_step);
-    }
-  }
-}
-
 TimeControlData::TimeControlData()
   : is_active(false),
     start_time(std::numeric_limits<double>::max()),
     end_time(std::numeric_limits<double>::max()),
     trigger_interval(-1.0),
-    trigger_every_time_steps(dealii::numbers::invalid_unsigned_int),
-    trigger_every_sub_time_step(dealii::numbers::invalid_unsigned_int),
-    force_final_evaluation(true),
-    counter_start(0)
+    trigger_every_time_steps(numbers::invalid_timestep)
 {
 }
 
 void
 TimeControlData::print(dealii::ConditionalOStream & pcout, bool const unsteady) const
 {
-  free_print(pcout, unsteady, *this);
+  if(unsteady || is_active)
+  {
+    print_parameter(pcout, "TimeControl start time", start_time);
+    print_parameter(pcout, "TimeControl end_time", end_time);
+    if(get_unsteady_evaluation_type(*this) == TimeControlData::EvalType::Interval)
+      print_parameter(pcout, "TimeControl triggers every interval", trigger_interval);
+    if(get_unsteady_evaluation_type(*this) == TimeControlData::EvalType::Timestep)
+      print_parameter(pcout, "TimeControl triggers every timestep", trigger_every_time_steps);
+  }
 }
 
 TimeControl::TimeControl()
-  : EPSILON(1.0e-10),
-    reset_counter(true),
-    counter(0),
-    forced_final_evaluation(false),
-    is_sub_time_step_triggered(false)
+  : EPSILON(1.0e-10), reset_counter(true), counter(0), end_time_reached(false)
 {
 }
 
 void
 TimeControl::setup(TimeControlData const & time_control_data_in)
 {
-  if(time_control_data_in.trigger_every_sub_time_step != dealii::numbers::invalid_unsigned_int)
-    AssertThrow(
-      get_unsteady_evaluation_type(time_control_data_in) == TimeControlData::EvalType::Timestep,
-      dealii::ExcMessage("Sub timestep can only be used if TimeControlData::EvalType::Timestep."));
-
   time_control_data = time_control_data_in;
-  counter           = time_control_data_in.counter_start;
 }
 
 // If setup() is not called needs_evaluation() will always evaluate to false
@@ -135,21 +107,10 @@ TimeControl::needs_evaluation(double const time, types::time_step const time_ste
     return false;
 
   if(time > time_control_data.end_time - EPSILON)
-  {
-    if(time_control_data.force_final_evaluation)
-    {
-      if(forced_final_evaluation == false)
-      {
-        forced_final_evaluation = true;
-        ++counter;
-        return true;
-      }
-    }
-    else
-    {
-      return false;
-    }
-  }
+    end_time_reached = true;
+
+  if(time > time_control_data.end_time + EPSILON)
+    return false;
 
   bool evaluate = false;
   if(get_unsteady_evaluation_type(time_control_data) == TimeControlData::EvalType::Timestep)
@@ -158,11 +119,6 @@ TimeControl::needs_evaluation(double const time, types::time_step const time_ste
     {
       evaluate = true;
       ++counter;
-
-      if((time_step_number - 1) % (time_control_data.trigger_every_time_steps *
-                                   time_control_data.trigger_every_sub_time_step) ==
-         0)
-        is_sub_time_step_triggered = true;
     }
   }
   else if(get_unsteady_evaluation_type(time_control_data) == TimeControlData::EvalType::Interval)
@@ -199,15 +155,15 @@ unsigned int
 TimeControl::get_counter() const
 {
   // the counter is incremented during needs_evaluation(), thus counter is ahead by 1
-  AssertThrow(counter - 1 != dealii::numbers::invalid_unsigned_int,
-              dealii::ExcMessage("Counter not in a valid state."));
+  AssertThrow(counter > 0, dealii::ExcMessage("Counter not in a valid state."));
   return counter - 1;
 }
 
 bool
-TimeControl::sub_time_step_triggered() const
+TimeControl::reached_end_time() const
 {
-  return is_sub_time_step_triggered;
+  return end_time_reached;
 }
+
 
 } // namespace ExaDG

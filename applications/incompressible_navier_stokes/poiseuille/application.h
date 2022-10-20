@@ -492,7 +492,6 @@ private:
     pp_data.error_data_u.time_control_data.is_active        = true;
     pp_data.error_data_u.time_control_data.start_time       = start_time;
     pp_data.error_data_u.time_control_data.trigger_interval = (end_time - start_time) / 10.0;
-    pp_data.error_data_u.analytical_solution_available      = true;
     pp_data.error_data_u.analytical_solution.reset(
       new AnalyticalSolutionVelocity<dim>(max_velocity, H));
     pp_data.error_data_u.calculate_relative_errors = false;
@@ -502,7 +501,6 @@ private:
     pp_data.error_data_p.time_control_data.is_active        = true;
     pp_data.error_data_p.time_control_data.start_time       = start_time;
     pp_data.error_data_p.time_control_data.trigger_interval = (end_time - start_time) / 10.0;
-    pp_data.error_data_p.analytical_solution_available      = true;
     if(boundary_condition == BoundaryCondition::Periodic)
       pp_data.error_data_p.analytical_solution.reset(new dealii::Functions::ZeroFunction<dim>(1));
     else

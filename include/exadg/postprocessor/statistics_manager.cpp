@@ -55,13 +55,13 @@ StatisticsManager<dim, Number>::setup(const std::function<double(double const &)
 {
   data = data_in;
 
-  AssertThrow(
-    data_in.time_control_data.trigger_every_sub_time_step != dealii::numbers::invalid_unsigned_int,
-    dealii::ExcMessage(
-      "time_control_data.trigger_every_sub_time_step has to be set since output is generated at subtimesteps!"));
-  time_control.setup(data_in.time_control_data);
+  AssertThrow(Utilities::is_valid_timestep(
+                data_in.time_control_data_statistics.write_preliminary_results_every_nth_time_step),
+              dealii::ExcMessage("write_preliminary_results_every_nth_time_step has to be set."));
 
-  if(data_in.time_control_data.is_active)
+  time_control_statistics.setup(data_in.time_control_data_statistics);
+
+  if(data_in.time_control_data_statistics.time_control_data.is_active)
   {
     // note: this code only works on structured meshes where the faces in
     // y-direction are faces 2 and 3
@@ -295,38 +295,19 @@ StatisticsManager<dim, Number>::setup(const std::function<double(double const &)
 
 template<int dim, typename Number>
 void
-StatisticsManager<dim, Number>::evaluate(VectorType const & velocity, bool const unsteady)
+StatisticsManager<dim, Number>::evaluate(VectorType const & velocity,
+                                         bool const         unsteady,
+                                         bool const         write_statistics)
 {
   AssertThrow(unsteady, dealii::ExcMessage("Only implemented for unsteady simulation."));
 
   std::string filename = data.directory + data.filename;
 
   // evaluate statistics
-  this->evaluate(velocity);
+  this->evaluate_statistics(velocity);
 
-  if(time_control.sub_time_step_triggered())
+  if(write_statistics)
     this->write_output(filename, data.viscosity, data.density);
-}
-
-template<int dim, typename Number>
-void
-StatisticsManager<dim, Number>::evaluate(VectorType const & velocity)
-{
-  std::vector<VectorType const *> vecs;
-  vecs.push_back(&velocity);
-  do_evaluate(vecs);
-}
-
-
-
-template<int dim, typename Number>
-void
-StatisticsManager<dim, Number>::evaluate(std::vector<VectorType> const & velocity)
-{
-  std::vector<VectorType const *> vecs;
-  for(unsigned int i = 0; i < velocity.size(); ++i)
-    vecs.push_back(&velocity[i]);
-  do_evaluate(vecs);
 }
 
 template<int dim, typename Number>
@@ -401,6 +382,24 @@ StatisticsManager<dim, Number>::reset()
   number_of_samples = 0;
 }
 
+template<int dim, typename Number>
+void
+StatisticsManager<dim, Number>::evaluate_statistics(VectorType const & velocity)
+{
+  std::vector<VectorType const *> vecs;
+  vecs.push_back(&velocity);
+  do_evaluate(vecs);
+}
+
+template<int dim, typename Number>
+void
+StatisticsManager<dim, Number>::evaluate_statistics(std::vector<VectorType> const & velocity)
+{
+  std::vector<VectorType const *> vecs;
+  for(unsigned int i = 0; i < velocity.size(); ++i)
+    vecs.push_back(&velocity[i]);
+  do_evaluate(vecs);
+}
 
 /*
  *  This function calculates the following statistical quantities of the flow ...

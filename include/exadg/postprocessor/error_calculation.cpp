@@ -116,7 +116,7 @@ ErrorCalculator<dim, Number>::setup(dealii::DoFHandler<dim> const &   dof_handle
 
   time_control.setup(error_data_in.time_control_data);
 
-  if(error_data.analytical_solution_available && error_data.write_errors_to_file)
+  if(error_data.analytical_solution && error_data.write_errors_to_file)
     create_directories(error_data.directory, mpi_comm);
 }
 
@@ -126,10 +126,8 @@ ErrorCalculator<dim, Number>::evaluate(VectorType const & solution,
                                        double const       time,
                                        bool const         unsteady)
 {
-  AssertThrow(
-    error_data.analytical_solution_available,
-    dealii::ExcMessage(
-      "Function can only be called if analytical solution is given. If you don't have an analytical solution you probably accidently set time_control.is_active or didn't check if the function should be called."));
+  AssertThrow(error_data.analytical_solution,
+              dealii::ExcMessage("Function can only be called if analytical solution is given."));
 
   dealii::ConditionalOStream pcout(std::cout,
                                    dealii::Utilities::MPI::this_mpi_process(mpi_comm) == 0);

@@ -288,8 +288,13 @@ PostProcessor<dim, Number>::initialize_additional_vectors()
 template<int dim, typename Number>
 void
 PostProcessor<dim, Number>::compute_mean_velocity(VectorType &       mean_velocity,
-                                                  VectorType const & velocity)
+                                                  VectorType const & velocity,
+                                                  bool const         unsteady)
 {
+  AssertThrow(unsteady,
+              dealii::ExcMessage(
+                "Calculating mean velocity does not make sense for steady problems."));
+
   unsigned int const counter = time_control_mean_velocity.get_counter();
   mean_velocity.sadd((double)counter, 1.0, velocity);
   mean_velocity *= 1. / (double)(counter + 1);
@@ -344,15 +349,10 @@ PostProcessor<dim, Number>::calculate_additional_vectors(VectorType const &     
 
   if(pp_data.output_data.mean_velocity.is_active == true)
   {
-    // TODO: THIS IS A QUESTION IN GENERAL: SHOULD THIS ASSERT BE CHECKED INSIDE OR OUTSIDE? I TEND
-    // TO DO IT INSIDE THE FUNCTIONS SINCE THE INTERFACE WILL LOOK THE SAME AND THE USER DOES NOT
-    // HAVE TO CARE DURING IMPLEMENTATION
-    AssertThrow(Utilities::is_unsteady_timestep(time_step_number),
-                dealii::ExcMessage(
-                  "Calculating mean velocity does not make sense for unsteady problems."));
-
     if(time_control_mean_velocity.needs_evaluation(time, time_step_number))
-      compute_mean_velocity(mean_velocity, velocity);
+      compute_mean_velocity(mean_velocity,
+                            velocity,
+                            Utilities::is_unsteady_timestep(time_step_number));
   }
 
   if(pp_data.output_data.write_cfl)

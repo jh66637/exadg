@@ -225,8 +225,11 @@ public:
   {
     Base::do_postprocessing(velocity, pressure, time, time_step_number);
 
-    if(statistics_turb_ch->time_control.needs_evaluation(time, time_step_number))
-      statistics_turb_ch->evaluate(velocity, Utilities::is_unsteady_timestep(time_step_number));
+    if(statistics_turb_ch->time_control_statistics.needs_evaluation(time, time_step_number))
+      statistics_turb_ch->evaluate(velocity,
+                                   Utilities::is_unsteady_timestep(time_step_number),
+                                   statistics_turb_ch->time_control_statistics
+                                     .write_preliminary_results(time, time_step_number));
   }
 
   TurbulentChannelData                            turb_ch_data;
@@ -480,12 +483,15 @@ private:
     pp_data_turb_ch.pp_data = pp_data;
 
     // turbulent channel statistics
-    pp_data_turb_ch.turb_ch_data.time_control_data.is_active  = true;
-    pp_data_turb_ch.turb_ch_data.time_control_data.start_time = SAMPLE_START_TIME;
-    pp_data_turb_ch.turb_ch_data.time_control_data.end_time   = SAMPLE_END_TIME;
-    pp_data_turb_ch.turb_ch_data.time_control_data.trigger_every_time_steps =
-      SAMPLE_EVERY_TIME_STEPS;
-    pp_data_turb_ch.turb_ch_data.time_control_data.trigger_every_sub_time_step = 100;
+    pp_data_turb_ch.turb_ch_data.time_control_data_statistics.time_control_data.is_active = true;
+    pp_data_turb_ch.turb_ch_data.time_control_data_statistics.time_control_data.start_time =
+      SAMPLE_START_TIME;
+    pp_data_turb_ch.turb_ch_data.time_control_data_statistics.time_control_data.end_time =
+      SAMPLE_END_TIME;
+    pp_data_turb_ch.turb_ch_data.time_control_data_statistics.time_control_data
+      .trigger_every_time_steps = SAMPLE_EVERY_TIME_STEPS;
+    pp_data_turb_ch.turb_ch_data.time_control_data_statistics
+      .write_preliminary_results_every_nth_time_step = SAMPLE_EVERY_TIME_STEPS * 100;
 
     pp_data_turb_ch.turb_ch_data.cells_are_stretched = true;
     pp_data_turb_ch.turb_ch_data.viscosity           = VISCOSITY;

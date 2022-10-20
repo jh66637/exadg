@@ -462,11 +462,15 @@ private:
     my_pp_data.line_plot_data.lines.push_back(vel_7);
     my_pp_data.line_plot_data.lines.push_back(vel_8);
 
-    my_pp_data.line_plot_data.time_control_data.is_active                = calculate_statistics;
-    my_pp_data.line_plot_data.time_control_data.start_time               = sample_start_time;
-    my_pp_data.line_plot_data.time_control_data.end_time                 = end_time;
-    my_pp_data.line_plot_data.time_control_data.trigger_every_time_steps = sample_every_timesteps;
-    my_pp_data.line_plot_data.time_control_data.trigger_every_sub_time_step = 100;
+    my_pp_data.line_plot_data.time_control_data_statistics.time_control_data.is_active =
+      calculate_statistics;
+    my_pp_data.line_plot_data.time_control_data_statistics.time_control_data.start_time =
+      sample_start_time;
+    my_pp_data.line_plot_data.time_control_data_statistics.time_control_data.end_time = end_time;
+    my_pp_data.line_plot_data.time_control_data_statistics.time_control_data
+      .trigger_every_time_steps = sample_every_timesteps;
+    my_pp_data.line_plot_data.time_control_data_statistics
+      .write_preliminary_results_every_nth_time_step = sample_every_timesteps * 100;
 
     // calculation of flow rate (use volume-based computation)
     my_pp_data.mean_velocity_data.calculate = true;

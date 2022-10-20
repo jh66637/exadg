@@ -30,26 +30,6 @@
 
 namespace ExaDG
 {
-void
-free_print(dealii::ConditionalOStream & pcout, bool const unsteady, LiftAndDragData const & data)
-{
-  if(data.boundary_IDs.size() > 0 && (data.time_control_data.is_active))
-  {
-    pcout << std::endl << "Lift and drag calculation" << std::endl;
-
-    data.time_control_data.print(pcout, unsteady);
-
-    for(auto const & bnd_id : data.boundary_IDs)
-      print_parameter(pcout, "Using boundary ID ", bnd_id);
-    print_parameter(pcout, "Reference value", data.reference_value);
-    print_parameter(pcout, "Kinematic viscosity", data.viscosity);
-
-    print_parameter(pcout, "Directory", data.directory);
-    print_parameter(pcout, "Filename Lift", data.filename_lift);
-    print_parameter(pcout, "Filename Drag", data.filename_drag);
-  }
-}
-
 template<int dim, typename Number>
 void
   calculate_lift_and_drag_force(dealii::Tensor<1, dim, Number> &             Force,
@@ -125,7 +105,21 @@ void
 void
 LiftAndDragData::print(dealii::ConditionalOStream & pcout, bool const unsteady) const
 {
-  free_print(pcout, unsteady, *this);
+  if(boundary_IDs.size() > 0 && (time_control_data.is_active))
+  {
+    pcout << std::endl << "Lift and drag calculation" << std::endl;
+
+    time_control_data.print(pcout, unsteady);
+
+    for(auto const & bnd_id : boundary_IDs)
+      print_parameter(pcout, "Using boundary ID ", bnd_id);
+    print_parameter(pcout, "Reference value", reference_value);
+    print_parameter(pcout, "Kinematic viscosity", viscosity);
+
+    print_parameter(pcout, "Directory", directory);
+    print_parameter(pcout, "Filename Lift", filename_lift);
+    print_parameter(pcout, "Filename Drag", filename_drag);
+  }
 }
 
 

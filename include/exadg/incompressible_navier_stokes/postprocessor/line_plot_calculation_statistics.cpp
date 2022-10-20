@@ -50,20 +50,17 @@ LinePlotCalculatorStatistics<dim, Number>::LinePlotCalculatorStatistics(
 
 template<int dim, typename Number>
 void
-LinePlotCalculatorStatistics<dim, Number>::setup(LinePlotData<dim> const & line_plot_data_in)
+LinePlotCalculatorStatistics<dim, Number>::setup(LinePlotDataStatistics<dim> const & data_in)
 {
   // initialize data
-  data = line_plot_data_in;
+  data = data_in;
 
-  AssertThrow(
-    line_plot_data_in.time_control_data.trigger_every_sub_time_step !=
-      dealii::numbers::invalid_unsigned_int,
-    dealii::ExcMessage(
-      "time_control_data.trigger_every_sub_time_step has to be set since output is generated at subtimesteps!"));
-  time_control.setup(line_plot_data_in.time_control_data);
+  AssertThrow(Utilities::is_valid_timestep(
+                data_in.time_control_data_statistics.write_preliminary_results_every_nth_time_step),
+              dealii::ExcMessage("write_preliminary_results_every_nth_time_step has to be set."));
+  time_control_statistics.setup(data_in.time_control_data_statistics);
 
-
-  if(line_plot_data_in.time_control_data.is_active)
+  if(data_in.time_control_data_statistics.time_control_data.is_active)
   {
     AssertThrow(data.lines.size() > 0, dealii::ExcMessage("Empty data"));
 
@@ -102,10 +99,12 @@ LinePlotCalculatorStatistics<dim, Number>::setup(LinePlotData<dim> const & line_
 template<int dim, typename Number>
 void
 LinePlotCalculatorStatistics<dim, Number>::evaluate(VectorType const & velocity,
-                                                    VectorType const & pressure)
+                                                    VectorType const & pressure,
+                                                    bool const         write_statistics)
 {
   do_evaluate(velocity, pressure);
-  if(time_control.sub_time_step_triggered())
+
+  if(write_statistics)
     do_write_output();
 }
 

@@ -108,8 +108,7 @@ private:
     pp_data.output_data.write_higher_order          = true;
     pp_data.output_data.degree                      = this->param.degree;
 
-    pp_data.error_data.time_control_data.is_active   = true;
-    pp_data.error_data.analytical_solution_available = true;
+    pp_data.error_data.time_control_data.is_active = true;
     pp_data.error_data.analytical_solution.reset(
       new dealii::Functions::SlitSingularityFunction<dim>());
 

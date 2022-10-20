@@ -458,13 +458,16 @@ private:
     pp_data_bfs.pp_data = pp_data;
 
     // line plot data: calculate statistics along lines
-    pp_data_bfs.line_plot_data.time_control_data.is_active                = true;
-    pp_data_bfs.line_plot_data.time_control_data.start_time               = sample_start_time;
-    pp_data_bfs.line_plot_data.time_control_data.end_time                 = end_time;
-    pp_data_bfs.line_plot_data.time_control_data.trigger_every_time_steps = sample_every_timesteps;
-    pp_data_bfs.line_plot_data.time_control_data.trigger_every_sub_time_step = 10;
 
-    pp_data_bfs.line_plot_data.directory = this->output_parameters.directory;
+    pp_data_bfs.turb_ch_data.time_control_data_statistics.time_control_data.is_active = true;
+    pp_data_bfs.turb_ch_data.time_control_data_statistics.time_control_data.start_time =
+      sample_start_time;
+    pp_data_bfs.turb_ch_data.time_control_data_statistics.time_control_data.end_time = end_time;
+    pp_data_bfs.turb_ch_data.time_control_data_statistics.time_control_data
+      .trigger_every_time_steps = sample_every_timesteps;
+    pp_data_bfs.turb_ch_data.time_control_data_statistics
+      .write_preliminary_results_every_nth_time_step = sample_every_timesteps * 10;
+    pp_data_bfs.line_plot_data.directory             = this->output_parameters.directory;
 
     // mean velocity
     std::shared_ptr<Quantity> quantity_velocity;
@@ -707,11 +710,14 @@ private:
     pp_data_bfs.pp_data = pp_data;
 
     // turbulent channel statistics
-    pp_data_bfs.turb_ch_data.time_control_data.is_active                   = true;
-    pp_data_bfs.turb_ch_data.time_control_data.start_time                  = sample_start_time;
-    pp_data_bfs.turb_ch_data.time_control_data.end_time                    = end_time;
-    pp_data_bfs.turb_ch_data.time_control_data.trigger_every_time_steps    = sample_every_timesteps;
-    pp_data_bfs.turb_ch_data.time_control_data.trigger_every_sub_time_step = 100;
+    pp_data_bfs.turb_ch_data.time_control_data_statistics.time_control_data.is_active = true;
+    pp_data_bfs.turb_ch_data.time_control_data_statistics.time_control_data.start_time =
+      sample_start_time;
+    pp_data_bfs.turb_ch_data.time_control_data_statistics.time_control_data.end_time = end_time;
+    pp_data_bfs.turb_ch_data.time_control_data_statistics.time_control_data
+      .trigger_every_time_steps = sample_every_timesteps;
+    pp_data_bfs.turb_ch_data.time_control_data_statistics
+      .write_preliminary_results_every_nth_time_step = sample_every_timesteps * 100;
 
 
     pp_data_bfs.turb_ch_data.cells_are_stretched = Geometry::use_grid_stretching_in_y_direction;

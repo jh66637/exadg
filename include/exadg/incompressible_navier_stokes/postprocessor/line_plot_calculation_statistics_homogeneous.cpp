@@ -49,17 +49,17 @@ LinePlotCalculatorStatisticsHomogeneous<dim, Number>::LinePlotCalculatorStatisti
 
 template<int dim, typename Number>
 void
-LinePlotCalculatorStatisticsHomogeneous<dim, Number>::setup(LinePlotData<dim> const & data_in)
+LinePlotCalculatorStatisticsHomogeneous<dim, Number>::setup(
+  LinePlotDataStatistics<dim> const & data_in)
 {
   data = data_in;
 
-  AssertThrow(
-    data_in.time_control_data.trigger_every_sub_time_step != dealii::numbers::invalid_unsigned_int,
-    dealii::ExcMessage(
-      "time_control_data.trigger_every_sub_time_step has to be set since output is generated at subtimesteps!"));
-  time_control.setup(data_in.time_control_data);
+  AssertThrow(Utilities::is_valid_timestep(
+                data_in.time_control_data_statistics.write_preliminary_results_every_nth_time_step),
+              dealii::ExcMessage("write_preliminary_results_every_nth_time_step has to be set."));
+  time_control_statistics.setup(data_in.time_control_data_statistics);
 
-  if(data_in.time_control_data.is_active)
+  if(data_in.time_control_data_statistics.time_control_data.is_active)
   {
     AssertThrow(dim == 3, dealii::ExcMessage("Not implemented."));
 
@@ -323,11 +323,12 @@ LinePlotCalculatorStatisticsHomogeneous<dim, Number>::setup(LinePlotData<dim> co
 template<int dim, typename Number>
 void
 LinePlotCalculatorStatisticsHomogeneous<dim, Number>::evaluate(VectorType const & velocity,
-                                                               VectorType const & pressure)
+                                                               VectorType const & pressure,
+                                                               bool const         write_statistics)
 {
   do_evaluate(velocity, pressure);
 
-  if(time_control.sub_time_step_triggered())
+  if(write_statistics)
     do_write_output();
 }
 

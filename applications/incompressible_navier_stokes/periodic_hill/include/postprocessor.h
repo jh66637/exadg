@@ -37,7 +37,7 @@ struct MyPostProcessorData
 {
   PostProcessorData<dim>          pp_data;
   MeanVelocityCalculatorData<dim> mean_velocity_data;
-  LinePlotData<dim>               line_plot_data;
+  LinePlotDataStatistics<dim>     line_plot_data;
 };
 
 template<int dim, typename Number>
@@ -104,8 +104,13 @@ public:
     }
 
     // line plot statistics
-    if(line_plot_calculator_statistics->time_control.needs_evaluation(time, time_step_number))
-      line_plot_calculator_statistics->evaluate(velocity, pressure);
+    if(line_plot_calculator_statistics->time_control_statistics.needs_evaluation(time,
+                                                                                 time_step_number))
+      line_plot_calculator_statistics->evaluate(
+        velocity,
+        pressure,
+        line_plot_calculator_statistics->time_control_statistics.write_preliminary_results(
+          time, time_step_number));
   }
 
 private:

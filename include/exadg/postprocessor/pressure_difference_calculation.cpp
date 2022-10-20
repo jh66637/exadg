@@ -32,28 +32,19 @@ namespace ExaDG
 {
 template<int dim>
 void
-free_print(dealii::ConditionalOStream &        pcout,
-           bool const                          unsteady,
-           PressureDifferenceData<dim> const & data)
-{
-  if(data.time_control_data.is_active)
-  {
-    pcout << std::endl << "Pressure difference calculation" << std::endl;
-    data.time_control_data.print(pcout, unsteady);
-
-    print_parameter(pcout, "Point 1", data.point_1);
-    print_parameter(pcout, "Point 2", data.point_2);
-
-    print_parameter(pcout, "Directory", data.directory);
-    print_parameter(pcout, "Filename", data.filename);
-  }
-}
-
-template<int dim>
-void
 PressureDifferenceData<dim>::print(dealii::ConditionalOStream & pcout, bool const unsteady) const
 {
-  free_print<dim>(pcout, unsteady, *this);
+  if(time_control_data.is_active)
+  {
+    pcout << std::endl << "Pressure difference calculation" << std::endl;
+    time_control_data.print(pcout, unsteady);
+
+    print_parameter(pcout, "Point 1", point_1);
+    print_parameter(pcout, "Point 2", point_2);
+
+    print_parameter(pcout, "Directory", directory);
+    print_parameter(pcout, "Filename", filename);
+  }
 }
 
 template<int dim, typename Number>

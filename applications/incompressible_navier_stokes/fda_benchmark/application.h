@@ -574,12 +574,15 @@ private:
     pp_data_fda.pp_data = pp_data;
 
     // evaluation of quantities along lines
-    pp_data_fda.line_plot_data.time_control_data.is_active                = true;
-    pp_data_fda.line_plot_data.time_control_data.start_time               = sample_start_time;
-    pp_data_fda.line_plot_data.time_control_data.end_time                 = end_time;
-    pp_data_fda.line_plot_data.time_control_data.trigger_every_time_steps = sample_every_timesteps;
-    pp_data_fda.line_plot_data.time_control_data.trigger_every_sub_time_step = 100;
-    pp_data_fda.line_plot_data.directory = this->output_parameters.directory;
+    pp_data_fda.line_plot_data.time_control_data_statistics.time_control_data.is_active = true;
+    pp_data_fda.line_plot_data.time_control_data_statistics.time_control_data.start_time =
+      sample_start_time;
+    pp_data_fda.line_plot_data.time_control_data_statistics.time_control_data.end_time = end_time;
+    pp_data_fda.line_plot_data.time_control_data_statistics.time_control_data
+      .trigger_every_time_steps = sample_every_timesteps;
+    pp_data_fda.line_plot_data.time_control_data_statistics
+      .write_preliminary_results_every_nth_time_step = sample_every_timesteps * 100;
+    pp_data_fda.line_plot_data.directory             = this->output_parameters.directory;
 
     // lines
     std::shared_ptr<LineCircumferentialAveraging<dim>> axial_profile, radial_profile_z1,

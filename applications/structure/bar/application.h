@@ -346,10 +346,9 @@ private:
     pp_data.output_data.write_higher_order = false;
     pp_data.output_data.degree             = this->param.degree;
 
-    pp_data.error_data.time_control_data.is_active   = true;
-    pp_data.error_data.analytical_solution_available = true;
-    pp_data.error_data.calculate_relative_errors     = true;
-    double const vol_force                           = use_volume_force ? this->volume_force : 0.0;
+    pp_data.error_data.time_control_data.is_active = true;
+    pp_data.error_data.calculate_relative_errors   = true;
+    double const vol_force                         = use_volume_force ? this->volume_force : 0.0;
     if(boundary_type == "Dirichlet")
     {
       pp_data.error_data.analytical_solution.reset(

@@ -38,8 +38,7 @@ template<int dim>
 struct ErrorCalculationData
 {
   ErrorCalculationData()
-    : analytical_solution_available(false),
-      calculate_relative_errors(true),
+    : calculate_relative_errors(true),
       calculate_H1_seminorm_error(false),
       write_errors_to_file(false),
       directory("output/"),
@@ -50,8 +49,8 @@ struct ErrorCalculationData
   void
   print(dealii::ConditionalOStream & pcout, bool unsteady)
   {
-    print_parameter(pcout, "Error calculation", unsteady == true && analytical_solution_available);
-    if(unsteady == true && analytical_solution_available)
+    print_parameter(pcout, "Error calculation", unsteady == true && analytical_solution);
+    if(unsteady == true && time_control_data.is_active)
     {
       print(pcout, unsteady, time_control_data);
       print_parameter(pcout, "Calculate relative errors", calculate_relative_errors);
@@ -62,9 +61,6 @@ struct ErrorCalculationData
       print_parameter(pcout, "Name", name);
     }
   }
-
-  // to calculate the error an analytical solution to the problem has to be available
-  bool analytical_solution_available;
 
   std::shared_ptr<dealii::Function<dim>> analytical_solution;
 

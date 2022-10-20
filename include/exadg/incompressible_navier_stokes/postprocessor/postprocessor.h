@@ -90,7 +90,9 @@ private:
   // TODO: FOR A MODULAR DESIGN THERE SHOULD PROBALY BE A CLASS CALLED MEAN_VECTOR_CALCULATION IN
   // WHICH RELEVANT SAMPLES CAN JUST BE SUBMITTED.
   void
-  compute_mean_velocity(VectorType & mean_velocity, VectorType const & velocity);
+  compute_mean_velocity(VectorType &       mean_velocity,
+                        VectorType const & velocity,
+                        bool const         unsteady);
 
   void
   calculate_additional_vectors(VectorType const &     velocity,

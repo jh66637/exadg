@@ -326,7 +326,6 @@ private:
     pp_data.error_data_u.time_control_data.is_active        = true;
     pp_data.error_data_u.time_control_data.start_time       = start_time;
     pp_data.error_data_u.time_control_data.trigger_interval = (end_time - start_time) / 20.0;
-    pp_data.error_data_u.analytical_solution_available      = true;
     pp_data.error_data_u.analytical_solution.reset(new AnalyticalSolutionVelocity<dim>(lambda));
     pp_data.error_data_u.name = "velocity";
 
@@ -334,7 +333,6 @@ private:
     pp_data.error_data_p.time_control_data.is_active        = true;
     pp_data.error_data_p.time_control_data.start_time       = start_time;
     pp_data.error_data_p.time_control_data.trigger_interval = (end_time - start_time) / 20.0;
-    pp_data.error_data_p.analytical_solution_available      = true;
     pp_data.error_data_p.analytical_solution.reset(new AnalyticalSolutionPressure<dim>(lambda));
     pp_data.error_data_p.name = "pressure";
 

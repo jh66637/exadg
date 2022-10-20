@@ -40,15 +40,12 @@ struct TimeControlData
 {
   TimeControlData();
 
-  bool         is_active;
-  double       start_time;
-  double       end_time;
-  double       trigger_interval;
-  unsigned int trigger_every_time_steps;
-  unsigned int trigger_every_sub_time_step;
-  bool         force_final_evaluation;
-  unsigned int counter_start;
-
+  bool             is_active;
+  double           start_time;
+  double           end_time;
+  double           trigger_interval;
+  types::time_step trigger_every_time_steps;
+  bool             force_final_evaluation;
 
   enum EvalType
   {
@@ -76,11 +73,12 @@ public:
   bool
   needs_evaluation(double const time, types::time_step const time_step_number) const;
 
-  bool
-  sub_time_step_triggered() const;
 
   unsigned int
   get_counter() const;
+
+  bool
+  reached_end_time() const;
 
 private:
   // small number which is much smaller than the time step size
@@ -88,7 +86,7 @@ private:
   mutable bool         reset_counter;
   mutable unsigned int counter;
   mutable bool         forced_final_evaluation;
-  mutable bool         is_sub_time_step_triggered;
+  mutable bool         end_time_reached;
 
   TimeControlData time_control_data;
 };
@@ -96,4 +94,5 @@ private:
 
 } // namespace ExaDG
 
-#endif /*INCLUDE_COMPRESSIBLE_NAVIER_STOKES_POSTPROCESSOR_ERROR_CALCULATION_H_*/
+
+#endif /*INCLUDE_COMPRESSIBLE_NAVIER_STOKES_POSTPROCESSOR_TIME_CONTROL_H_*/

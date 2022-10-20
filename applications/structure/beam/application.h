@@ -310,9 +310,8 @@ private:
 
     if(boundary_type == "SingleForce")
     {
-      pp_data.error_data.time_control_data.is_active   = true;
-      pp_data.error_data.analytical_solution_available = true;
-      pp_data.error_data.calculate_relative_errors     = true;
+      pp_data.error_data.time_control_data.is_active = true;
+      pp_data.error_data.calculate_relative_errors   = true;
       pp_data.error_data.analytical_solution.reset(
         new SolutionSF<dim>(length, height, width, force));
     }

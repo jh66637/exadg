@@ -27,7 +27,7 @@
 #include <deal.II/lac/la_parallel_vector.h>
 
 // ExaDG
-#include <exadg/postprocessor/time_control.h>
+#include <exadg/postprocessor/time_control_statistics.h>
 #include <exadg/utilities/print_functions.h>
 
 namespace ExaDG
@@ -48,13 +48,13 @@ struct TurbulentChannelData
   void
   print(dealii::ConditionalOStream & pcout)
   {
-    if(time_control_data.is_active)
+    if(time_control_data_statistics.time_control_data.is_active)
     {
       pcout << "  Turbulent channel statistics:" << std::endl;
 
       // only implemented for unsteady problem
       pcout << "    Time control:" << std::endl;
-      time_control_data.print(pcout, true /*unsteady*/);
+      time_control_data_statistics.print(pcout, true /*unsteady*/);
 
       print_parameter(pcout, "Cells are stretched", cells_are_stretched);
       print_parameter(pcout, "Dynamic viscosity", viscosity);
@@ -64,7 +64,7 @@ struct TurbulentChannelData
     }
   }
 
-  TimeControlData time_control_data;
+  TimeControlDataStatistics time_control_data_statistics;
 
   // are cells stretched, i.e., is a volume manifold applied?
   bool cells_are_stretched;
@@ -97,13 +97,7 @@ public:
         TurbulentChannelData const &                  data);
 
   void
-  evaluate(VectorType const & velocity, bool const unsteady);
-
-  void
-  evaluate(VectorType const & velocity);
-
-  void
-  evaluate(const std::vector<VectorType> & velocity);
+  evaluate(VectorType const & velocity, bool const unsteady, bool const write_statistics);
 
   void
   write_output(std::string const filename, double const dynamic_viscosity, double const density);
@@ -111,11 +105,17 @@ public:
   void
   reset();
 
-  TimeControl time_control;
+  TimeControlStatistics time_control_statistics;
 
 private:
   static unsigned int const n_points_y_per_cell_linear = 11;
   unsigned int              n_points_y_per_cell;
+
+  void
+  evaluate_statistics(VectorType const & velocity);
+
+  void
+  evaluate_statistics(const std::vector<VectorType> & velocity);
 
   void
   do_evaluate(const std::vector<VectorType const *> & velocity);

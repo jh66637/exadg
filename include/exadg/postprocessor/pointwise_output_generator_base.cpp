@@ -87,10 +87,17 @@ PointwiseOutputGeneratorBase<dim, Number>::setup_base(
 #ifdef DEAL_II_WITH_HDF5
   pointwise_output_data = pointwise_output_data_in;
 
-  AssertThrow(pointwise_output_data_in.time_control_data.counter_start == 0,
-              dealii::ExcMessage("Only implemented in the case that counter_start is 0"));
-  time_control.setup(pointwise_output_data_in.time_control_data);
+  AssertThrow(time_control.get_counter() == 0,
+              dealii::ExcMessage(
+                "Only implemented in the case that the simulation is not restarted"));
 
+  AssertThrow(
+    get_unsteady_evaluation_type(pointwise_output_data_in.time_control_data) ==
+      TimeControlData::EvalType::Interval,
+    dealii::ExcMessage(
+      "This module can currently only be used with time TimeControlData::EvalType::Interval"));
+
+  time_control.setup(pointwise_output_data_in.time_control_data);
 
   if(pointwise_output_data.time_control_data.is_active &&
      pointwise_output_data.evaluation_points.size() > 0)

@@ -75,12 +75,12 @@ public:
                                MPI_Comm const &                mpi_comm_in);
 
   void
-  setup(LinePlotData<dim> const & line_plot_data_in);
+  setup(LinePlotDataStatistics<dim> const & data_in);
 
   void
-  evaluate(VectorType const & velocity, VectorType const & pressure);
+  evaluate(VectorType const & velocity, VectorType const & pressure, bool const write_statistics);
 
-  TimeControl time_control;
+  TimeControlStatistics time_control_statistics;
 
 private:
   void
@@ -115,7 +115,7 @@ private:
   dealii::Mapping<dim> const &    mapping;
   MPI_Comm                        mpi_comm;
 
-  LinePlotData<dim> data;
+  LinePlotDataStatistics<dim> data;
 
   // Global points
   std::vector<std::vector<dealii::Point<dim>>> global_points;

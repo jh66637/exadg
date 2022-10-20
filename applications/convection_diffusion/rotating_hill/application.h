@@ -205,7 +205,6 @@ private:
     pp_data.error_data.time_control_data.is_active        = true;
     pp_data.error_data.time_control_data.start_time       = start_time;
     pp_data.error_data.time_control_data.trigger_interval = (end_time - start_time) / 20.0;
-    pp_data.error_data.analytical_solution_available      = true;
     pp_data.error_data.analytical_solution.reset(new Solution<dim>(1));
     pp_data.error_data.calculate_relative_errors = true;
 
