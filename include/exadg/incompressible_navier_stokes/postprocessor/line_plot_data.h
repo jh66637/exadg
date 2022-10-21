@@ -256,7 +256,7 @@ struct LinePlotDataStatistics : public LinePlotDataBase<dim>
     {
       this->print_base();
       // only makes sense in unsteady case
-      time_control_data_statistics.time_control_data.print(pcout, true);
+      time_control_data_statistics.print(pcout, true);
     }
   }
 };
