@@ -153,6 +153,7 @@ private:
   dealii::Vector<Number>                                              componentwise_result;
   unsigned int                                                        n_out_samples;
   std::shared_ptr<dealii::Utilities::MPI::RemotePointEvaluation<dim>> remote_evaluator;
+  bool                                                                first_evaluation;
 
   std::map<std::string, unsigned int> name_to_components;
 

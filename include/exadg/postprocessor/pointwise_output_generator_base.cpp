@@ -64,10 +64,13 @@ PointwiseOutputGeneratorBase<dim, Number>::evaluate(VectorType const & solution,
 {
   AssertThrow(unsteady, dealii::ExcMessage("Only implemented for the unsteady case."));
 
-  AssertThrow(time_control.is_restarted() == false,
-              dealii::ExcMessage(
-                "Only implemented in the case that the simulation is not restarted"));
-
+  if(first_evaluation)
+  {
+    first_evaluation = false;
+    AssertThrow(time_control.get_counter() == 0,
+                dealii::ExcMessage(
+                  "Only implemented in the case that the simulation is not restarted"));
+  }
 
   if(pointwise_output_data.update_points_before_evaluation)
     reinit_remote_evaluator();
@@ -78,7 +81,7 @@ PointwiseOutputGeneratorBase<dim, Number>::evaluate(VectorType const & solution,
 
 template<int dim, typename Number>
 PointwiseOutputGeneratorBase<dim, Number>::PointwiseOutputGeneratorBase(MPI_Comm const & comm)
-  : mpi_comm(comm)
+  : mpi_comm(comm), first_evaluation(true)
 {
 }
 

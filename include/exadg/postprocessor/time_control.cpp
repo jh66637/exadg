@@ -74,11 +74,7 @@ TimeControlData::print(dealii::ConditionalOStream & pcout, bool const unsteady) 
 }
 
 TimeControl::TimeControl()
-  : EPSILON(1.0e-10),
-    reset_counter(true),
-    counter(0),
-    end_time_reached(false),
-    simulation_was_restarted(false)
+  : EPSILON(1.0e-10), reset_counter(true), counter(0), end_time_reached(false),
 {
 }
 
@@ -133,14 +129,8 @@ TimeControl::needs_evaluation(double const time, types::time_step const time_ste
     // restarted simulation.
     if(reset_counter)
     {
-      unsigned int counter_increment =
-        ((time - time_control_data.start_time + EPSILON) / time_control_data.trigger_interval);
-
-      if(counter_increment > 0)
-        simulation_was_restarted = true;
-
-      counter += counter_increment;
-
+      counter += static_cast<unsigned int>((time - time_control_data.start_time + EPSILON) /
+                                           time_control_data.trigger_interval);
       reset_counter = false;
     }
 
@@ -173,11 +163,6 @@ TimeControl::reached_end_time() const
   return end_time_reached;
 }
 
-bool
-TimeControl::is_restarted() const
-{
-  return simulation_was_restarted;
-}
 
 
 } // namespace ExaDG
