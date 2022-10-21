@@ -108,25 +108,27 @@ public:
 
     // turbulent channel statistics
     if(statistics_turb_ch->time_control_statistics.needs_evaluation(time, time_step_number))
+    {
       statistics_turb_ch->evaluate(
         velocity,
         Utilities::is_unsteady_timestep(time_step_number),
         statistics_turb_ch->time_control_statistics.write_preliminary_results(time_step_number));
+    }
 
     // inflow data
     if(pp_data_bfs.inflow_data.write_inflow_data)
-    {
       inflow_data_calculator->calculate(velocity);
-    }
 
     // line plot statistics
     if(line_plot_calculator_statistics->time_control_statistics.needs_evaluation(time,
                                                                                  time_step_number))
+    {
       line_plot_calculator_statistics->evaluate(
         velocity,
         pressure,
         line_plot_calculator_statistics->time_control_statistics.write_preliminary_results(
           time_step_number));
+    }
   }
 
   bool                                               write_final_output;

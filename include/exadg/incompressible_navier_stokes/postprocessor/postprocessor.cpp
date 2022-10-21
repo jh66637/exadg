@@ -120,11 +120,13 @@ PostProcessor<dim, Number>::do_postprocessing(VectorType const &     velocity,
    *  write output
    */
   if(output_generator.time_control.needs_evaluation(time, time_step_number))
+  {
     output_generator.evaluate(velocity,
                               pressure,
                               additional_fields,
                               time,
                               Utilities::is_unsteady_timestep(time_step_number));
+  }
 
   /*
    *  calculate error
@@ -150,25 +152,31 @@ PostProcessor<dim, Number>::do_postprocessing(VectorType const &     velocity,
    *  Analysis of divergence and mass error
    */
   if(div_and_mass_error_calculator.time_control.needs_evaluation(time, time_step_number))
+  {
     div_and_mass_error_calculator.evaluate(velocity,
                                            time,
                                            Utilities::is_unsteady_timestep(time_step_number));
+  }
 
   /*
    *  calculation of kinetic energy
    */
   if(kinetic_energy_calculator.time_control.needs_evaluation(time, time_step_number))
+  {
     kinetic_energy_calculator.evaluate(velocity,
                                        time,
                                        Utilities::is_unsteady_timestep(time_step_number));
+  }
 
   /*
    *  calculation of kinetic energy spectrum
    */
   if(kinetic_energy_spectrum_calculator.time_control.needs_evaluation(time, time_step_number))
+  {
     kinetic_energy_spectrum_calculator.evaluate(velocity,
                                                 time,
                                                 Utilities::is_unsteady_timestep(time_step_number));
+  }
 
   /*
    *  Evaluate fields along lines
@@ -350,9 +358,11 @@ PostProcessor<dim, Number>::calculate_additional_vectors(VectorType const &     
   if(pp_data.output_data.mean_velocity.is_active == true)
   {
     if(time_control_mean_velocity.needs_evaluation(time, time_step_number))
+    {
       compute_mean_velocity(mean_velocity,
                             velocity,
                             Utilities::is_unsteady_timestep(time_step_number));
+    }
   }
 
   if(pp_data.output_data.write_cfl)

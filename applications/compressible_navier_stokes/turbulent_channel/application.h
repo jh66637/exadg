@@ -250,10 +250,12 @@ public:
     Base::do_postprocessing(solution, time, time_step_number);
 
     if(statistics_turb_ch->time_control_statistics.needs_evaluation(time, time_step_number))
+    {
       statistics_turb_ch->evaluate(
         this->velocity,
         Utilities::is_unsteady_timestep(time_step_number),
         statistics_turb_ch->time_control_statistics.write_preliminary_results(time_step_number));
+    }
   }
 
   TurbulentChannelData                            turb_ch_data;

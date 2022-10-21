@@ -103,18 +103,22 @@ PostProcessor<dim, Number>::do_postprocessing(VectorType const &     solution,
    *  write output
    */
   if(output_generator.time_control.needs_evaluation(time, time_step_number))
+  {
     output_generator.evaluate(solution,
                               additional_fields,
                               time,
                               Utilities::is_unsteady_timestep(time_step_number));
+  }
 
   /*
    *  write pointwise output
    */
   if(pointwise_output_generator.time_control.needs_evaluation(time, time_step_number))
+  {
     pointwise_output_generator.evaluate(solution,
                                         time,
                                         Utilities::is_unsteady_timestep(time_step_number));
+  }
   /*
    *  calculate error
    */
@@ -137,17 +141,21 @@ PostProcessor<dim, Number>::do_postprocessing(VectorType const &     solution,
    *  calculation of kinetic energy
    */
   if(kinetic_energy_calculator.time_control.needs_evaluation(time, time_step_number))
+  {
     kinetic_energy_calculator.evaluate(velocity,
                                        time,
                                        Utilities::is_unsteady_timestep(time_step_number));
+  }
 
   /*
    *  calculation of kinetic energy spectrum
    */
   if(kinetic_energy_spectrum_calculator.time_control.needs_evaluation(time, time_step_number))
+  {
     kinetic_energy_spectrum_calculator.evaluate(velocity,
                                                 time,
                                                 Utilities::is_unsteady_timestep(time_step_number));
+  }
 }
 
 template<int dim, typename Number>

@@ -143,11 +143,13 @@ public:
     // evaluation of results along lines
     if(line_plot_calculator_statistics->time_control_statistics.needs_evaluation(time,
                                                                                  time_step_number))
+    {
       line_plot_calculator_statistics->evaluate(
         velocity,
         pressure,
         line_plot_calculator_statistics->time_control_statistics.write_preliminary_results(
           time_step_number));
+    }
   }
 
 private:
