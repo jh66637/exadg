@@ -45,7 +45,6 @@ struct TimeControlData
   double           end_time;
   double           trigger_interval;
   types::time_step trigger_every_time_steps;
-  bool             force_final_evaluation;
 
   enum EvalType
   {
@@ -85,7 +84,6 @@ private:
   double const         EPSILON;
   mutable bool         reset_counter;
   mutable unsigned int counter;
-  mutable bool         forced_final_evaluation;
   mutable bool         end_time_reached;
 
   TimeControlData time_control_data;
