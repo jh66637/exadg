@@ -147,7 +147,7 @@ public:
         velocity,
         pressure,
         line_plot_calculator_statistics->time_control_statistics.write_preliminary_results(
-          time, time_step_number));
+          time_step_number));
   }
 
 private:

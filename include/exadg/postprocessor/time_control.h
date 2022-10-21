@@ -80,6 +80,10 @@ public:
   bool
   reached_end_time() const;
 
+
+  bool
+  is_restarted() const;
+
 private:
   // small number which is much smaller than the time step size
   double const         EPSILON;
@@ -87,6 +91,7 @@ private:
   mutable unsigned int counter;
   mutable bool         forced_final_evaluation;
   mutable bool         end_time_reached;
+  mutable bool         simulation_was_restarted;
 
   TimeControlData time_control_data;
 };

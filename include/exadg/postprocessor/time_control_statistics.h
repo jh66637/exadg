@@ -54,7 +54,7 @@ public:
   get_counter() const;
 
   bool
-  write_preliminary_results(double const time, types::time_step const time_step_number) const;
+  write_preliminary_results(types::time_step const time_step_number) const;
 
 private:
   TimeControlDataStatistics time_control_data_statistics;

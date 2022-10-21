@@ -53,7 +53,7 @@ TimeControlStatistics::needs_evaluation(double const           time,
 {
   if(time_control.needs_evaluation(time, time_step_number))
     return true;
-  if(write_preliminary_results(time, time_step_number))
+  if(write_preliminary_results(time_step_number))
     return true;
 
   return false;
@@ -66,8 +66,7 @@ TimeControlStatistics::get_counter() const
 }
 
 bool
-TimeControlStatistics::write_preliminary_results(double const           time,
-                                                 types::time_step const time_step_number) const
+TimeControlStatistics::write_preliminary_results(types::time_step const time_step_number) const
 {
   if(Utilities::is_valid_timestep(
        time_control_data_statistics.write_preliminary_results_every_nth_time_step))

@@ -64,6 +64,11 @@ PointwiseOutputGeneratorBase<dim, Number>::evaluate(VectorType const & solution,
 {
   AssertThrow(unsteady, dealii::ExcMessage("Only implemented for the unsteady case."));
 
+  AssertThrow(time_control.is_restarted() == false,
+              dealii::ExcMessage(
+                "Only implemented in the case that the simulation is not restarted"));
+
+
   if(pointwise_output_data.update_points_before_evaluation)
     reinit_remote_evaluator();
 
@@ -86,10 +91,6 @@ PointwiseOutputGeneratorBase<dim, Number>::setup_base(
 {
 #ifdef DEAL_II_WITH_HDF5
   pointwise_output_data = pointwise_output_data_in;
-
-  AssertThrow(time_control.get_counter() == 0,
-              dealii::ExcMessage(
-                "Only implemented in the case that the simulation is not restarted"));
 
   AssertThrow(
     get_unsteady_evaluation_type(pointwise_output_data_in.time_control_data) ==
