@@ -74,7 +74,7 @@ TimeControlData::print(dealii::ConditionalOStream & pcout, bool const unsteady) 
 }
 
 TimeControl::TimeControl()
-  : EPSILON(1.0e-10), reset_counter(true), counter(0), end_time_reached(false),
+  : EPSILON(1.0e-10), reset_counter(true), counter(0), end_time_reached(false)
 {
 }
 
