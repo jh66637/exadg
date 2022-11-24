@@ -127,6 +127,14 @@ TimeIntBDFCoupled<dim, Number>::get_pressure() const
 }
 
 template<int dim, typename Number>
+std::vector<typename TimeIntBDFCoupled<dim, Number>::VectorType> const &
+TimeIntBDFCoupled<dim, Number>::get_pressures() const
+{
+  AssertThrow(false, dealii::ExcMessage("Not yet implemented"));
+  return {};
+}
+
+template<int dim, typename Number>
 typename TimeIntBDFCoupled<dim, Number>::VectorType const &
 TimeIntBDFCoupled<dim, Number>::get_pressure_np() const
 {

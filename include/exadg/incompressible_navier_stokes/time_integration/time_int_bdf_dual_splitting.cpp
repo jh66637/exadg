@@ -205,6 +205,13 @@ TimeIntBDFDualSplitting<dim, Number>::get_pressure() const
 }
 
 template<int dim, typename Number>
+std::vector<typename TimeIntBDFDualSplitting<dim, Number>::VectorType> const &
+TimeIntBDFDualSplitting<dim, Number>::get_pressures() const
+{
+  return pressure;
+}
+
+template<int dim, typename Number>
 typename TimeIntBDFDualSplitting<dim, Number>::VectorType const &
 TimeIntBDFDualSplitting<dim, Number>::get_pressure_np() const
 {

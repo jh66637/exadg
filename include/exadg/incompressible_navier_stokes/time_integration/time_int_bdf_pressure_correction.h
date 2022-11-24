@@ -68,6 +68,9 @@ public:
   VectorType const &
   get_pressure() const final;
 
+  std::vector<VectorType> const &
+  get_pressures() const final;
+
   VectorType const &
   get_pressure_np() const final;
 

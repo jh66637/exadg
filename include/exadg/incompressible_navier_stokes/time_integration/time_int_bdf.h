@@ -69,6 +69,9 @@ public:
   virtual VectorType const &
   get_pressure() const = 0;
 
+  virtual std::vector<VectorType> const &
+  get_pressures() const = 0;
+
   virtual VectorType const &
   get_pressure_np() const = 0;
 
@@ -91,6 +94,9 @@ public:
 
   bool
   print_solver_info() const final;
+
+  BDFTimeIntegratorConstants const &
+  get_bdf_time_integrator_constants() const;
 
 protected:
   void

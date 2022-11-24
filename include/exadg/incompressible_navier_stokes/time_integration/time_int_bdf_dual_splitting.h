@@ -68,6 +68,9 @@ public:
   VectorType const &
   get_pressure() const final;
 
+  std::vector<VectorType> const &
+  get_pressures() const final;
+
   VectorType const &
   get_pressure_np() const final;
 
@@ -169,7 +172,7 @@ private:
   std::pair<unsigned int /* calls */, unsigned long long /* iteration counts */>
     iterations_pressure;
   std::pair<unsigned int /* calls */, unsigned long long /* iteration counts */>
-                                                                                 iterations_projection;
+    iterations_projection;
   std::pair<unsigned int /* calls */, unsigned long long /* iteration counts */> iterations_viscous;
   std::pair<unsigned int /* calls */, unsigned long long /* iteration counts */> iterations_penalty;
   std::pair<unsigned int /* calls */, unsigned long long /* iteration counts */> iterations_mass;

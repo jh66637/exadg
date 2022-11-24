@@ -377,6 +377,13 @@ TimeIntBDF<dim, Number>::print_solver_info() const
 }
 
 template<int dim, typename Number>
+TimeIntBDF<dim, Number>::BDFTimeIntegratorConstants const &
+get_bdf_time_integrator_constants() const
+{
+  return bdf;
+}
+
+template<int dim, typename Number>
 void
 TimeIntBDF<dim, Number>::get_velocities_and_times(std::vector<VectorType const *> & velocities,
                                                   std::vector<double> &             times) const
