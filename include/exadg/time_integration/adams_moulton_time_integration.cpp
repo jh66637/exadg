@@ -44,6 +44,14 @@ AdamsMoultonTimeIntegratorConstants::AdamsMoultonTimeIntegratorConstants(
 }
 
 double
+AdamsMoultonTimeIntegratorConstants::get_gamma0() const
+{
+  AssertThrow(gamma0 > 0.0, dealii::ExcMessage("Constant gamma0 has not been initialized."));
+
+  return gamma0;
+}
+
+double
 AdamsMoultonTimeIntegratorConstants::get_alpha(unsigned int const i) const
 {
   AssertThrow(i < order,
