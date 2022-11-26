@@ -19,22 +19,22 @@
  *  ______________________________________________________________________
  */
 
-#ifndef INCLUDE_EXADG_TIME_INTEGRATION_BDF_TIME_INTEGRATION_H_
-#define INCLUDE_EXADG_TIME_INTEGRATION_BDF_TIME_INTEGRATION_H_
+#ifndef INCLUDE_EXADG_TIME_INTEGRATION_ADAMS_MOULTON_TIME_INTEGRATION_H_
+#  define INCLUDE_EXADG_TIME_INTEGRATION_ADAMS_BOULTON_TIME_INTEGRATION_H_
 
 // C/C++
-#include <vector>
+#  include <vector>
 
 // deal.II
-#include <deal.II/base/conditional_ostream.h>
+#  include <deal.II/base/conditional_ostream.h>
 
 namespace ExaDG
 {
-class BDFTimeIntegratorConstants
+class AdamsMoultonTimeIntegratorConstants
 {
 public:
-  BDFTimeIntegratorConstants(unsigned int const order_time_integrator,
-                             bool const         start_with_low_order_method);
+  AdamsMoultonTimeIntegratorConstants(unsigned int const order_time_integrator,
+                                      bool const         start_with_low_order_method);
 
   double
   get_gamma0() const;
@@ -42,22 +42,19 @@ public:
   double
   get_alpha(unsigned int const i) const;
 
-  double
-  get_scaling_factor_time_derivative_term(double const timestep_size) const;
-
   /*
-   *  This function updates the time integrator constants of the BDF scheme
+   *  This function updates the time integrator constants of the AB scheme
    *  in case of constant time step sizes.
    */
   void
-  update(unsigned int const current_order);
+  update(unsigned int const time_step_number);
 
   /*
-   *  This function updates the time integrator constants of the BDF scheme
+   *  This function updates the time integrator constants of the AB scheme
    *  in case of adaptive time step sizes.
    */
   void
-  update(unsigned int const current_order, std::vector<double> const & time_steps);
+  update(unsigned int const time_step_number, std::vector<double> const & time_steps);
 
   /*
    *  This function prints the time integrator constants
@@ -68,7 +65,7 @@ public:
 
 private:
   /*
-   *  This function calculates the time integrator constants of the BDF scheme
+   *  This function calculates the time integrator constants of the AB scheme
    *  in case of constant time step sizes.
    */
   void
@@ -87,36 +84,10 @@ private:
   // use a low order time integration scheme to start the time integrator?
   bool const start_with_low_order;
 
-  /*
-   *  BDF time integrator constants:
-   *
-   *  du/dt = (gamma_0 u^{n+1} - alpha_0 u^{n} - alpha_1 u^{n-1} ... - alpha_{J-1} u^{n-J+1})/dt
-   */
-  double gamma0;
-
+  double              gamma0;
   std::vector<double> alpha;
 };
 
-/*
- * Calculates the time derivative
- *
- *  derivative = du/dt = (gamma_0 u^{n+1} - alpha_0 u^{n} - alpha_1 u^{n-1} ... - alpha_{J-1}
- * u^{n-J+1})/dt
- */
-template<typename VectorType>
-void
-compute_bdf_time_derivative(VectorType &                       derivative,
-                            VectorType const &                 solution_np,
-                            std::vector<VectorType> const &    previous_solutions,
-                            BDFTimeIntegratorConstants const & bdf,
-                            double const &                     time_step_size)
-{
-  derivative.equ(bdf.get_gamma0() / time_step_size, solution_np);
-
-  for(unsigned int i = 0; i < previous_solutions.size(); ++i)
-    derivative.add(-bdf.get_alpha(i) / time_step_size, previous_solutions[i]);
-}
-
 } // namespace ExaDG
 
-#endif /* INCLUDE_EXADG_TIME_INTEGRATION_BDF_TIME_INTEGRATION_H_ */
+#endif /* INCLUDE_EXADG_TIME_INTEGRATION_ADAMS_MOULTON_TIME_INTEGRATION_H_ */

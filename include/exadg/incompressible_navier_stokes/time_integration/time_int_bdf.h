@@ -26,7 +26,9 @@
 #include <deal.II/lac/la_parallel_vector.h>
 
 // ExaDG
-#include <exadg/time_integration/time_int_bdf_base.h>
+#include <exadg/time_integration/bdf_time_integration.h>
+#include <exadg/time_integration/extrapolation_scheme.h>
+#include <exadg/time_integration/time_int_multistep_base.h>
 
 namespace ExaDG
 {
@@ -41,10 +43,10 @@ template<typename Number>
 class PostProcessorInterface;
 
 template<int dim, typename Number>
-class TimeIntBDF : public TimeIntBDFBase<Number>
+class TimeIntBDF : public TimeIntMultistepBase<Number>
 {
 public:
-  typedef TimeIntBDFBase<Number>                                  Base;
+  typedef TimeIntMultistepBase<Number>                            Base;
   typedef typename Base::VectorType                               VectorType;
   typedef dealii::LinearAlgebra::distributed::BlockVector<Number> BlockVectorType;
 
@@ -98,6 +100,9 @@ public:
   BDFTimeIntegratorConstants const &
   get_bdf_time_integrator_constants() const;
 
+  double
+  get_scaling_factor_time_derivative_term() const;
+
 protected:
   void
   allocate_vectors() override;
@@ -113,6 +118,12 @@ protected:
 
   void
   prepare_vectors_for_next_timestep() override;
+
+  void
+  update_time_integrator_constants() override;
+
+  BDFTimeIntegratorConstants bdf;
+  ExtrapolationConstants     extra;
 
   Parameters const & param;
 

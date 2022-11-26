@@ -26,7 +26,9 @@
 #include <deal.II/lac/la_parallel_vector.h>
 
 // ExaDG
-#include <exadg/time_integration/time_int_bdf_base.h>
+#include <exadg/time_integration/bdf_time_integration.h>
+#include <exadg/time_integration/extrapolation_scheme.h>
+#include <exadg/time_integration/time_int_multistep_base.h>
 
 namespace ExaDG
 {
@@ -45,10 +47,10 @@ class PostProcessorInterface;
 namespace ConvDiff
 {
 template<int dim, typename Number>
-class TimeIntBDF : public TimeIntBDFBase<Number>
+class TimeIntBDF : public TimeIntMultistepBase<Number>
 {
 public:
-  typedef typename TimeIntBDFBase<Number>::VectorType VectorType;
+  typedef typename TimeIntMultistepBase<Number>::VectorType VectorType;
 
   TimeIntBDF(std::shared_ptr<Operator<dim, Number>>          operator_in,
              Parameters const &                              param_in,
@@ -69,6 +71,9 @@ public:
   void
   print_iterations() const;
 
+  double
+  get_scaling_factor_time_derivative_term() const;
+
 private:
   void
   allocate_vectors() final;
@@ -77,7 +82,7 @@ private:
   initialize_current_solution() final;
 
   void
-  initialize_former_solutions() final;
+  initialize_multistep_dof_vectors() final;
 
   void
   initialize_vec_convective_term();
@@ -108,6 +113,12 @@ private:
 
   void
   postprocessing() const final;
+
+  void
+  update_time_integrator_constants() final;
+
+  BDFTimeIntegratorConstants bdf;
+  ExtrapolationConstants     extra;
 
   std::shared_ptr<Operator<dim, Number>> pde_operator;
 

@@ -60,6 +60,12 @@ BDFTimeIntegratorConstants::get_alpha(unsigned int const i) const
   return alpha[i];
 }
 
+double
+BDFTimeIntegratorConstants::get_scaling_factor_time_derivative_term(
+  double const timestep_size) const
+{
+  return get_gamma0() / timestep_size;
+}
 
 void
 BDFTimeIntegratorConstants::set_constant_time_step(unsigned int const current_order)
