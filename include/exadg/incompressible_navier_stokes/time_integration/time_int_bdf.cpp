@@ -392,12 +392,13 @@ TimeIntBDF<dim, Number>::print_solver_info() const
 }
 
 template<int dim, typename Number>
-TimeIntBDF<dim, Number>::BDFTimeIntegratorConstants const &
-get_bdf_time_integrator_constants() const
+BDFTimeIntegratorConstants const &
+TimeIntBDF<dim, Number>::get_bdf_time_integrator_constants() const
 {
   return bdf;
 }
 
+template<int dim, typename Number>
 double
 TimeIntBDF<dim, Number>::get_scaling_factor_time_derivative_term() const
 {
