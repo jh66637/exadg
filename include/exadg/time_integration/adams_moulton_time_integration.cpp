@@ -108,21 +108,55 @@ void
 AdamsMoultonTimeIntegratorConstants::set_adaptive_time_step(unsigned int const current_order,
                                                             std::vector<double> const & time_steps)
 {
-  AssertThrow(false, dealii::ExcMessage("Currently not implemented."));
-  (void)time_steps;
-
   if(current_order == 1) // AM 1
   {
     gamma0 = 1.0;
   }
   else if(current_order == 2) // AM 2
   {
+    gamma0   = 1.0 / 2.0;
+    alpha[0] = 1.0 / 2.0;
   }
   else if(current_order == 3) // AM 3
   {
+    gamma0 =
+      (1.0 / 3.0 * time_steps[0] + 1.0 / 2.0 * time_steps[1]) / (time_steps[0] + time_steps[1]);
+
+    alpha[0] = 1.0 - (1.0 / 3.0 * time_steps[0] * time_steps[0] +
+                      1.0 / 2.0 * time_steps[0] * (time_steps[1] - time_steps[0])) /
+                       (time_steps[0] * time_steps[1]);
+
+    alpha[1] =
+      (time_steps[0] * time_steps[0]) / (-6.0 * time_steps[1] * (time_steps[0] + time_steps[1]));
   }
   else if(current_order == 4) // AM 4
   {
+    gamma0 = (1.0 / 4.0 * time_steps[0] * time_steps[0] * time_steps[0] +
+              1.0 / 3.0 * time_steps[0] * time_steps[0] * (2.0 * time_steps[1] + time_steps[2]) +
+              1.0 / 2.0 * time_steps[0] * time_steps[1] * (time_steps[1] + time_steps[2])) /
+             (time_steps[0] * (time_steps[0] + time_steps[1]) *
+              (time_steps[0] + time_steps[1] + time_steps[2]));
+
+    alpha[0] = (1.0 / 4.0 * time_steps[0] * time_steps[0] * time_steps[0] +
+                1.0 / 3.0 * time_steps[0] * time_steps[0] *
+                  (2.0 * time_steps[1] + time_steps[2] - time_steps[0]) +
+                1.0 / 2.0 * time_steps[0] *
+                  (time_steps[1] * (time_steps[1] + time_steps[2] - time_steps[0]) -
+                   time_steps[0] * (time_steps[1] + time_steps[2])) -
+                (time_steps[0] * time_steps[1] * (time_steps[1] + time_steps[2]))) /
+               (-time_steps[0] * time_steps[1] * (time_steps[1] + time_steps[2]));
+
+    alpha[1] =
+      (1.0 / 4.0 * time_steps[0] * time_steps[0] * time_steps[0] +
+       1.0 / 3.0 * time_steps[0] * time_steps[0] * (time_steps[1] + time_steps[2] - time_steps[0]) -
+       1.0 / 2.0 * time_steps[0] * time_steps[0] * (time_steps[1] + time_steps[2])) /
+      (time_steps[1] * time_steps[2] * (time_steps[0] + time_steps[1]));
+
+    alpha[2] = (1.0 / 4.0 * time_steps[0] * time_steps[0] * time_steps[0] +
+                1.0 / 3.0 * time_steps[0] * time_steps[0] * (time_steps[1] - time_steps[0]) -
+                1.0 / 2.0 * time_steps[0] * (time_steps[0] * time_steps[1])) /
+               (-time_steps[2] * (time_steps[1] + time_steps[2]) *
+                (time_steps[0] + time_steps[1] + time_steps[2]));
   }
 
   /*
@@ -169,6 +203,7 @@ AdamsMoultonTimeIntegratorConstants::update(unsigned int const          current_
 void
 AdamsMoultonTimeIntegratorConstants::print(dealii::ConditionalOStream & pcout) const
 {
+  pcout << "Gamma0 = " << gamma0 << std::endl;
   for(unsigned int i = 0; i < alpha.size(); ++i)
     pcout << "Alpha[" << i << "] = " << alpha[i] << std::endl;
 }

@@ -97,21 +97,60 @@ AdamsBashforthTimeIntegratorConstants::set_adaptive_time_step(
   unsigned int const          current_order,
   std::vector<double> const & time_steps)
 {
-  AssertThrow(false, dealii::ExcMessage("Currently not implemented."));
-  (void)time_steps;
-
   if(current_order == 1) // AB 1
   {
     alpha[0] = 1.0;
   }
   else if(current_order == 2) // AB 2
   {
+    alpha[0] = 1.0 / 2.0 + time_steps[0] / (4.0 * time_steps[1]);
+    alpha[1] = time_steps[0] / (-2.0 * time_steps[1]);
   }
   else if(current_order == 3) // AB 3
   {
+    alpha[0] = 1.0 + (1.0 / 3.0 * time_steps[0] * time_steps[0] +
+                      1.0 / 2.0 * time_steps[0] * (2.0 * time_steps[1] + time_steps[2])) /
+                       (time_steps[1] * (time_steps[1] + time_steps[2]));
+
+    alpha[1] = (1.0 / 3.0 * time_steps[0] * time_steps[0] +
+                1.0 / 2.0 * time_steps[0] * (time_steps[1] + time_steps[2])) /
+               (-time_steps[1] * time_steps[2]);
+
+    alpha[2] =
+      (1.0 / 3.0 * time_steps[0] * time_steps[0] + 1.0 / 2.0 * time_steps[0] * time_steps[1]) /
+      (time_steps[2] * (time_steps[1] + time_steps[2]));
   }
   else if(current_order == 4) // AB 4
   {
+    alpha[0] = 1.0 + (1.0 / 4.0 * time_steps[0] * time_steps[0] * time_steps[0] +
+                      1.0 / 3.0 * time_steps[0] * time_steps[0] *
+                        (3 * time_steps[1] + 2.0 * time_steps[2] + time_steps[3]) +
+                      1.0 / 2.0 * time_steps[0] *
+                        (3.0 * time_steps[1] * time_steps[1] + 2.0 * time_steps[1] * time_steps[3] +
+                         time_steps[2] * time_steps[2] + time_steps[2] * time_steps[3] +
+                         4.0 * time_steps[1] * time_steps[2])) /
+                       (time_steps[1] * (time_steps[1] + time_steps[2]) *
+                        (time_steps[1] + time_steps[2] + time_steps[3]));
+
+    alpha[1] = (1.0 / 4.0 * time_steps[0] * time_steps[0] * time_steps[0] +
+                1.0 / 3.0 * time_steps[0] * time_steps[0] *
+                  (2.0 * time_steps[1] + 2.0 * time_steps[2] + time_steps[3]) +
+                1.0 / 2.0 * time_steps[0] * (time_steps[1] + time_steps[2]) *
+                  (time_steps[1] + time_steps[2] + time_steps[3])) /
+               (-time_steps[1] * time_steps[2] * (time_steps[2] + time_steps[3]));
+
+    alpha[2] = (1.0 / 4.0 * time_steps[0] * time_steps[0] * time_steps[0] +
+                1.0 / 3.0 * time_steps[0] * time_steps[0] *
+                  (2.0 * time_steps[1] + time_steps[2] + time_steps[3]) +
+                1.0 / 2.0 * time_steps[0] * time_steps[1] *
+                  (time_steps[1] + time_steps[2] + time_steps[3])) /
+               (time_steps[3] * time_steps[2] * (time_steps[1] + time_steps[2]));
+
+    alpha[3] = (1.0 / 4.0 * time_steps[0] * time_steps[0] * time_steps[0] +
+                1.0 / 3.0 * time_steps[0] * time_steps[0] * (2.0 * time_steps[1] + time_steps[2]) +
+                1.0 / 2.0 * time_steps[0] * time_steps[1] * (time_steps[1] + time_steps[2])) /
+               (-time_steps[3] * (time_steps[2] + time_steps[3]) *
+                (time_steps[1] + time_steps[2] + time_steps[3]));
   }
 
   /*
