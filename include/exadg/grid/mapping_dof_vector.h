@@ -34,6 +34,7 @@
 #include <deal.II/fe/mapping_q_cache.h>
 #include <deal.II/lac/la_parallel_block_vector.h>
 #include <deal.II/multigrid/mg_transfer_matrix_free.h>
+#include <deal.II/base/multithread_info.h>
 
 // ExaDG
 #include <exadg/solvers_and_preconditioners/multigrid/transfers/mg_transfer_global_coarsening.h>

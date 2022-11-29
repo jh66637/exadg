@@ -78,6 +78,7 @@ SET(TARGET_SRC
      include/exadg/solvers_and_preconditioners/multigrid/transfers/mg_transfer_global_coarsening.cpp
      include/exadg/solvers_and_preconditioners/multigrid/transfers/mg_transfer_global_refinement.cpp
      include/exadg/postprocessor/error_calculation.cpp
+     include/exadg/postprocessor/pointwise_output_generator_base.cpp
      include/exadg/postprocessor/mean_scalar_calculation.cpp
      include/exadg/postprocessor/lift_and_drag_calculation.cpp
      include/exadg/postprocessor/pressure_difference_calculation.cpp
