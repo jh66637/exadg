@@ -103,7 +103,7 @@ AdamsBashforthTimeIntegratorConstants::set_adaptive_time_step(
   }
   else if(current_order == 2) // AB 2
   {
-    alpha[0] = 1.0 / 2.0 + time_steps[0] / (4.0 * time_steps[1]);
+    alpha[0] = (1.0 / 2.0 * time_steps[0] + time_steps[1]) / (time_steps[1]);
     alpha[1] = time_steps[0] / (-2.0 * time_steps[1]);
   }
   else if(current_order == 3) // AB 3

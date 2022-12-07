@@ -97,7 +97,7 @@ AdamsMoultonTimeIntegratorConstants::set_constant_time_step(unsigned int const c
    * Fill the rest of the vectors with zeros since current_order might be
    * smaller than order, e.g., when using start_with_low_order = true
    */
-  for(unsigned int i = current_order; i < alpha.size(); ++i)
+  for(unsigned int i = current_order - 1; i < alpha.size(); ++i)
   {
     alpha[i] = 0.0;
   }
@@ -163,7 +163,7 @@ AdamsMoultonTimeIntegratorConstants::set_adaptive_time_step(unsigned int const c
    * Fill the rest of the vectors with zeros since current_order might be
    * smaller than order, e.g. when using start_with_low_order = true
    */
-  for(unsigned int i = current_order; i < alpha.size(); ++i)
+  for(unsigned int i = current_order - 1; i < alpha.size(); ++i)
   {
     alpha[i] = 0.0;
   }
