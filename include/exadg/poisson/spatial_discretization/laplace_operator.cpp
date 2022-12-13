@@ -207,8 +207,9 @@ LaplaceOperator<dim, Number, n_components>::do_face_ext_integral(
 
 template<int dim, typename Number, int n_components>
 void
-LaplaceOperator<dim, Number, n_components>::do_boundary_integral(
+LaplaceOperator<dim, Number, n_components>::do_boundary_integral_new(
   IntegratorFace &                   integrator_m,
+  IntegratorRemote &                 integrator_r,
   OperatorType const &               operator_type,
   dealii::types::boundary_id const & boundary_id) const
 {
@@ -221,6 +222,7 @@ LaplaceOperator<dim, Number, n_components>::do_boundary_integral(
     value value_p = calculate_exterior_value<dim, Number, n_components, rank>(value_m,
                                                                               q,
                                                                               integrator_m,
+                                                                              integrator_r,
                                                                               operator_type,
                                                                               boundary_type,
                                                                               boundary_id,
@@ -416,8 +418,8 @@ LaplaceOperator<dim, Number, n_components>::set_constrained_values(VectorType & 
 
   dst.update_ghost_values();
 
-  // DirichletCached type boundary conditions
-  if(not(operator_data.bc->dirichlet_cached_bc.empty()))
+  // Overset type boundary conditions
+  if(not(operator_data.bc->overset_bc.empty()))
   {
     unsigned int const dof_index  = operator_data.dof_index;
     unsigned int const quad_index = operator_data.quad_index_gauss_lobatto;
@@ -433,10 +435,13 @@ LaplaceOperator<dim, Number, n_components>::set_constrained_values(VectorType & 
 
       BoundaryType const boundary_type = operator_data.bc->get_boundary_type(boundary_id);
 
-      if(boundary_type == BoundaryType::DirichletCached)
+      if(boundary_type == BoundaryType::Overset)
       {
         integrator.reinit(face);
         integrator.read_dof_values(dst);
+
+        // TODO:
+        // integrator_r.reinit(face);
 
         for(unsigned int q = 0; q < integrator.n_q_points; ++q)
         {
@@ -448,11 +453,10 @@ LaplaceOperator<dim, Number, n_components>::set_constrained_values(VectorType & 
 
           dealii::Tensor<rank, dim, dealii::VectorizedArray<Number>> g;
 
-          if(boundary_type == BoundaryType::DirichletCached)
+          if(boundary_type == BoundaryType::Overset)
           {
-            auto bc = operator_data.bc->dirichlet_cached_bc.find(boundary_id)->second;
-
-            g = FunctionEvaluator<rank, dim, Number>::value(bc, face, q, quad_index);
+            // TODO:
+            // g = integrator_r.get_value(q);
           }
           else
           {

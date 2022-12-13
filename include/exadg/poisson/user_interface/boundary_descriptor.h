@@ -26,9 +26,6 @@
 #include <deal.II/base/function.h>
 #include <deal.II/base/types.h>
 
-// ExaDG
-#include <exadg/functions_and_boundary_conditions/function_cached.h>
-
 namespace ExaDG
 {
 namespace Poisson
@@ -37,8 +34,8 @@ enum class BoundaryType
 {
   Undefined,
   Dirichlet,
-  DirichletCached,
-  Neumann
+  Neumann,
+  Overset
 };
 
 template<int rank, int dim>
@@ -49,8 +46,7 @@ struct BoundaryDescriptor
   // dealii::ComponentMask is only used for continuous elements, and is ignored for DG
   std::map<dealii::types::boundary_id, dealii::ComponentMask> dirichlet_bc_component_mask;
 
-  std::map<dealii::types::boundary_id, std::shared_ptr<FunctionCached<rank, dim>>>
-    dirichlet_cached_bc;
+  std::map<dealii::types::boundary_id, dealii::types::boundary_id> overset_bc;
 
   std::map<dealii::types::boundary_id, std::shared_ptr<dealii::Function<dim>>> neumann_bc;
 
@@ -61,8 +57,8 @@ struct BoundaryDescriptor
   {
     if(this->dirichlet_bc.find(boundary_id) != this->dirichlet_bc.end())
       return BoundaryType::Dirichlet;
-    else if(this->dirichlet_cached_bc.find(boundary_id) != this->dirichlet_cached_bc.end())
-      return BoundaryType::DirichletCached;
+    else if(this->overset_bc.find(boundary_id) != this->overset_bc.end())
+      return BoundaryType::Overset;
     else if(this->neumann_bc.find(boundary_id) != this->neumann_bc.end())
       return BoundaryType::Neumann;
 
@@ -81,7 +77,7 @@ struct BoundaryDescriptor
     if(dirichlet_bc.find(boundary_id) != dirichlet_bc.end())
       counter++;
 
-    if(dirichlet_cached_bc.find(boundary_id) != dirichlet_cached_bc.end())
+    if(overset_bc.find(boundary_id) != overset_bc.end())
       counter++;
 
     if(neumann_bc.find(boundary_id) != neumann_bc.end())

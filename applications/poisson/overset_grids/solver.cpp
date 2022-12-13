@@ -20,7 +20,7 @@
  */
 
 // solver
-#include <exadg/poisson/overset_grids/solver.h>
+#include <exadg/poisson/solver.h>
 
 // application
 #include "application.h"

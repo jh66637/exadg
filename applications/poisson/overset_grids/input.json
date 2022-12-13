@@ -4,17 +4,22 @@
         "Dim": "2",
         "IsTest": "false"
     },
-    "ResolutionDomain1": {
-        "Degree": "3",
-        "RefineSpace": "0"
+    "Resolution": {
+        "RunType": "RefineHAndP",
+        "DegreeMin": "3",
+        "DegreeMax": "3",
+        "RefineSpaceMin": "0",
+        "RefineSpaceMax": "0",
+        "DofsMin": "1000",
+        "DofsMax": "10000"
+
     },
-    "ResolutionDomain2": {
-        "Degree": "3",
-        "RefineSpace": "2"
+    "Application": {
+        "AdditionalRefinementDomain2": "2"
     },
     "Output": {
-        "OutputDirectory": "output/overset_grids/",
-        "OutputName": "solution",
+        "OutputDirectory": "output/poisson/sine/",
+        "OutputName": "test",
         "WriteOutput": "false"
     }
 }

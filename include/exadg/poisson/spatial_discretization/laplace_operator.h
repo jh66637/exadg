@@ -214,8 +214,9 @@ private:
   typedef OperatorBase<dim, Number, n_components>    Base;
   typedef LaplaceOperator<dim, Number, n_components> This;
 
-  typedef typename Base::IntegratorCell IntegratorCell;
-  typedef typename Base::IntegratorFace IntegratorFace;
+  typedef typename Base::IntegratorCell   IntegratorCell;
+  typedef typename Base::IntegratorFace   IntegratorFace;
+  typedef typename Base::IntegratorRemote IntegratorRemote;
 
   typedef typename Base::Range Range;
 
@@ -279,9 +280,10 @@ private:
   do_face_ext_integral(IntegratorFace & integrator_m, IntegratorFace & integrator_p) const final;
 
   void
-  do_boundary_integral(IntegratorFace &                   integrator_m,
-                       OperatorType const &               operator_type,
-                       dealii::types::boundary_id const & boundary_id) const final;
+  do_boundary_integral_new(IntegratorFace &                   integrator_m,
+                           IntegratorRemote &                 integrator_r,
+                           OperatorType const &               operator_type,
+                           dealii::types::boundary_id const & boundary_id) const final;
 
   void
   cell_loop_empty(dealii::MatrixFree<dim, Number> const & matrix_free,

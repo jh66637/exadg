@@ -19,24 +19,31 @@
  *  ______________________________________________________________________
  */
 
-#ifndef INCLUDE_EXADG_POISSON_OVERSET_GRIDS_USER_INTERFACE_IMPLEMENT_GET_APPLICATION_H_
-#define INCLUDE_EXADG_POISSON_OVERSET_GRIDS_USER_INTERFACE_IMPLEMENT_GET_APPLICATION_H_
+#ifndef INCLUDE_COUPLING_FE_REMOTE_POINT_EVALUATION_DATA_H_
+#define INCLUDE_COUPLING_FE_REMOTE_POINT_EVALUATION_DATA_H_
 
-#include <exadg/poisson/user_interface/application_base.h>
+#include <deal.II/matrix_free/fe_evaluation.h>
 
 namespace ExaDG
 {
-namespace Poisson
+/**
+ * A class that stores quantities at the quadrature points.
+ */
+template<int dim,
+         int n_components,
+         typename Number,
+         typename VectorizedArrayType = dealii::VectorizedArray<Number>>
+class FERemotePointEvaluationData
 {
-template<int dim, int n_components, typename Number>
-std::shared_ptr<ApplicationOversetGridsBase<dim, n_components, Number>>
-get_application_overset_grids(std::string input_file, MPI_Comm const & comm)
-{
-  return std::make_shared<Application<dim, n_components, Number>>(input_file, comm);
-}
+public:
+  using integrator_type =
+    dealii::FEEvaluation<dim, -1, 0, n_components, Number, VectorizedArrayType>;
 
-} // namespace Poisson
+  using value_type    = typename integrator_type::value_type;
+  using gradient_type = typename integrator_type::gradient_type;
+
+  std::vector<value_type>    values;
+  std::vector<gradient_type> gradients;
+};
 } // namespace ExaDG
-
-
-#endif /* INCLUDE_EXADG_POISSON_OVERSET_GRIDS_USER_INTERFACE_IMPLEMENT_GET_APPLICATION_H_ */
+#endif /*INCLUDE_COUPLING_FE_REMOTE_POINT_EVALUATION_DATA_H_*/
