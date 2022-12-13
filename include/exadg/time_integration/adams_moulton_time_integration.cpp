@@ -54,7 +54,7 @@ AdamsMoultonTimeIntegratorConstants::get_gamma0() const
 double
 AdamsMoultonTimeIntegratorConstants::get_alpha(unsigned int const i) const
 {
-  AssertThrow(i < order,
+  AssertThrow(i < order - 1,
               dealii::ExcMessage(
                 "In order to access time integrator constants, the index "
                 "has to be smaller than the order of the time integration scheme."));

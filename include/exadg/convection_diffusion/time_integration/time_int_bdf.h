@@ -66,7 +66,7 @@ public:
   extrapolate_solution(VectorType & vector);
 
   void
-  ale_update();
+  ale_update() final;
 
   void
   print_iterations() const;

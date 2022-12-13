@@ -91,6 +91,9 @@ public:
   double
   get_previous_time(int const i /* t_{n-i} */) const;
 
+  virtual void
+  ale_update() = 0;
+
 protected:
   /*
    * Do one time step including different updates before and after the actual solution of the
