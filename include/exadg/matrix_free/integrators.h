@@ -25,6 +25,7 @@
 // deal.II
 #include <deal.II/base/config.h>
 #include <deal.II/matrix_free/fe_evaluation.h>
+#include <exadg/../../../aeroacousticdg/include/aeroacousticdg/coupling/fe_remote_point_evaluation.h>
 
 template<int dim,
          int n_components,
@@ -38,5 +39,12 @@ template<int dim,
          typename VectorizedArrayType = dealii::VectorizedArray<Number>>
 using FaceIntegrator =
   dealii::FEFaceEvaluation<dim, -1, 0, n_components, Number, VectorizedArrayType>;
+
+template<int dim,
+         int n_components,
+         typename Number,
+         typename VectorizedArrayType = dealii::VectorizedArray<Number>>
+using RemoteIntegrator =
+  ExaDG::FERemotePointEvaluation<dim, n_components, Number, VectorizedArrayType>;
 
 #endif
