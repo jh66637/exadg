@@ -94,6 +94,12 @@ public:
   virtual void
   ale_update() = 0;
 
+  /*
+   * prints iterations used by solver.
+   */
+  virtual void
+  print_iterations() const = 0;
+  
 protected:
   /*
    * Do one time step including different updates before and after the actual solution of the
