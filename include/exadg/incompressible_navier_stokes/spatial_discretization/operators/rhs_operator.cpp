@@ -24,6 +24,9 @@ RHSOperator<dim, Number>::initialize(dealii::MatrixFree<dim, Number> const & mat
   this->matrix_free = &matrix_free_in;
   this->data        = data_in;
 
+  if(this->data.externally_set_source_term)
+    matrix_free_in.initialize_dof_vector(external_source_term.own(), this->data.dof_index);
+  
   kernel.reinit(data.kernel_data);
 }
 
@@ -33,8 +36,15 @@ RHSOperator<dim, Number>::evaluate(VectorType & dst, Number const evaluation_tim
 {
   time = evaluation_time;
 
-  VectorType src;
-  matrix_free->cell_loop(&This::cell_loop, this, dst, src, true /*zero_dst_vector = true*/);
+  if(this->data.externally_set_source_term)
+  {
+    dst = *external_source_term;
+  }
+  else
+  {
+    VectorType src;
+    matrix_free->cell_loop(&This::cell_loop, this, dst, src, true /*zero_dst_vector = true*/);
+  }
 }
 
 template<int dim, typename Number>
@@ -43,8 +53,15 @@ RHSOperator<dim, Number>::evaluate_add(VectorType & dst, Number const evaluation
 {
   time = evaluation_time;
 
-  VectorType src;
-  matrix_free->cell_loop(&This::cell_loop, this, dst, src, false /*zero_dst_vector = false*/);
+  if(this->data.externally_set_source_term)
+  {
+    dst += *external_source_term;
+  }
+  else
+  {
+    VectorType src;
+    matrix_free->cell_loop(&This::cell_loop, this, dst, src, false /*zero_dst_vector = false*/);
+  }
 }
 
 template<int dim, typename Number>
@@ -54,6 +71,14 @@ RHSOperator<dim, Number>::set_temperature(VectorType const & T)
   this->temperature = &T;
 }
 
+template<int dim, typename Number>
+void
+RHSOperator<dim, Number>::set_external_source_term_ptr(VectorType const & src)
+{
+  external_source_term.reset(src);
+  external_source_term->update_ghost_values();
+}
+  
 template<int dim, typename Number>
 void
 RHSOperator<dim, Number>::do_cell_integral(Integrator &       integrator,

@@ -174,6 +174,9 @@ public:
   double thermal_expansion_coefficient;
   double reference_temperature;
 
+  // needed if some other solver computes a source that should be applied 
+  bool source_term_set_externally;
+  
   /**************************************************************************************/
   /*                                                                                    */
   /*                             TEMPORAL DISCRETIZATION                                */

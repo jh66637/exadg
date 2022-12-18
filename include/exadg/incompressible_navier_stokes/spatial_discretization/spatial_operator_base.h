@@ -283,6 +283,9 @@ public:
   void
   set_temperature(VectorType const & temperature);
 
+  void
+  set_external_source_term(VectorType const & src);
+
   /*
    * Computation of derived quantities which is needed for postprocessing but some of them are also
    * needed, e.g., for special splitting-type time integration schemes.

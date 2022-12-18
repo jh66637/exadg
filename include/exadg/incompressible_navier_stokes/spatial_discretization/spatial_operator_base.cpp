@@ -457,6 +457,7 @@ SpatialOperatorBase<dim, Number>::initialize_operators(std::string const & dof_i
   rhs_data.kernel_data.thermal_expansion_coefficient = param.thermal_expansion_coefficient;
   rhs_data.kernel_data.reference_temperature         = param.reference_temperature;
   rhs_data.kernel_data.gravitational_force           = field_functions->gravitational_force;
+  rhs_data.externally_set_source_term = param.source_term_set_externally;
 
   rhs_operator.initialize(*matrix_free, rhs_data);
 
@@ -1142,6 +1143,13 @@ SpatialOperatorBase<dim, Number>::set_temperature(VectorType const & temperature
   AssertThrow(param.boussinesq_term, dealii::ExcMessage("Invalid parameters detected."));
 
   rhs_operator.set_temperature(temperature);
+}
+
+template<int dim, typename Number>
+void
+SpatialOperatorBase<dim, Number>::set_external_source_term(VectorType const & src)
+{
+  rhs_operator.set_external_source_term_ptr(src);
 }
 
 template<int dim, typename Number>

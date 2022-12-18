@@ -55,6 +55,9 @@ Parameters::Parameters()
     thermal_expansion_coefficient(1.0),
     reference_temperature(0.0),
 
+    // VOLUME COUPLING
+    source_term_set_externally(false),
+
     // TEMPORAL DISCRETIZATION
     solver_type(SolverType::Undefined),
     temporal_discretization(TemporalDiscretization::Undefined),
@@ -243,6 +246,9 @@ Parameters::check(dealii::ConditionalOStream const & pcout) const
   AssertThrow(equation_type != EquationType::Undefined,
               dealii::ExcMessage("parameter must be defined"));
 
+  if(source_term_set_externally)
+    AssertThrow(right_hand_side, dealii::ExcMessage("If source is set externally you also have to activate right_hands_side==true."));
+  
   if(equation_type == EquationType::Euler)
   {
     AssertThrow(std::abs(viscosity) < 1.e-15,
@@ -644,6 +650,7 @@ Parameters::print_parameters_mathematical_model(dealii::ConditionalOStream const
   }
 
   print_parameter(pcout, "Right-hand side", right_hand_side);
+  print_parameter(pcout, "Source term set from external application", source_term_set_externally);
   print_parameter(pcout, "Boussinesq term", boussinesq_term);
   print_parameter(pcout, "Boussinesq - dynamic part only", boussinesq_dynamic_part_only);
 

@@ -11,6 +11,7 @@
 #include <exadg/functions_and_boundary_conditions/evaluate_functions.h>
 #include <exadg/matrix_free/integrators.h>
 #include <exadg/operators/mapping_flags.h>
+#include <exadg/operators/lazy_ptr.h>
 
 namespace ExaDG
 {
@@ -108,7 +109,7 @@ private:
 template<int dim>
 struct RHSOperatorData
 {
-  RHSOperatorData() : dof_index(0), quad_index(0), dof_index_scalar(2)
+  RHSOperatorData() : dof_index(0), quad_index(0), dof_index_scalar(2), externally_set_source_term(false)
   {
   }
 
@@ -117,6 +118,8 @@ struct RHSOperatorData
 
   unsigned int dof_index_scalar;
 
+  bool externally_set_source_term;
+  
   Operators::RHSKernelData<dim> kernel_data;
 };
 
@@ -149,6 +152,9 @@ public:
   void
   set_temperature(VectorType const & T);
 
+  void
+  set_external_source_term_ptr(VectorType const & src);
+
 private:
   void
   do_cell_integral(Integrator & integrator, IntegratorScalar & integrator_temperature) const;
@@ -168,6 +174,7 @@ private:
   Operators::RHSKernel<dim, Number> kernel;
 
   VectorType const * temperature;
+  lazy_ptr<VectorType> external_source_term;
 };
 
 } // namespace IncNS
