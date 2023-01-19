@@ -858,7 +858,7 @@ OperatorCoupled<dim, Number>::update_block_preconditioner()
 
 template<int dim, typename Number>
 void
-OperatorCoupled<dim, Number>::apply_block_preconditioner(BlockVectorType &       dst,
+SpatialOperator<dim, Number>::apply_block_preconditioner(BlockVectorType &       dst,
                                                          BlockVectorType const & src) const
 {
   auto type = this->param.preconditioner_coupled;
