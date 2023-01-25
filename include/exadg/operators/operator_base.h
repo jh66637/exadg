@@ -68,8 +68,9 @@ struct OperatorBaseData
   {
   }
 
-  unsigned int dof_index;
-  unsigned int quad_index;
+  unsigned int                                                                   dof_index;
+  unsigned int                                                                   quad_index;
+  std::vector<std::pair<dealii::types::boundary_id, dealii::types::boundary_id>> remote_ids;
 
   // Solution of linear systems of equations and preconditioning
   bool operator_is_singular;
@@ -95,6 +96,7 @@ public:
   typedef std::pair<unsigned int, unsigned int>              Range;
   typedef CellIntegrator<dim, n_components, Number>          IntegratorCell;
   typedef FaceIntegrator<dim, n_components, Number>          IntegratorFace;
+  typedef RemoteIntegrator<dim, n_components, Number>        IntegratorRemote;
 
   static unsigned int const vectorization_length = dealii::VectorizedArray<Number>::size();
 
@@ -309,6 +311,9 @@ protected:
   virtual void
   reinit_boundary_face(unsigned int const face) const;
 
+  virtual void
+  reinit_remote(unsigned int const cell) const;
+
   // standard integration procedure with separate loops for cell and face integrals
   virtual void
   do_cell_integral(IntegratorCell & integrator) const;
@@ -320,6 +325,12 @@ protected:
   do_boundary_integral(IntegratorFace &                   integrator,
                        OperatorType const &               operator_type,
                        dealii::types::boundary_id const & boundary_id) const;
+
+  virtual void
+  do_boundary_integral_new(IntegratorFace &                   integrator,
+                           IntegratorRemote &                 integrator_r,
+                           OperatorType const &               operator_type,
+                           dealii::types::boundary_id const & boundary_id) const;
 
   virtual void
   do_boundary_integral_continuous(IntegratorFace &                   integrator,
@@ -382,9 +393,11 @@ protected:
    */
   bool is_dg;
 
-  std::shared_ptr<IntegratorCell> integrator;
-  std::shared_ptr<IntegratorFace> integrator_m;
-  std::shared_ptr<IntegratorFace> integrator_p;
+  std::shared_ptr<IntegratorCell>                  integrator;
+  std::shared_ptr<IntegratorFace>                  integrator_m;
+  std::shared_ptr<IntegratorFace>                  integrator_p;
+  FERemotePointEvaluationCommunicator<dim, Number> communicator_r;
+  std::shared_ptr<IntegratorRemote>                integrator_r;
 
   /*
    * Block Jacobi preconditioner/smoother: matrix-free version with elementwise iterative solver

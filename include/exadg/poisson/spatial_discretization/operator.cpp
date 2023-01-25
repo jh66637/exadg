@@ -150,14 +150,15 @@ Operator<dim, n_components, Number>::distribute_dofs()
     }
 
     // DirichletCached boundaries
-    for(auto it : this->boundary_descriptor->dirichlet_cached_bc)
-    {
-      dealii::ComponentMask mask = dealii::ComponentMask();
-      dealii::DoFTools::make_zero_boundary_constraints(dof_handler,
-                                                       it.first,
-                                                       affine_constraints,
-                                                       mask);
-    }
+    // TODO:??needed for non dg
+    // for(auto it : this->boundary_descriptor->dirichlet_cached_bc)
+    // {
+    //   dealii::ComponentMask mask = dealii::ComponentMask();
+    //   dealii::DoFTools::make_zero_boundary_constraints(dof_handler,
+    //                                                    it.first,
+    //                                                    affine_constraints,
+    //                                                    mask);
+    // }
 
     affine_constraints.close();
   }
@@ -213,6 +214,7 @@ Operator<dim, n_components, Number>::fill_matrix_free_data(
   else
     AssertThrow(false, ExcNotImplemented());
 
+  // TODO: needed for non DG
   // Create a Gauss-Lobatto quadrature rule for DirichletCached boundary conditions.
   // These quadrature points coincide with the nodes of the discretization, so that
   // the values stored in the DirichletCached boundary condition can be directly
@@ -221,15 +223,15 @@ Operator<dim, n_components, Number>::fill_matrix_free_data(
   // conditions. This is not needed in case of discontinuous Galerkin discretizations
   // where boundary conditions are imposed weakly via integrals over the domain
   // boundaries.
-  if(param.spatial_discretization == SpatialDiscretization::CG &&
-     not(boundary_descriptor->dirichlet_cached_bc.empty()))
-  {
-    AssertThrow(this->grid->triangulation->all_reference_cells_are_hyper_cube(),
-                ExcNotImplemented());
+  // if(param.spatial_discretization == SpatialDiscretization::CG &&
+  //    not(boundary_descriptor->dirichlet_cached_bc.empty()))
+  // {
+  //   AssertThrow(this->grid->triangulation->all_reference_cells_are_hyper_cube(),
+  //               ExcNotImplemented());
 
-    matrix_free_data.insert_quadrature(dealii::QGaussLobatto<1>(param.degree + 1),
-                                       get_quad_gauss_lobatto_name());
-  }
+  //   matrix_free_data.insert_quadrature(dealii::QGaussLobatto<1>(param.degree + 1),
+  //                                      get_quad_gauss_lobatto_name());
+  // }
 }
 
 template<int dim, int n_components, typename Number>
@@ -240,13 +242,14 @@ Operator<dim, n_components, Number>::setup_operators()
   Poisson::LaplaceOperatorData<rank, dim> laplace_operator_data;
   laplace_operator_data.dof_index  = get_dof_index();
   laplace_operator_data.quad_index = get_quad_index();
+  // TODO:??
   if(param.spatial_discretization == SpatialDiscretization::CG &&
-     not(boundary_descriptor->dirichlet_cached_bc.empty()))
+     not(boundary_descriptor->overset_bc.empty()))
   {
     AssertThrow(this->grid->triangulation->all_reference_cells_are_hyper_cube(),
                 ExcNotImplemented());
-
     laplace_operator_data.quad_index_gauss_lobatto = get_quad_index_gauss_lobatto();
+    laplace_operator_data.remote_ids               = boundary_descriptor->overset_bc;
   }
   laplace_operator_data.bc                    = boundary_descriptor;
   laplace_operator_data.use_cell_based_loops  = param.enable_cell_based_face_loops;
@@ -275,26 +278,27 @@ Operator<dim, n_components, Number>::setup(
   matrix_free      = matrix_free_in;
   matrix_free_data = matrix_free_data_in;
 
-  if(not(boundary_descriptor->dirichlet_cached_bc.empty()))
-  {
-    interface_data_dirichlet_cached = std::make_shared<ContainerInterfaceData<rank, dim, double>>();
-    std::vector<unsigned int> quad_indices;
-    if(param.spatial_discretization == SpatialDiscretization::DG)
-      quad_indices.emplace_back(get_quad_index());
-    else if(param.spatial_discretization == SpatialDiscretization::CG)
-      quad_indices.emplace_back(get_quad_index_gauss_lobatto());
-    else
-      AssertThrow(false, dealii::ExcMessage("not implemented."));
+  // TODO:
+  // if(not(boundary_descriptor->dirichlet_cached_bc.empty()))
+  // {
+  //   interface_data_dirichlet_cached = std::make_shared<ContainerInterfaceData<rank, dim,
+  //   double>>(); std::vector<unsigned int> quad_indices; if(param.spatial_discretization ==
+  //   SpatialDiscretization::DG)
+  //     quad_indices.emplace_back(get_quad_index());
+  //   else if(param.spatial_discretization == SpatialDiscretization::CG)
+  //     quad_indices.emplace_back(get_quad_index_gauss_lobatto());
+  //   else
+  //     AssertThrow(false, dealii::ExcMessage("not implemented."));
 
-    std::set<dealii::types::boundary_id> bids;
-    for(auto const & bc : boundary_descriptor->dirichlet_cached_bc)
-      bids.insert(bc.first);
+  //   std::set<dealii::types::boundary_id> bids;
+  //   for(auto const & bc : boundary_descriptor->dirichlet_cached_bc)
+  //     bids.insert(bc.first);
 
-    interface_data_dirichlet_cached->setup(matrix_free, get_dof_index(), quad_indices, bids);
+  //   interface_data_dirichlet_cached->setup(matrix_free, get_dof_index(), quad_indices, bids);
 
-    for(auto const & bc : boundary_descriptor->dirichlet_cached_bc)
-      bc.second->set_data_pointer(interface_data_dirichlet_cached);
-  }
+  //   for(auto const & bc : boundary_descriptor->dirichlet_cached_bc)
+  //     bc.second->set_data_pointer(interface_data_dirichlet_cached);
+  // }
 
   setup_operators();
 
@@ -338,24 +342,26 @@ Operator<dim, n_components, Number>::setup_solver()
     std::map<dealii::types::boundary_id, std::shared_ptr<dealii::Function<dim>>>
       dirichlet_boundary_conditions = laplace_operator.get_data().bc->dirichlet_bc;
 
+    // TODO:
+    // AssertThrow(false, ExcNotImplemented());
     // We also need to add DirichletCached boundary conditions. From the
     // perspective of multigrid, there is no difference between standard
     // and cached Dirichlet BCs. Since multigrid does not need information
     // about inhomogeneous boundary data, we simply fill the map with
     // dealii::Functions::ZeroFunction for DirichletCached BCs.
-    for(auto iter : laplace_operator.get_data().bc->dirichlet_cached_bc)
-      dirichlet_boundary_conditions.insert(
-        pair(iter.first, new dealii::Functions::ZeroFunction<dim>(n_components)));
+    // for(auto iter : laplace_operator.get_data().bc->dirichlet_cached_bc)
+    //   dirichlet_boundary_conditions.insert(
+    //     pair(iter.first, new dealii::Functions::ZeroFunction<dim>(n_components)));
 
-    mg_preconditioner->initialize(mg_data,
-                                  &dof_handler.get_triangulation(),
-                                  grid->get_coarse_triangulations(),
-                                  dof_handler.get_fe(),
-                                  grid->mapping,
-                                  laplace_operator.get_data(),
-                                  false /* moving_mesh */,
-                                  dirichlet_boundary_conditions,
-                                  grid->periodic_faces);
+    // mg_preconditioner->initialize(mg_data,
+    //                               &dof_handler.get_triangulation(),
+    //                               grid->get_coarse_triangulations(),
+    //                               dof_handler.get_fe(),
+    //                               grid->mapping,
+    //                               laplace_operator.get_data(),
+    //                               false /* moving_mesh */,
+    //                               dirichlet_boundary_conditions,
+    //                               grid->periodic_faces);
   }
   else
   {

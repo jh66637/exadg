@@ -81,6 +81,14 @@ OperatorBase<dim, Number, n_components>::reinit(
                                                   this->data.dof_index,
                                                   this->data.quad_index);
 
+  communicator_r.initialize_face_pairs(this->data.remote_ids,
+                                       *this->matrix_free,
+                                       this->data.dof_index,
+                                       this->data.quad_index);
+  integrator_r =
+    std::make_shared<IntegratorRemote>(communicator_r,
+                                       this->matrix_free->get_dof_handler(this->data.dof_index));
+
   if(!is_dg)
   {
     constrained_indices.clear();
@@ -262,6 +270,12 @@ OperatorBase<dim, Number, n_components>::apply(VectorType & dst, VectorType cons
   if(is_dg)
   {
     if(evaluate_face_integrals())
+    {
+      // TODO:
+      integrator_r->gather_evaluate(src,
+                                    dealii::EvaluationFlags::values |
+                                      dealii::EvaluationFlags::gradients);
+
       matrix_free->loop(&This::cell_loop,
                         &This::face_loop,
                         &This::boundary_face_loop_hom_operator,
@@ -269,8 +283,11 @@ OperatorBase<dim, Number, n_components>::apply(VectorType & dst, VectorType cons
                         dst,
                         src,
                         true);
+    }
     else
+    {
       matrix_free->cell_loop(&This::cell_loop, this, dst, src, true);
+    }
   }
   else
   {
@@ -312,8 +329,15 @@ OperatorBase<dim, Number, n_components>::apply_add(VectorType & dst, VectorType 
   if(is_dg)
   {
     if(evaluate_face_integrals())
+    {
+      // TODO:
+      integrator_r->gather_evaluate(src,
+                                    dealii::EvaluationFlags::values |
+                                      dealii::EvaluationFlags::gradients);
+
       matrix_free->loop(
         &This::cell_loop, &This::face_loop, &This::boundary_face_loop_hom_operator, this, dst, src);
+    }
     else
       matrix_free->cell_loop(&This::cell_loop, this, dst, src);
   }
@@ -849,6 +873,13 @@ OperatorBase<dim, Number, n_components>::reinit_boundary_face(unsigned int const
 
 template<int dim, typename Number, int n_components>
 void
+OperatorBase<dim, Number, n_components>::reinit_remote(unsigned int const cell) const
+{
+  integrator_r->reinit(cell);
+}
+
+template<int dim, typename Number, int n_components>
+void
 OperatorBase<dim, Number, n_components>::do_cell_integral(IntegratorCell & integrator) const
 {
   (void)integrator;
@@ -882,6 +913,18 @@ OperatorBase<dim, Number, n_components>::do_boundary_integral(
 
   AssertThrow(false,
               dealii::ExcMessage("OperatorBase::do_boundary_integral() has not been implemented!"));
+}
+
+template<int dim, typename Number, int n_components>
+void
+OperatorBase<dim, Number, n_components>::do_boundary_integral_new(
+  IntegratorFace &                   integrator,
+  IntegratorRemote &                 integrator_r,
+  OperatorType const &               operator_type,
+  dealii::types::boundary_id const & boundary_id) const
+{
+  (void)integrator_r;
+  do_boundary_integral(integrator, operator_type, boundary_id);
 }
 
 template<int dim, typename Number, int n_components>
@@ -1080,12 +1123,14 @@ OperatorBase<dim, Number, n_components>::boundary_face_loop_hom_operator(
   for(unsigned int face = range.first; face < range.second; face++)
   {
     this->reinit_boundary_face(face);
+    this->reinit_remote(face);
 
     integrator_m->gather_evaluate(src, integrator_flags.face_evaluate);
 
-    do_boundary_integral(*integrator_m,
-                         OperatorType::homogeneous,
-                         matrix_free.get_boundary_id(face));
+    do_boundary_integral_new(*integrator_m,
+                             *integrator_r,
+                             OperatorType::homogeneous,
+                             matrix_free.get_boundary_id(face));
 
     integrator_m->integrate_scatter(integrator_flags.face_integrate, dst);
   }
@@ -1106,13 +1151,14 @@ OperatorBase<dim, Number, n_components>::boundary_face_loop_inhom_operator(
     for(unsigned int face = range.first; face < range.second; face++)
     {
       this->reinit_boundary_face(face);
+      this->reinit_remote(face);
 
       // note: no gathering/evaluation is necessary when calculating the
       //       inhomogeneous part of boundary face integrals
-
-      do_boundary_integral(*integrator_m,
-                           OperatorType::inhomogeneous,
-                           matrix_free.get_boundary_id(face));
+      do_boundary_integral_new(*integrator_m,
+                               *integrator_r,
+                               OperatorType::inhomogeneous,
+                               matrix_free.get_boundary_id(face));
 
       integrator_m->integrate_scatter(integrator_flags.face_integrate, dst);
     }
@@ -1144,10 +1190,14 @@ OperatorBase<dim, Number, n_components>::boundary_face_loop_full_operator(
   for(unsigned int face = range.first; face < range.second; face++)
   {
     this->reinit_boundary_face(face);
+    this->reinit_remote(face);
 
     integrator_m->gather_evaluate(src, integrator_flags.face_evaluate);
 
-    do_boundary_integral(*integrator_m, OperatorType::full, matrix_free.get_boundary_id(face));
+    do_boundary_integral_new(*integrator_m,
+                             *integrator_r,
+                             OperatorType::full,
+                             matrix_free.get_boundary_id(face));
 
     integrator_m->integrate_scatter(integrator_flags.face_integrate, dst);
   }
@@ -1305,6 +1355,7 @@ OperatorBase<dim, Number, n_components>::boundary_face_loop_diagonal(
     auto bid = matrix_free.get_boundary_id(face);
 
     this->reinit_boundary_face(face);
+    this->reinit_remote(face);
 
     for(unsigned int j = 0; j < dofs_per_cell; ++j)
     {
@@ -1312,7 +1363,7 @@ OperatorBase<dim, Number, n_components>::boundary_face_loop_diagonal(
 
       integrator_m->evaluate(integrator_flags.face_evaluate);
 
-      this->do_boundary_integral(*integrator_m, OperatorType::homogeneous, bid);
+      this->do_boundary_integral_new(*integrator_m, *integrator_r, OperatorType::homogeneous, bid);
 
       integrator_m->integrate(integrator_flags.face_integrate);
 
@@ -1366,6 +1417,7 @@ OperatorBase<dim, Number, n_components>::cell_based_loop_diagonal(
       auto bid  = bids[0];
 
       this->reinit_face_cell_based(cell, face, bid);
+      this->reinit_remote(face);
 
 #ifdef DEBUG
       unsigned int const n_filled_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
@@ -1387,7 +1439,10 @@ OperatorBase<dim, Number, n_components>::cell_based_loop_diagonal(
         }
         else // boundary face
         {
-          this->do_boundary_integral(*integrator_m, OperatorType::homogeneous, bid);
+          this->do_boundary_integral_new(*integrator_m,
+                                         *integrator_r,
+                                         OperatorType::homogeneous,
+                                         bid);
         }
 
         integrator_m->integrate(integrator_flags.face_integrate);
@@ -1580,6 +1635,7 @@ OperatorBase<dim, Number, n_components>::boundary_face_loop_block_diagonal(
     unsigned int const n_filled_lanes = matrix_free.n_active_entries_per_face_batch(face);
 
     this->reinit_boundary_face(face);
+    this->reinit_remote(face);
 
     auto bid = matrix_free.get_boundary_id(face);
 
@@ -1589,7 +1645,7 @@ OperatorBase<dim, Number, n_components>::boundary_face_loop_block_diagonal(
 
       integrator_m->evaluate(integrator_flags.face_evaluate);
 
-      this->do_boundary_integral(*integrator_m, OperatorType::homogeneous, bid);
+      this->do_boundary_integral_new(*integrator_m, *integrator_r, OperatorType::homogeneous, bid);
 
       integrator_m->integrate(integrator_flags.face_integrate);
 
@@ -1643,6 +1699,7 @@ OperatorBase<dim, Number, n_components>::cell_based_loop_block_diagonal(
       auto bid  = bids[0];
 
       this->reinit_face_cell_based(cell, face, bid);
+      this->reinit_remote(face);
 
 #ifdef DEBUG
       for(unsigned int v = 0; v < n_filled_lanes; v++)
@@ -1663,7 +1720,10 @@ OperatorBase<dim, Number, n_components>::cell_based_loop_block_diagonal(
         }
         else // boundary face
         {
-          this->do_boundary_integral(*integrator_m, OperatorType::homogeneous, bid);
+          this->do_boundary_integral_new(*integrator_m,
+                                         *integrator_r,
+                                         OperatorType::homogeneous,
+                                         bid);
         }
 
         integrator_m->integrate(integrator_flags.face_integrate);
@@ -1928,6 +1988,7 @@ OperatorBase<dim, Number, n_components>::boundary_face_loop_calculate_system_mat
     std::fill_n(matrices, vectorization_length, FullMatrix_(dofs_per_cell, dofs_per_cell));
 
     this->reinit_boundary_face(face);
+    this->reinit_remote(face);
 
     auto bid = matrix_free.get_boundary_id(face);
 
@@ -1937,7 +1998,7 @@ OperatorBase<dim, Number, n_components>::boundary_face_loop_calculate_system_mat
 
       integrator_m->evaluate(integrator_flags.face_evaluate);
 
-      this->do_boundary_integral(*integrator_m, OperatorType::homogeneous, bid);
+      this->do_boundary_integral_new(*integrator_m, *integrator_r, OperatorType::homogeneous, bid);
 
       integrator_m->integrate(integrator_flags.face_integrate);
 

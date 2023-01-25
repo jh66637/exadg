@@ -75,6 +75,7 @@ inline DEAL_II_ALWAYS_INLINE //
     dealii::Tensor<rank, dim, dealii::VectorizedArray<Number>> const & value_m,
     unsigned int const                                                 q,
     FaceIntegrator<dim, n_components, Number> const &                  integrator,
+    RemoteIntegrator<dim, n_components, Number> const &                integrator_r,
     OperatorType const &                                               operator_type,
     BoundaryType const &                                               boundary_type,
     dealii::types::boundary_id const                                   boundary_id,
@@ -83,7 +84,7 @@ inline DEAL_II_ALWAYS_INLINE //
 {
   dealii::Tensor<rank, dim, dealii::VectorizedArray<Number>> value_p;
 
-  if(boundary_type == BoundaryType::Dirichlet || boundary_type == BoundaryType::DirichletCached)
+  if(boundary_type == BoundaryType::Dirichlet || boundary_type == BoundaryType::Overset)
   {
     if(operator_type == OperatorType::full || operator_type == OperatorType::inhomogeneous)
     {
@@ -96,13 +97,9 @@ inline DEAL_II_ALWAYS_INLINE //
 
         g = FunctionEvaluator<rank, dim, Number>::value(bc, q_points, time);
       }
-      else if(boundary_type == BoundaryType::DirichletCached)
+      else if(boundary_type == BoundaryType::Overset)
       {
-        auto bc = boundary_descriptor->dirichlet_cached_bc.find(boundary_id)->second;
-        g       = FunctionEvaluator<rank, dim, Number>::value(bc,
-                                                        integrator.get_current_cell_index(),
-                                                        q,
-                                                        integrator.get_quadrature_index());
+        g = integrator_r.get_value(q);
       }
       else
       {
@@ -199,10 +196,15 @@ inline DEAL_II_ALWAYS_INLINE //
 {
   dealii::Tensor<rank, dim, dealii::VectorizedArray<Number>> normal_gradient_p;
 
-  if(boundary_type == BoundaryType::Dirichlet || boundary_type == BoundaryType::DirichletCached)
+  if(boundary_type == BoundaryType::Dirichlet || boundary_type == BoundaryType::Overset)
   {
     normal_gradient_p = normal_gradient_m;
   }
+  // TODO: shouldnt it be?
+  // else if(boundary_type == BoundaryType::Overset)
+  // {
+  //   normal_gradient_p = remote_integrator.get_gradient(q)*-n;
+  // }
   else if(boundary_type == BoundaryType::Neumann)
   {
     if(operator_type == OperatorType::full || operator_type == OperatorType::inhomogeneous)
@@ -259,8 +261,7 @@ inline DEAL_II_ALWAYS_INLINE //
   {
     // do nothing
 
-    Assert(boundary_type == BoundaryType::Dirichlet ||
-             boundary_type == BoundaryType::DirichletCached,
+    Assert(boundary_type == BoundaryType::Dirichlet || boundary_type == BoundaryType::Overset,
            dealii::ExcMessage("Boundary type of face is invalid or not implemented."));
   }
 
