@@ -56,7 +56,7 @@ template struct PointwiseOutputData<3>;
 
 template<int dim, typename Number>
 PointwiseOutputGenerator<dim, Number>::PointwiseOutputGenerator(MPI_Comm const & comm)
-  : PointwiseOutputGeneratorBase<dim, Number, VectorType>(comm)
+  : PointwiseOutputGeneratorBase<dim, VectorType>(comm)
 {
 }
 

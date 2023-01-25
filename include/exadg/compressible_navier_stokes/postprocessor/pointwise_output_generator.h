@@ -46,7 +46,6 @@ struct PointwiseOutputData : public PointwiseOutputDataBase<dim>
 template<int dim, typename Number>
 class PointwiseOutputGenerator
   : public PointwiseOutputGeneratorBase<dim,
-                                        Number,
                                         dealii::LinearAlgebra::distributed::Vector<Number>>
 {
 public:

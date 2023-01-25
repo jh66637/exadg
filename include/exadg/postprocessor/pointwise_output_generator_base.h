@@ -65,12 +65,14 @@ struct PointwiseOutputDataBase
   print(dealii::ConditionalOStream & pcout) const;
 };
 
-template<int dim, typename Number, typename VectorType>
+template<int dim, typename VectorType>
 class PointwiseOutputGeneratorBase
 {
 public:
   using point_value_type = typename PointwiseOutputDataBase<dim>::point_value_type;
 
+  using Number = typename VectorType::value_type;
+  
   void
   evaluate(VectorType const & solution, double const time, bool const unsteady);
 

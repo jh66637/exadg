@@ -58,9 +58,9 @@ PointwiseOutputDataBase<dim>::print(dealii::ConditionalOStream & pcout) const
 template struct PointwiseOutputDataBase<2>;
 template struct PointwiseOutputDataBase<3>;
 
-template<int dim, typename Number, typename VectorType>
+template<int dim, typename VectorType>
 void
-PointwiseOutputGeneratorBase<dim, Number, VectorType>::evaluate(VectorType const & solution,
+PointwiseOutputGeneratorBase<dim, VectorType>::evaluate(VectorType const & solution,
                                                                 double const       time,
                                                                 bool const         unsteady)
 {
@@ -81,16 +81,16 @@ PointwiseOutputGeneratorBase<dim, Number, VectorType>::evaluate(VectorType const
   do_evaluate(solution);
 }
 
-template<int dim, typename Number, typename VectorType>
-PointwiseOutputGeneratorBase<dim, Number, VectorType>::PointwiseOutputGeneratorBase(
+  template<int dim, typename VectorType>
+PointwiseOutputGeneratorBase<dim, VectorType>::PointwiseOutputGeneratorBase(
   MPI_Comm const & comm)
   : mpi_comm(comm), first_evaluation(true)
 {
 }
 
-template<int dim, typename Number, typename VectorType>
+template<int dim, typename VectorType>
 void
-PointwiseOutputGeneratorBase<dim, Number, VectorType>::setup_base(
+PointwiseOutputGeneratorBase<dim, VectorType>::setup_base(
   dealii::Triangulation<dim> const &   triangulation_in,
   dealii::Mapping<dim> const &         mapping_in,
   PointwiseOutputDataBase<dim> const & pointwise_output_data_in)
@@ -147,9 +147,9 @@ PointwiseOutputGeneratorBase<dim, Number, VectorType>::setup_base(
 #endif
 }
 
-template<int dim, typename Number, typename VectorType>
+template<int dim, typename VectorType>
 void
-PointwiseOutputGeneratorBase<dim, Number, VectorType>::add_quantity(std::string const & name,
+PointwiseOutputGeneratorBase<dim, VectorType>::add_quantity(std::string const & name,
                                                                     unsigned int const n_components)
 {
   AssertThrow(n_components > 0, dealii::ExcMessage("n_components has to be > 0."));
@@ -170,27 +170,27 @@ PointwiseOutputGeneratorBase<dim, Number, VectorType>::add_quantity(std::string 
 #endif
 }
 
-template<int dim, typename Number, typename VectorType>
+template<int dim, typename VectorType>
 void
-PointwiseOutputGeneratorBase<dim, Number, VectorType>::setup_remote_evaluator()
+PointwiseOutputGeneratorBase<dim, VectorType>::setup_remote_evaluator()
 {
   remote_evaluator =
     std::make_shared<dealii::Utilities::MPI::RemotePointEvaluation<dim>>(1e-6, false, 0);
   reinit_remote_evaluator();
 }
 
-template<int dim, typename Number, typename VectorType>
+template<int dim, typename VectorType>
 void
-PointwiseOutputGeneratorBase<dim, Number, VectorType>::reinit_remote_evaluator()
+PointwiseOutputGeneratorBase<dim, VectorType>::reinit_remote_evaluator()
 {
   remote_evaluator->reinit(pointwise_output_data.evaluation_points, *triangulation, *mapping);
   AssertThrow(remote_evaluator->all_points_found(),
               dealii::ExcMessage("Not all remote points found."));
 }
 
-template<int dim, typename Number, typename VectorType>
+template<int dim, typename VectorType>
 void
-PointwiseOutputGeneratorBase<dim, Number, VectorType>::create_hdf5_file()
+PointwiseOutputGeneratorBase<dim, VectorType>::create_hdf5_file()
 {
 #ifdef DEAL_II_WITH_HDF5
   ExaDG::create_directories(pointwise_output_data.directory, mpi_comm);
@@ -203,9 +203,9 @@ PointwiseOutputGeneratorBase<dim, Number, VectorType>::create_hdf5_file()
 #endif
 }
 
-template<int dim, typename Number, typename VectorType>
+template<int dim, typename VectorType>
 void
-PointwiseOutputGeneratorBase<dim, Number, VectorType>::write_evaluation_points(
+PointwiseOutputGeneratorBase<dim, VectorType>::write_evaluation_points(
   std::string const & name)
 {
 #ifdef DEAL_II_WITH_HDF5
@@ -233,9 +233,9 @@ PointwiseOutputGeneratorBase<dim, Number, VectorType>::write_evaluation_points(
 }
 
 #ifdef DEAL_II_WITH_HDF5
-template<int dim, typename Number, typename VectorType>
+template<int dim, typename VectorType>
 void
-PointwiseOutputGeneratorBase<dim, Number, VectorType>::add_evaluation_points_dataset(
+PointwiseOutputGeneratorBase<dim, VectorType>::add_evaluation_points_dataset(
   dealii::HDF5::Group & group,
   std::string const &   name)
 {
@@ -244,18 +244,18 @@ PointwiseOutputGeneratorBase<dim, Number, VectorType>::add_evaluation_points_dat
   group.template create_dataset<point_value_type>(name, hdf5_point_dims);
 }
 
-template<int dim, typename Number, typename VectorType>
+template<int dim, typename VectorType>
 void
-PointwiseOutputGeneratorBase<dim, Number, VectorType>::add_time_dataset(dealii::HDF5::Group & group,
+PointwiseOutputGeneratorBase<dim, VectorType>::add_time_dataset(dealii::HDF5::Group & group,
                                                                         std::string const &   name)
 {
   group.template create_dataset<Number>(name, std::vector<hsize_t>{1, 1 * n_out_samples});
 }
 #endif
 
-template<int dim, typename Number, typename VectorType>
+template<int dim, typename VectorType>
 void
-PointwiseOutputGeneratorBase<dim, Number, VectorType>::write_time(double time)
+PointwiseOutputGeneratorBase<dim, VectorType>::write_time(double time)
 {
 #ifdef DEAL_II_WITH_HDF5
   auto dataset = hdf5_file->open_dataset("PhysicalInformation/Time");
@@ -282,21 +282,21 @@ PointwiseOutputGeneratorBase<dim, Number, VectorType>::write_time(double time)
 template<typename Number>
 using VectorType = dealii::LinearAlgebra::distributed::Vector<Number>;
 
-template class PointwiseOutputGeneratorBase<2, float, VectorType<float>>;
-template class PointwiseOutputGeneratorBase<2, double, VectorType<double>>;
+template class PointwiseOutputGeneratorBase<2, VectorType<float>>;
+template class PointwiseOutputGeneratorBase<2, VectorType<double>>;
 
-template class PointwiseOutputGeneratorBase<3, float, VectorType<float>>;
-template class PointwiseOutputGeneratorBase<3, double, VectorType<double>>;
+template class PointwiseOutputGeneratorBase<3, VectorType<float>>;
+template class PointwiseOutputGeneratorBase<3, VectorType<double>>;
 
 // BlockVector Instantiations
 template<typename Number>
 using BlockVectorType = dealii::LinearAlgebra::distributed::BlockVector<Number>;
 
-template class PointwiseOutputGeneratorBase<2, float, BlockVectorType<float>>;
-template class PointwiseOutputGeneratorBase<2, double, BlockVectorType<double>>;
+template class PointwiseOutputGeneratorBase<2, BlockVectorType<float>>;
+template class PointwiseOutputGeneratorBase<2, BlockVectorType<double>>;
 
-template class PointwiseOutputGeneratorBase<3, float, BlockVectorType<float>>;
-template class PointwiseOutputGeneratorBase<3, double, BlockVectorType<double>>;
+template class PointwiseOutputGeneratorBase<3, BlockVectorType<float>>;
+template class PointwiseOutputGeneratorBase<3, BlockVectorType<double>>;
 
 
 } // namespace ExaDG
