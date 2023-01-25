@@ -135,10 +135,11 @@ public:
     this->param.rel_tol_steady = 1.e-8;
 
     // SPATIAL DISCRETIZATION
-    this->param.grid.triangulation_type = TriangulationType::Distributed;
-    this->param.grid.mapping_degree     = this->param.degree_u;
-    this->param.degree_p                = DegreePressure::MixedOrder;
-
+    this->param.grid.triangulation_type           = TriangulationType::Distributed;
+    this->param.grid.mapping_degree               = this->param.degree_u;
+    this->param.degree_p                          = DegreePressure::MixedOrder;
+    this->param.grid.create_coarse_triangulations = true;
+    
     // convective term
     if(this->param.formulation_convective_term == FormulationConvectiveTerm::DivergenceFormulation)
       this->param.upwind_factor = 0.5; // allows using larger CFL values for explicit formulations
