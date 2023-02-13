@@ -55,7 +55,8 @@ TimeControlData::TimeControlData()
     start_time(std::numeric_limits<double>::max()),
     end_time(std::numeric_limits<double>::max()),
     trigger_interval(-1.0),
-    trigger_every_time_steps(numbers::invalid_timestep)
+    trigger_every_time_steps(numbers::invalid_timestep),
+    reset_counter(true)
 {
 }
 
@@ -66,6 +67,7 @@ TimeControlData::print(dealii::ConditionalOStream & pcout, bool const unsteady) 
   {
     print_parameter(pcout, "TimeControl start time", start_time);
     print_parameter(pcout, "TimeControl end_time", end_time);
+    print_parameter(pcout, "TimeControl reset_counter", reset_counter);
     if(get_unsteady_evaluation_type(*this) == TimeControlData::UnsteadyEvalType::Interval)
       print_parameter(pcout, "TimeControl triggers every interval", trigger_interval);
     if(get_unsteady_evaluation_type(*this) == TimeControlData::UnsteadyEvalType::Timestep)
@@ -82,6 +84,7 @@ void
 TimeControl::setup(TimeControlData const & time_control_data_in)
 {
   time_control_data = time_control_data_in;
+  reset_counter     = time_control_data_in.reset_counter;
 }
 
 bool

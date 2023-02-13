@@ -45,6 +45,7 @@ struct TimeControlData
   double           end_time;
   double           trigger_interval;
   types::time_step trigger_every_time_steps;
+  bool             reset_counter;
 
   enum UnsteadyEvalType
   {
