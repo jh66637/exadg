@@ -31,6 +31,7 @@ PostProcessor<dim, Number>::PostProcessor(PostProcessorData<dim> const & postpro
   : mpi_comm(comm),
     pp_data(postprocessor_data),
     output_generator(comm),
+    pointwise_pressure_output_generator(mpi_comm),
     error_calculator_u(comm),
     error_calculator_p(comm),
     lift_and_drag_calculator(comm),
@@ -61,6 +62,10 @@ PostProcessor<dim, Number>::setup(Operator const & pde_operator)
                          pde_operator.get_dof_handler_p(),
                          *pde_operator.get_mapping(),
                          pp_data.output_data);
+
+  pointwise_pressure_output_generator.setup(pde_operator.get_dof_handler_p(),
+                                            *pde_operator.get_mapping(),
+                                            pp_data.pointwise_pressure_output_data);
 
   error_calculator_u.setup(pde_operator.get_dof_handler_u(),
                            *pde_operator.get_mapping(),
@@ -176,6 +181,15 @@ PostProcessor<dim, Number>::do_postprocessing(VectorType const &     velocity,
                               time,
                               Utilities::is_unsteady_timestep(time_step_number));
   }
+
+  /*
+   *  Evaluate pressure at arbitrary points
+   */
+  if(pointwise_pressure_output_generator.time_control.needs_evaluation(time, time_step_number))
+    pointwise_pressure_output_generator.evaluate(pressure,
+                                                 time,
+                                                 Utilities::is_unsteady_timestep(time_step_number));
+
 
   /*
    *  calculate error

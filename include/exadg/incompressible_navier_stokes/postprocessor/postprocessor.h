@@ -26,6 +26,7 @@
 #include <exadg/incompressible_navier_stokes/postprocessor/kinetic_energy_dissipation_detailed.h>
 #include <exadg/incompressible_navier_stokes/postprocessor/line_plot_calculation.h>
 #include <exadg/incompressible_navier_stokes/postprocessor/output_generator.h>
+#include <exadg/incompressible_navier_stokes/postprocessor/pointwise_pressure_output_generator.h>
 #include <exadg/incompressible_navier_stokes/postprocessor/postprocessor_base.h>
 #include <exadg/incompressible_navier_stokes/spatial_discretization/spatial_operator_base.h>
 #include <exadg/postprocessor/error_calculation.h>
@@ -44,15 +45,16 @@ struct PostProcessorData
   {
   }
 
-  OutputData                  output_data;
-  ErrorCalculationData<dim>   error_data_u;
-  ErrorCalculationData<dim>   error_data_p;
-  LiftAndDragData             lift_and_drag_data;
-  PressureDifferenceData<dim> pressure_difference_data;
-  MassConservationData        mass_data;
-  KineticEnergyData           kinetic_energy_data;
-  KineticEnergySpectrumData   kinetic_energy_spectrum_data;
-  LinePlotData<dim>           line_plot_data;
+  OutputData                       output_data;
+  PointwisePressureOutputData<dim> pointwise_pressure_output_data;
+  ErrorCalculationData<dim>        error_data_u;
+  ErrorCalculationData<dim>        error_data_p;
+  LiftAndDragData                  lift_and_drag_data;
+  PressureDifferenceData<dim>      pressure_difference_data;
+  MassConservationData             mass_data;
+  KineticEnergyData                kinetic_energy_data;
+  KineticEnergySpectrumData        kinetic_energy_spectrum_data;
+  LinePlotData<dim>                line_plot_data;
 };
 
 template<int dim, typename Number>
@@ -108,6 +110,9 @@ private:
 
   // write output for visualization of results (e.g., using paraview)
   OutputGenerator<dim, Number> output_generator;
+
+  // write pressure at arbitrary points in the domain
+  PointwisePressureOutputGenerator<dim, Number> pointwise_pressure_output_generator;
 
   // calculate errors for verification purposes for problems with known analytical solution
   ErrorCalculator<dim, Number> error_calculator_u;
