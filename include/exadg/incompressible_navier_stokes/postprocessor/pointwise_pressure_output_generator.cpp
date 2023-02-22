@@ -23,15 +23,14 @@
 
 #include <exadg/utilities/print_functions.h>
 
-#include <exadg/incompressible_navier_stokes/postprocessor/pointwise_output_generator.h>
+#include <exadg/incompressible_navier_stokes/postprocessor/pointwise_pressure_output_generator.h>
 
 namespace ExaDG
 {
 namespace IncNS
 {
 template<int dim>
-PointwisePressureOutputData<dim>::PointwisePressureOutputData()
-  : write_pressure(false), write_velocity(false)
+PointwisePressureOutputData<dim>::PointwisePressureOutputData() : write_pressure(false)
 {
 }
 
@@ -53,20 +52,18 @@ template class PointwisePressureOutputData<3>;
 template<int dim, typename Number>
 PointwisePressureOutputGenerator<dim, Number>::PointwisePressureOutputGenerator(
   MPI_Comm const & comm)
-  : PointwisePressureOutputGeneratorBase<dim, VectorType>(comm)
+  : PointwiseOutputGeneratorBase<dim, VectorType>(comm)
 {
 }
 
 template<int dim, typename Number>
 void
 PointwisePressureOutputGenerator<dim, Number>::setup(
-  dealii::DoFHandler<dim> const &  dof_handler_in,
-  dealii::Mapping<dim> const &     mapping_in,
-  PointwiseOutputData<dim> const & pointwise_output_data_in)
+  dealii::DoFHandler<dim> const &          dof_handler_in,
+  dealii::Mapping<dim> const &             mapping_in,
+  PointwisePressureOutputData<dim> const & pointwise_output_data_in)
 {
-  this->setup_base(dof_handler_velocity_in.get_triangulation(),
-                   mapping_in,
-                   pointwise_output_data_in);
+  this->setup_base(dof_handler_in.get_triangulation(), mapping_in, pointwise_output_data_in);
 
   dof_handler = &dof_handler_in;
 
@@ -78,7 +75,7 @@ PointwisePressureOutputGenerator<dim, Number>::setup(
 
 template<int dim, typename Number>
 void
-PointwisePressureOutputGenerator<dim, Number>::do_evaluate(BlockVectorType const & pressure)
+PointwisePressureOutputGenerator<dim, Number>::do_evaluate(VectorType const & pressure)
 {
   if(pointwise_output_data.write_pressure)
   {
