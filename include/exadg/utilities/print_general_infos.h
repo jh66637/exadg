@@ -93,6 +93,17 @@ print_dealii_info(dealii::ConditionalOStream const & pcout)
   // clang-format on
 }
 
+// print ExaDG info
+inline void
+print_exadg_info(dealii::ConditionalOStream const & pcout)
+{
+  pcout << std::endl
+        << "ExaDG info:" << std::endl
+        << std::endl
+        << "  ExaDG git version " << EXADG_GIT_SHORTREV << " on branch " << EXADG_GIT_BRANCH
+        << std::endl;
+}
+
 template<typename Number>
 inline void
 print_matrixfree_info(dealii::ConditionalOStream const & pcout)
@@ -142,6 +153,7 @@ print_general_info(dealii::ConditionalOStream const & pcout,
   if(not(is_test))
   {
     print_dealii_info(pcout);
+    print_exadg_info(pcout);
     print_matrixfree_info<Number>(pcout);
   }
 

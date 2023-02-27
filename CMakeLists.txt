@@ -202,6 +202,14 @@ OPTION(PICKUP_TESTS "Pick up ExaDG tests." ON)
 OPTION(BUILD_SHARED_LIBS "Build shared library." ON)
 
 ADD_LIBRARY(exadg ${TARGET_SRC})
+
+# Add info of git branch 
+SET(EXADG_MACRO_DIR ${CMAKE_SOURCE_DIR}/cmake/macros)
+INCLUDE(${EXADG_MACRO_DIR}/macro_git_info.cmake)
+FETCH_GIT_INFO(EXADG_GIT_BRANCH EXADG_GIT_SHORTREV)
+TARGET_COMPILE_DEFINITIONS(exadg PUBLIC EXADG_GIT_BRANCH=\"${EXADG_GIT_BRANCH}\")
+TARGET_COMPILE_DEFINITIONS(exadg PUBLIC EXADG_GIT_SHORTREV=\"${EXADG_GIT_SHORTREV}\")
+
 # Set the include directories
 SET(EXADG_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/include)
 TARGET_INCLUDE_DIRECTORIES(exadg PUBLIC ${EXADG_INCLUDE_DIRS})
@@ -284,7 +292,6 @@ ADD_SUBDIRECTORY(doc/doxygen)
 # once EXADG has a version number).
 
 INCLUDE(CMakePackageConfigHelpers)
-SET(EXADG_MACRO_DIR ${CMAKE_SOURCE_DIR}/cmake/macros)
 
 # EXADGConfig.cmake.in serves as a template. Running CMake will create EXADGConfig.cmake and
 # EXADGTargets.cmake from it in the build folder. These files are needed to use the
