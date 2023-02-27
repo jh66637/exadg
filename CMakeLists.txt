@@ -54,9 +54,19 @@ ENDIF()
 
 DEAL_II_INITIALIZE_CACHED_VARIABLES()
 
+# Add info of git branch 
+SET(EXADG_MACRO_DIR ${CMAKE_SOURCE_DIR}/cmake/macros)
+INCLUDE(${EXADG_MACRO_DIR}/macro_git_info.cmake)
+FETCH_GIT_INFO(EXADG_GIT_BRANCH EXADG_GIT_SHORTREV)
+CONFIGURE_FILE(
+  ${CMAKE_SOURCE_DIR}/include/exadg/utilities/exadg_git_revision.h.in
+  ${CMAKE_SOURCE_DIR}/include/exadg/utilities/exadg_git_revision.h
+  )
+
 # Set the source files to be compiled
 SET(TARGET_SRC
      include/exadg/utilities/timer_tree.cpp
+     include/exadg/utilities/exadg_git_info.cpp
      include/exadg/time_integration/bdf_time_integration.cpp
      include/exadg/time_integration/extrapolation_scheme.cpp
      include/exadg/time_integration/adams_bashforth_time_integration.cpp
@@ -202,13 +212,6 @@ OPTION(PICKUP_TESTS "Pick up ExaDG tests." ON)
 OPTION(BUILD_SHARED_LIBS "Build shared library." ON)
 
 ADD_LIBRARY(exadg ${TARGET_SRC})
-
-# Add info of git branch 
-SET(EXADG_MACRO_DIR ${CMAKE_SOURCE_DIR}/cmake/macros)
-INCLUDE(${EXADG_MACRO_DIR}/macro_git_info.cmake)
-FETCH_GIT_INFO(EXADG_GIT_BRANCH EXADG_GIT_SHORTREV)
-TARGET_COMPILE_DEFINITIONS(exadg PUBLIC EXADG_GIT_BRANCH=\"${EXADG_GIT_BRANCH}\")
-TARGET_COMPILE_DEFINITIONS(exadg PUBLIC EXADG_GIT_SHORTREV=\"${EXADG_GIT_SHORTREV}\")
 
 # Set the include directories
 SET(EXADG_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/include)

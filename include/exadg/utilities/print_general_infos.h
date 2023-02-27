@@ -30,6 +30,7 @@
 
 // ExaDG
 #include <exadg/grid/grid.h>
+#include <exadg/utilities/exadg_git_info.h>
 #include <exadg/utilities/print_functions.h>
 
 namespace ExaDG
@@ -100,8 +101,8 @@ print_exadg_info(dealii::ConditionalOStream const & pcout)
   pcout << std::endl
         << "ExaDG info:" << std::endl
         << std::endl
-        << "  ExaDG git version " << EXADG_GIT_SHORTREV << " on branch " << EXADG_GIT_BRANCH
-        << std::endl;
+        << "  ExaDG git version " << GitRevision::get_exadg_git_shortrev() << " on branch "
+        << GitRevision::get_exadg_git_branch() << std::endl;
 }
 
 template<typename Number>
