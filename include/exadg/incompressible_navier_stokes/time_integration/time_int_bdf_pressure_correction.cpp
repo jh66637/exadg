@@ -159,15 +159,18 @@ template<int dim, typename Number>
 void
 TimeIntBDFPressureCorrection<dim, Number>::initialize_multistep_dof_vectors()
 {
-  // note that the loop begins with i=1! (we could also start with i=0 but this is not necessary)
-  for(unsigned int i = 1; i < velocity.size(); ++i)
+  if(this->start_with_low_order == false)
   {
-    if(this->param.ale_formulation)
-      pde_operator->move_grid(this->get_previous_time(i));
+    // note that the loop begins with i=1! (we could also start with i=0 but this is not necessary)
+    for(unsigned int i = 1; i < velocity.size(); ++i)
+    {
+      if(this->param.ale_formulation)
+        pde_operator->move_grid(this->get_previous_time(i));
 
-    pde_operator->prescribe_initial_conditions(velocity[i],
-                                               pressure[i],
-                                               this->get_previous_time(i));
+      pde_operator->prescribe_initial_conditions(velocity[i],
+                                                 pressure[i],
+                                                 this->get_previous_time(i));
+    }
   }
 }
 

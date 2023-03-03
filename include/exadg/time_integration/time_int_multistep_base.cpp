@@ -96,10 +96,8 @@ TimeIntMultistepBase<Number>::initialize_vectors_and_time_step_size(bool do_rest
     for(unsigned int i = 1; i < order; ++i)
       time_steps[i] = time_steps[0];
 
-    // Finally, set vectors at former times needed for the multistep method. This is only necessary
-    // if the time integrator starts with a high-order scheme in the first time step.
-    if(start_with_low_order == false)
-      initialize_multistep_dof_vectors();
+    // Finally, set vectors at former times needed for the multistep method.
+    initialize_multistep_dof_vectors();
   }
 }
 

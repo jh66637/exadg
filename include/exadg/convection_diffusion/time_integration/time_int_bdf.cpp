@@ -149,13 +149,16 @@ template<int dim, typename Number>
 void
 TimeIntBDF<dim, Number>::initialize_multistep_dof_vectors()
 {
-  // Start with i=1 since we only want to initialize the solution at former instants of time.
-  for(unsigned int i = 1; i < solution.size(); ++i)
+  if(this->start_with_low_order == false)
   {
-    if(this->param.ale_formulation)
-      pde_operator->move_grid(this->get_previous_time(i));
+    // Start with i=1 since we only want to initialize the solution at former instants of time.
+    for(unsigned int i = 1; i < solution.size(); ++i)
+    {
+      if(this->param.ale_formulation)
+        pde_operator->move_grid(this->get_previous_time(i));
 
-    pde_operator->prescribe_initial_conditions(solution[i], this->get_previous_time(i));
+      pde_operator->prescribe_initial_conditions(solution[i], this->get_previous_time(i));
+    }
   }
 }
 
