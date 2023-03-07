@@ -444,6 +444,10 @@ OperatorBase<dim, Number, n_components>::add_diagonal(VectorType & diagonal) con
         *matrix_free,
         diagonal,
         [&](auto & integrator) -> void {
+          if(cell_integral_needs_evaluation(*matrix_free, integrator.get_current_cell_index()) ==
+             false)
+            return;
+
           // TODO this line is currently needed as bugfix, but should be
           // removed because reinit is now done twice
           this->reinit_cell(integrator.get_current_cell_index());
@@ -616,6 +620,9 @@ OperatorBase<dim, Number, n_components>::apply_add_block_diagonal_elementwise(
   (void)problem_size;
 
   AssertThrow(is_dg, dealii::ExcMessage("Block Jacobi only implemented for DG!"));
+
+  if(cell_integral_needs_evaluation(*matrix_free, cell) == false)
+    return;
 
   this->reinit_cell(cell);
 
@@ -960,6 +967,20 @@ OperatorBase<dim, Number, n_components>::do_face_int_integral_cell_based(
 }
 
 template<int dim, typename Number, int n_components>
+bool
+OperatorBase<dim, Number, n_components>::cell_integral_needs_evaluation(
+  dealii::MatrixFree<dim, Number> const & matrix_free,
+  const unsigned int                      cell) const
+{
+  if(!(data.cell_evaluation_categories.size() > 0))
+    return true;
+
+  return (std::find(data.cell_evaluation_categories.begin(),
+                    data.cell_evaluation_categories.end(),
+                    matrix_free.get_cell_category(cell)) != data.cell_evaluation_categories.end());
+}
+
+template<int dim, typename Number, int n_components>
 void
 OperatorBase<dim, Number, n_components>::create_standard_basis(unsigned int     j,
                                                                IntegratorCell & integrator) const
@@ -1034,6 +1055,9 @@ OperatorBase<dim, Number, n_components>::cell_loop(
 
   for(auto cell = range.first; cell < range.second; ++cell)
   {
+    if(cell_integral_needs_evaluation(matrix_free, cell) == false)
+      continue;
+
     this->reinit_cell(cell);
 
     integrator->gather_evaluate(src, integrator_flags.cell_evaluate);
@@ -1192,7 +1216,6 @@ OperatorBase<dim, Number, n_components>::cell_loop_diagonal(
   VectorType const &                      src,
   Range const &                           range) const
 {
-  (void)matrix_free;
   (void)src;
 
   // create temporal array for local diagonal
@@ -1201,6 +1224,9 @@ OperatorBase<dim, Number, n_components>::cell_loop_diagonal(
 
   for(auto cell = range.first; cell < range.second; ++cell)
   {
+    if(cell_integral_needs_evaluation(matrix_free, cell) == false)
+      continue;
+
     this->reinit_cell(cell);
 
     for(unsigned int j = 0; j < dofs_per_cell; ++j)
@@ -1342,6 +1368,9 @@ OperatorBase<dim, Number, n_components>::cell_based_loop_diagonal(
 
   for(auto cell = range.first; cell < range.second; ++cell)
   {
+    if(cell_integral_needs_evaluation(matrix_free, cell) == false)
+      continue;
+
     this->reinit_cell(cell);
 
     for(unsigned int j = 0; j < dofs_per_cell; ++j)
@@ -1487,6 +1516,9 @@ OperatorBase<dim, Number, n_components>::cell_loop_block_diagonal(
 
   for(auto cell = range.first; cell < range.second; ++cell)
   {
+    if(cell_integral_needs_evaluation(matrix_free, cell) == false)
+      continue;
+
     unsigned int const n_filled_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
 
     this->reinit_cell(cell);
@@ -1615,6 +1647,9 @@ OperatorBase<dim, Number, n_components>::cell_based_loop_block_diagonal(
 
   for(auto cell = range.first; cell < range.second; ++cell)
   {
+    if(cell_integral_needs_evaluation(matrix_free, cell) == false)
+      continue;
+
     unsigned int const n_filled_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
 
     this->reinit_cell(cell);
@@ -1691,6 +1726,9 @@ OperatorBase<dim, Number, n_components>::cell_loop_calculate_system_matrix(
 
   for(auto cell = range.first; cell < range.second; ++cell)
   {
+    if(cell_integral_needs_evaluation(matrix_free, cell) == false)
+      continue;
+
     unsigned int const n_filled_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
 
     // create a temporal full matrix for the local element matrix of each ...

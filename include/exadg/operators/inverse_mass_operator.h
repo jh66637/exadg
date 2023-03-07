@@ -55,11 +55,14 @@ public:
   void
   initialize(dealii::MatrixFree<dim, Number> const & matrix_free_in,
              unsigned int const                      dof_index_in,
-             unsigned int const                      quad_index_in)
+             unsigned int const                      quad_index_in,
+             std::vector<unsigned int> const &       cell_evaluation_categories_in = {})
   {
     this->matrix_free = &matrix_free_in;
     dof_index         = dof_index_in;
     quad_index        = quad_index_in;
+
+    cell_evaluation_categories = cell_evaluation_categories_in;
   }
 
   void
@@ -82,6 +85,13 @@ private:
 
     for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
     {
+      // in case cell_evaluation_categories is set, check if cell needs to be evaluated
+      if(cell_evaluation_categories.size() > 0)
+        if(std::find(cell_evaluation_categories.begin(),
+                     cell_evaluation_categories.end(),
+                     matrix_free->get_cell_category(cell)) == cell_evaluation_categories.end())
+          continue;
+
       integrator.reinit(cell);
       integrator.read_dof_values(src, 0);
 
@@ -94,6 +104,8 @@ private:
   dealii::MatrixFree<dim, Number> const * matrix_free;
 
   unsigned int dof_index, quad_index;
+
+  std::vector<unsigned int> cell_evaluation_categories;
 };
 
 } // namespace ExaDG

@@ -83,6 +83,9 @@ struct OperatorBaseData
   Elementwise::Solver         solver_block_diagonal;
   Elementwise::Preconditioner preconditioner_block_diagonal;
   SolverData                  solver_data_block_diagonal;
+
+  // specify cell categories for which cell integrals are evaluated
+  std::vector<unsigned int> cell_evaluation_categories;
 };
 
 template<int dim, typename Number, int n_components = 1>
@@ -401,6 +404,11 @@ protected:
   mutable std::shared_ptr<ELEMENTWISE_SOLVER>         elementwise_solver;
 
 private:
+  // check if cell integgral needs to be evaluated
+  bool
+  cell_integral_needs_evaluation(dealii::MatrixFree<dim, Number> const & matrix_free,
+                                 const unsigned int                      cell) const;
+
   /*
    * Helper functions:
    *
