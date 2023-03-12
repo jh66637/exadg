@@ -26,10 +26,17 @@ namespace ExaDG
 {
 namespace FSI
 {
+enum class AccelerationMethod
+{
+  Aitken,
+  IQN_ILS,
+  IQN_IMVLS
+};
+
 struct Parameters
 {
   Parameters()
-    : method("Aitken"),
+    : method(AccelerationMethod::Aitken),
       abs_tol(1.e-12),
       rel_tol(1.e-3),
       omega_init(0.1),
@@ -46,9 +53,7 @@ struct Parameters
     prm.enter_subsection(subsection_name);
       prm.add_parameter("Method",
                         method,
-                        "Acceleration method.",
-                        dealii::Patterns::Selection("Aitken|IQN-ILS|IQN-IMVLS"),
-                        true);
+                        "Acceleration method.");
       prm.add_parameter("AbsTol",
                         abs_tol,
                         "Absolute solver tolerance.",
@@ -83,12 +88,12 @@ struct Parameters
     // clang-format on
   }
 
-  std::string  method;
-  double       abs_tol;
-  double       rel_tol;
-  double       omega_init;
-  unsigned int reused_time_steps;
-  unsigned int partitioned_iter_max;
+  AccelerationMethod method;
+  double             abs_tol;
+  double             rel_tol;
+  double             omega_init;
+  unsigned int       reused_time_steps;
+  unsigned int       partitioned_iter_max;
 
   // tolerance used to locate points at the fluid-structure interface
   double geometric_tolerance;

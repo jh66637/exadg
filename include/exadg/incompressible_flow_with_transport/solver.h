@@ -22,10 +22,8 @@
 #ifndef INCLUDE_EXADG_INCOMPRESSIBLE_FLOW_WITH_TRANSPORT_SOLVER_H_
 #define INCLUDE_EXADG_INCOMPRESSIBLE_FLOW_WITH_TRANSPORT_SOLVER_H_
 
-// deal.II
-#include <deal.II/base/parameter_handler.h>
-
 // ExaDG
+#include <exadg/utilities/parameter_handler.h>
 
 // driver
 #include <exadg/incompressible_flow_with_transport/driver.h>

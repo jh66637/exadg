@@ -27,10 +27,8 @@
 #  include <likwid.h>
 #endif
 
-// deal.II
-#include <deal.II/base/parameter_handler.h>
-
 // ExaDG
+#include <exadg/utilities/parameter_handler.h>
 #include "print_solver_results.h"
 
 namespace ExaDG

@@ -22,13 +22,11 @@
 #ifndef INCLUDE_EXADG_FLUID_STRUCTURE_INTERACTION_SOLVER_H_
 #define INCLUDE_EXADG_FLUID_STRUCTURE_INTERACTION_SOLVER_H_
 
-// deal.II
-#include <deal.II/base/parameter_handler.h>
-
 // ExaDG
 #include <exadg/fluid_structure_interaction/driver.h>
 #include <exadg/fluid_structure_interaction/user_interface/declare_get_application.h>
 #include <exadg/utilities/general_parameters.h>
+#include <exadg/utilities/parameter_handler.h>
 
 namespace ExaDG
 {

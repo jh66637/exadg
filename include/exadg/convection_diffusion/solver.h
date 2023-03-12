@@ -24,9 +24,9 @@
 
 // deal.II
 #include <deal.II/base/exceptions.h>
-#include <deal.II/base/parameter_handler.h>
 
 // ExaDG
+#include <exadg/utilities/parameter_handler.h>
 
 // driver
 #include <exadg/convection_diffusion/driver.h>

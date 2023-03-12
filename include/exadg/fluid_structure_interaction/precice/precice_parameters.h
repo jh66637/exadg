@@ -22,12 +22,9 @@
 #ifndef INCLUDE_EXADG_FLUID_STRUCTURE_INTERACTION_PRECICE_PRECICE_PARAMETERS_H_
 #define INCLUDE_EXADG_FLUID_STRUCTURE_INTERACTION_PRECICE_PRECICE_PARAMETERS_H_
 
-// deal.II
-#include <deal.II/base/parameter_handler.h>
-
 // ExaDG
 #include <exadg/fluid_structure_interaction/precice/coupling_base.h>
-#include <exadg/utilities/enum_utilities.h>
+#include <exadg/utilities/parameter_handler.h>
 
 namespace ExaDG
 {

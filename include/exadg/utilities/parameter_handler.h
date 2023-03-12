@@ -2,7 +2,7 @@
  *
  *  ExaDG - High-Order Discontinuous Galerkin for the Exa-Scale
  *
- *  Copyright (C) 2021 by the ExaDG authors
+ *  Copyright (C) 2022 by the ExaDG authors
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,28 +19,11 @@
  *  ______________________________________________________________________
  */
 
-#ifndef EXADG_GRID_GRID_PARAMETERS_H
-#define EXADG_GRID_GRID_PARAMETERS_H
+#ifndef INCLUDE_EXADG_UTILITIES_PARAMETER_HANDLER_H_
+#define INCLUDE_EXADG_UTILITIES_PARAMETER_HANDLER_H_
 
-#include <exadg/utilities/parameter_handler.h>
+#include <deal.II/base/parameter_handler.h>
 
-namespace ExaDG
-{
-struct GridParameters
-{
-  void
-  add_parameters(dealii::ParameterHandler & prm, std::string const & subsection_name = "Grid")
-  {
-    // clang-format off
-    prm.enter_subsection(subsection_name);
-      prm.add_parameter("FileName", file_name, "External input grid file.");
-    prm.leave_subsection();
-    // clang-format on
-  }
+#include <exadg/utilities/enum_patterns.h>
 
-  std::string file_name;
-};
-
-} // namespace ExaDG
-
-#endif // EXADG_GRID_GRID_PARAMETERS_H
+#endif /*INCLUDE_EXADG_UTILITIES_PARAMETER_HANDLER_H_*/

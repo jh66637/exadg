@@ -22,8 +22,7 @@
 #ifndef INCLUDE_EXADG_POSTPROCESSOR_OUTPUT_PARAMETERS_H_
 #define INCLUDE_EXADG_POSTPROCESSOR_OUTPUT_PARAMETERS_H_
 
-// deal.II
-#include <deal.II/base/parameter_handler.h>
+#include <exadg/utilities/parameter_handler.h>
 
 namespace ExaDG
 {

@@ -22,10 +22,8 @@
 #ifndef INCLUDE_EXADG_INCOMPRESSIBLE_NAVIER_STOKES_SOLVER_PRECURSOR_H_
 #define INCLUDE_EXADG_INCOMPRESSIBLE_NAVIER_STOKES_SOLVER_PRECURSOR_H_
 
-// deal.II
-#include <deal.II/base/parameter_handler.h>
-
 // ExaDG
+#include <exadg/utilities/parameter_handler.h>
 
 // driver
 #include <exadg/incompressible_navier_stokes/driver_precursor.h>

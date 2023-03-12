@@ -49,24 +49,22 @@ get_dofs_per_element(std::string const & input_file,
                      unsigned int const  dim,
                      unsigned int const  degree)
 {
-  std::string spatial_discretization = "DG";
+  SpatialDiscretization spatial_discretization = SpatialDiscretization::Undefined;
 
   dealii::ParameterHandler prm;
   prm.enter_subsection("Discretization");
   prm.add_parameter("SpatialDiscretization",
                     spatial_discretization,
-                    "Spatial discretization (CG vs. DG).",
-                    dealii::Patterns::Selection("CG|DG"),
-                    true);
+                    "Spatial discretization (CG vs. DG).");
   prm.leave_subsection();
 
   prm.parse_input(input_file, "", true, true);
 
   unsigned int dofs_per_element = 1;
 
-  if(spatial_discretization == "CG")
+  if(spatial_discretization == SpatialDiscretization::CG)
     dofs_per_element = dealii::Utilities::pow(degree, dim);
-  else if(spatial_discretization == "DG")
+  else if(spatial_discretization == SpatialDiscretization::DG)
     dofs_per_element = dealii::Utilities::pow(degree + 1, dim);
   else
     AssertThrow(false, dealii::ExcMessage("Not implemented."));
