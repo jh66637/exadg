@@ -38,12 +38,15 @@ enum class BoundaryType
   Undefined,
   Dirichlet,
   DirichletCached,
-  Neumann
+  Neumann,
+  Overset
 };
 
 template<int rank, int dim>
 struct BoundaryDescriptor
 {
+  std::map<dealii::types::boundary_id, dealii::types::boundary_id> overset_boundaries;
+
   std::map<dealii::types::boundary_id, std::shared_ptr<dealii::Function<dim>>> dirichlet_bc;
 
   // dealii::ComponentMask is only used for continuous elements, and is ignored for DG
@@ -65,6 +68,8 @@ struct BoundaryDescriptor
       return BoundaryType::DirichletCached;
     else if(this->neumann_bc.find(boundary_id) != this->neumann_bc.end())
       return BoundaryType::Neumann;
+    else if(this->overset_boundaries.find(boundary_id) != this->overset_boundaries.end())
+      return BoundaryType::Overset;
 
     AssertThrow(false, dealii::ExcMessage("Boundary type of face is invalid or not implemented."));
 
@@ -88,6 +93,9 @@ struct BoundaryDescriptor
       counter++;
 
     if(periodic_boundary_ids.find(boundary_id) != periodic_boundary_ids.end())
+      counter++;
+
+    if(overset_boundaries.find(boundary_id) != overset_boundaries.end())
       counter++;
 
     AssertThrow(counter == 1,
