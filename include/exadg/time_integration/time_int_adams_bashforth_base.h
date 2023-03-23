@@ -19,42 +19,40 @@
  *  ______________________________________________________________________
  */
 
-#ifndef INCLUDE_EXADG_TIME_INTEGRATION_TIME_INT_BDF_BASE_H_
-#define INCLUDE_EXADG_TIME_INTEGRATION_TIME_INT_BDF_BASE_H_
+#ifndef INCLUDE_EXADG_TIME_INTEGRATION_TIME_INT_ADAMS_BASHFORTH_BASE_H_
+#define INCLUDE_EXADG_TIME_INTEGRATION_TIME_INT_ADAMS_BASHFORTH_BASE_H_
 
 // ExaDG
+#include <exadg/time_integration/adams_bashforth_time_integration.h>
 #include <exadg/time_integration/bdf_time_integration.h>
-#include <exadg/time_integration/extrapolation_scheme.h>
 #include <exadg/time_integration/time_int_multistep_base.h>
 
 namespace ExaDG
 {
-class TimeIntBDFBase : public TimeIntMultistepBase
+class TimeIntAdamsBashforthBase : public TimeIntMultistepBase
 {
 public:
-  TimeIntBDFBase(double const        start_time_,
-                 double const        end_time_,
-                 unsigned int const  max_number_of_time_steps_,
-                 unsigned const      order_,
-                 bool const          start_with_low_order_,
-                 bool const          adaptive_time_stepping_,
-                 RestartData const & restart_data_,
-                 MPI_Comm const &    mpi_comm_,
-                 bool const          is_test_);
+  TimeIntAdamsBashforthBase(double const        start_time_,
+                            double const        end_time_,
+                            unsigned int const  max_number_of_time_steps_,
+                            unsigned const      order_,
+                            bool const          start_with_low_order_,
+                            bool const          adaptive_time_stepping_,
+                            RestartData const & restart_data_,
+                            MPI_Comm const &    mpi_comm_,
+                            bool const          is_test_);
 
-  virtual ~TimeIntBDFBase() = default;
-
-  double
-  get_scaling_factor_time_derivative_term() const;
+  virtual ~TimeIntAdamsBashforthBase() = default;
 
 protected:
   void
   update_time_integrator_constants() override;
 
+  AdamsBashforthTimeIntegratorConstants ab;
+  // needed for ALE
   BDFTimeIntegratorConstants bdf;
-  ExtrapolationConstants     extra;
 };
 
 } // namespace ExaDG
 
-#endif /* INCLUDE_EXADG_TIME_INTEGRATION_TIME_INT_BDF_BASE_H_ */
+#endif /* INCLUDE_EXADG_TIME_INTEGRATION_TIME_INT_BASHFORTH_ADAMS_BASE_H_ */

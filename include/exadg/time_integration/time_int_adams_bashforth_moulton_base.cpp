@@ -18,19 +18,20 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *  ______________________________________________________________________
  */
-#include <exadg/time_integration/time_int_bdf_base.h>
+#include <exadg/time_integration/time_int_adams_bashforth_moulton_base.h>
 
 namespace ExaDG
 {
-TimeIntBDFBase::TimeIntBDFBase(double const        start_time_,
-                               double const        end_time_,
-                               unsigned int const  max_number_of_time_steps_,
-                               unsigned const      order_,
-                               bool const          start_with_low_order_,
-                               bool const          adaptive_time_stepping_,
-                               RestartData const & restart_data_,
-                               MPI_Comm const &    mpi_comm_,
-                               bool const          is_test_)
+TimeIntAdamsBashforthMoultonBase::TimeIntAdamsBashforthMoultonBase(
+  double const        start_time_,
+  double const        end_time_,
+  unsigned int const  max_number_of_time_steps_,
+  unsigned const      order_,
+  bool const          start_with_low_order_,
+  bool const          adaptive_time_stepping_,
+  RestartData const & restart_data_,
+  MPI_Comm const &    mpi_comm_,
+  bool const          is_test_)
   : TimeIntMultistepBase(start_time_,
                          end_time_,
                          max_number_of_time_steps_,
@@ -40,22 +41,20 @@ TimeIntBDFBase::TimeIntBDFBase(double const        start_time_,
                          restart_data_,
                          mpi_comm_,
                          is_test_),
-    bdf(order_, start_with_low_order_),
-    extra(order_, start_with_low_order_)
+    // Adams-Bashforth coefficients only need order J-1 to obtain a scheme of order J
+    ab(order_ - 1, start_with_low_order_),
+    am(order_, start_with_low_order_),
+    bdf(order_, start_with_low_order_)
 {
 }
 
-double
-TimeIntBDFBase::get_scaling_factor_time_derivative_term() const
-{
-  return bdf.get_gamma0() / this->get_time_step_size();
-}
 
 void
-TimeIntBDFBase::update_time_integrator_constants()
+TimeIntAdamsBashforthMoultonBase::update_time_integrator_constants()
 {
+  ab.update(this->time_step_number - 1, this->time_steps, this->adaptive_time_stepping);
+  am.update(this->time_step_number, this->time_steps, this->adaptive_time_stepping);
   bdf.update(this->time_step_number, this->time_steps, this->adaptive_time_stepping);
-  extra.update(this->time_step_number, this->time_steps, this->adaptive_time_stepping);
 }
 
 } // namespace ExaDG
