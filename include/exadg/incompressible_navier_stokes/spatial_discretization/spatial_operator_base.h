@@ -280,6 +280,13 @@ public:
   set_temperature(VectorType const & temperature);
 
   /*
+   * Sets a body force term that has already been integrated. The motivation is that in the
+   * case of volume coupling we might already have this integrated term and just have to add it.
+   */
+  void
+  set_integrated_body_force_term(VectorType const & src);
+
+  /*
    * Computation of derived quantities which is needed for postprocessing but some of them are also
    * needed, e.g., for special splitting-type time integration schemes.
    */

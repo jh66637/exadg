@@ -149,6 +149,9 @@ public:
   void
   set_temperature(VectorType const & T);
 
+  void
+  set_integrated_body_force_term_ptr(VectorType const & src);
+
 private:
   void
   do_cell_integral(Integrator & integrator, IntegratorScalar & integrator_temperature) const;
@@ -168,6 +171,8 @@ private:
   Operators::RHSKernel<dim, Number> kernel;
 
   VectorType const * temperature;
+
+  VectorType const * integrated_body_force_term;
 };
 
 } // namespace IncNS

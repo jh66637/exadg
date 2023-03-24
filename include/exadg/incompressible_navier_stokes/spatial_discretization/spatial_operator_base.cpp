@@ -1162,6 +1162,13 @@ SpatialOperatorBase<dim, Number>::set_temperature(VectorType const & temperature
 
 template<int dim, typename Number>
 void
+SpatialOperatorBase<dim, Number>::set_integrated_body_force_term(VectorType const & src)
+{
+  this->rhs_operator.set_integrated_body_force_term_ptr(src);
+}
+
+template<int dim, typename Number>
+void
 SpatialOperatorBase<dim, Number>::compute_vorticity(VectorType & dst, VectorType const & src) const
 {
   vorticity_calculator.compute_vorticity(dst, src);

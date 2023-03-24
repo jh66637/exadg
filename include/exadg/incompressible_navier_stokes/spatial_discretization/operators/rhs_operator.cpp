@@ -35,6 +35,9 @@ RHSOperator<dim, Number>::evaluate(VectorType & dst, Number const evaluation_tim
 
   VectorType src;
   matrix_free->cell_loop(&This::cell_loop, this, dst, src, true /*zero_dst_vector = true*/);
+
+  if(integrated_body_force_term)
+    dst += *integrated_body_force_term;
 }
 
 template<int dim, typename Number>
@@ -45,6 +48,9 @@ RHSOperator<dim, Number>::evaluate_add(VectorType & dst, Number const evaluation
 
   VectorType src;
   matrix_free->cell_loop(&This::cell_loop, this, dst, src, false /*zero_dst_vector = false*/);
+
+  if(integrated_body_force_term)
+    dst += *integrated_body_force_term;
 }
 
 template<int dim, typename Number>
@@ -53,6 +59,14 @@ RHSOperator<dim, Number>::set_temperature(VectorType const & T)
 {
   this->temperature = &T;
 }
+
+template<int dim, typename Number>
+void
+RHSOperator<dim, Number>::set_integrated_body_force_term_ptr(VectorType const & src)
+{
+  this->integrated_body_force_term = &src;
+}
+
 
 template<int dim, typename Number>
 void
