@@ -51,6 +51,12 @@ TimeIntBDFBase::get_scaling_factor_time_derivative_term() const
   return bdf.get_gamma0() / this->get_time_step_size();
 }
 
+BDFTimeIntegratorConstants const &
+TimeIntBDFBase::get_bdf_constants() const
+{
+  return bdf;
+}
+
 void
 TimeIntBDFBase::update_time_integrator_constants()
 {

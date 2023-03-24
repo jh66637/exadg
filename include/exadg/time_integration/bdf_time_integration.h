@@ -23,6 +23,7 @@
 #define INCLUDE_EXADG_TIME_INTEGRATION_BDF_TIME_INTEGRATION_H_
 
 // C/C++
+#include <algorithm>
 #include <vector>
 
 // deal.II
@@ -96,16 +97,35 @@ private:
  */
 template<typename VectorType>
 void
+compute_bdf_time_derivative(VectorType &                            derivative,
+                            VectorType const &                      solution_np,
+                            std::vector<VectorType const *> const & previous_solutions,
+                            BDFTimeIntegratorConstants const &      bdf,
+                            double const &                          time_step_size)
+{
+  derivative.equ(bdf.get_gamma0() / time_step_size, solution_np);
+
+  for(unsigned int i = 0; i < previous_solutions.size(); ++i)
+    derivative.add(-bdf.get_alpha(i) / time_step_size, *previous_solutions[i]);
+}
+
+template<typename VectorType>
+void
 compute_bdf_time_derivative(VectorType &                       derivative,
                             VectorType const &                 solution_np,
                             std::vector<VectorType> const &    previous_solutions,
                             BDFTimeIntegratorConstants const & bdf,
                             double const &                     time_step_size)
 {
-  derivative.equ(bdf.get_gamma0() / time_step_size, solution_np);
+  std::vector<VectorType const *> previous_solutions_ptrs(previous_solutions.size());
 
-  for(unsigned int i = 0; i < previous_solutions.size(); ++i)
-    derivative.add(-bdf.get_alpha(i) / time_step_size, previous_solutions[i]);
+  std::transform(previous_solutions.begin(),
+                 previous_solutions.end(),
+                 previous_solutions_ptrs.begin(),
+                 [](VectorType const & t) { return &t; });
+
+  compute_bdf_time_derivative(
+    derivative, solution_np, previous_solutions_ptrs, bdf, time_step_size);
 }
 
 } // namespace ExaDG

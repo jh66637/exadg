@@ -47,6 +47,9 @@ public:
   double
   get_scaling_factor_time_derivative_term() const;
 
+  BDFTimeIntegratorConstants const &
+  get_bdf_constants() const;
+
 protected:
   void
   update_time_integrator_constants() override;

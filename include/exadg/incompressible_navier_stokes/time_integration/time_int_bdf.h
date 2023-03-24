@@ -77,6 +77,14 @@ public:
                               std::vector<double> &             times) const;
 
   void
+  get_pressures_and_times(std::vector<VectorType const *> & pressures,
+                          std::vector<double> &             times) const;
+
+  void
+  get_pressures_and_times_np(std::vector<VectorType const *> & pressures,
+                             std::vector<double> &             times) const;
+
+  void
   ale_update() final;
 
   void

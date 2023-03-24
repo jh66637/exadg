@@ -447,6 +447,79 @@ TimeIntBDF<dim, Number>::get_velocities_and_times_np(std::vector<VectorType cons
 
 template<int dim, typename Number>
 void
+TimeIntBDF<dim, Number>::get_pressures_and_times(std::vector<VectorType const *> & pressures,
+                                                 std::vector<double> &             times) const
+{
+  /*
+   * the convective term is nonlinear, so we have to initialize the transport velocity
+   * and the discrete time instants that can be used for interpolation
+   *
+   *   time t
+   *  -------->   t_{n-2}   t_{n-1}   t_{n}     t_{n+1}
+   *  _______________|_________|________|___________|___________\
+   *                 |         |        |           |           /
+   *               sol[2]    sol[1]   sol[0]
+   *             times[2]  times[1]  times[0]
+   */
+  unsigned int current_order = this->order;
+  if(this->time_step_number <= this->order && this->param.start_with_low_order == true)
+  {
+    current_order = this->time_step_number;
+  }
+
+  AssertThrow(current_order > 0 && current_order <= this->order,
+              dealii::ExcMessage("Invalid parameter current_order"));
+
+  pressures.resize(current_order);
+  times.resize(current_order);
+
+  for(unsigned int i = 0; i < current_order; ++i)
+  {
+    pressures.at(i) = &get_pressure(i);
+    times.at(i)     = this->get_previous_time(i);
+  }
+}
+
+template<int dim, typename Number>
+void
+TimeIntBDF<dim, Number>::get_pressures_and_times_np(std::vector<VectorType const *> & pressures,
+                                                    std::vector<double> &             times) const
+{
+  /*
+   * the convective term is nonlinear, so we have to initialize the transport velocity
+   * and the discrete time instants that can be used for interpolation
+   *
+   *   time t
+   *  -------->     t_{n-2}   t_{n-1}   t_{n}     t_{n+1}
+   *  _______________|_________|________|___________|___________\
+   *                 |         |        |           |           /
+   *               sol[3]   sol[2]    sol[1]     sol[0]
+   *              times[3] times[2]  times[1]   times[0]
+   */
+  unsigned int current_order = this->order;
+  if(this->time_step_number <= this->order && this->param.start_with_low_order == true)
+  {
+    current_order = this->time_step_number;
+  }
+
+  AssertThrow(current_order > 0 && current_order <= this->order,
+              dealii::ExcMessage("Invalid parameter current_order"));
+
+  pressures.resize(current_order + 1);
+  times.resize(current_order + 1);
+
+  pressures.at(0) = &get_pressure_np();
+  times.at(0)     = this->get_next_time();
+  for(unsigned int i = 0; i < current_order; ++i)
+  {
+    pressures.at(i + 1) = &get_pressure(i);
+    times.at(i + 1)     = this->get_previous_time(i);
+  }
+}
+
+
+template<int dim, typename Number>
+void
 TimeIntBDF<dim, Number>::postprocessing() const
 {
   dealii::Timer timer;
