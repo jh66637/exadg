@@ -22,6 +22,9 @@
 #ifndef INCLUDE_EXADG_TIME_INTEGRATION_TIME_INT_BDF_BASE_H_
 #define INCLUDE_EXADG_TIME_INTEGRATION_TIME_INT_BDF_BASE_H_
 
+// C++
+#include <vector>
+
 // deal.II
 #include <deal.II/lac/la_parallel_vector.h>
 
@@ -100,6 +103,49 @@ public:
    */
   double
   get_previous_time(int const i /* t_{n-i} */) const;
+
+  /*
+   * Get current order of time integrator
+   */
+  unsigned int
+  get_current_order() const;
+
+  /*
+   * Fill a vector at previous times given a lambda.
+   */
+  template<typename Iterator, typename Lambda>
+  void
+  fill_at_previous_times(Iterator const & begin, Iterator const & end, Lambda const & f) const
+  {
+    /*
+     *
+     *   time t
+     *  -------->   t_{n-2}   t_{n-1}   t_{n}     t_{n+1}
+     *  _______________|_________|________|___________|___________\
+     *                 |         |        |           |           /
+     *                end       ...     begin
+     */
+
+    AssertThrow(std::distance(begin, end) <= get_current_order(),
+                dealii::ExcMessage("Iterator range exceeds available time steps."));
+
+    unsigned int i = 0;
+    for(auto it = begin; it != end; ++it, ++i)
+      *it = f(i);
+  }
+
+  /*
+   * Fill a vector with previous times.
+   */
+  void
+  fill_with_previous_times(std::vector<double>::iterator const & begin,
+                           std::vector<double>::iterator const & end) const
+  {
+    fill_at_previous_times(begin, end, [&](auto const i) { return get_previous_time(i); });
+  }
+
+  BDFTimeIntegratorConstants const &
+  get_bdf_constants() const;
 
 protected:
   /*

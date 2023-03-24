@@ -147,6 +147,22 @@ TimeIntBDFBase<Number>::get_previous_time(int const i /* t_{n-i} */) const
 }
 
 template<typename Number>
+unsigned int
+TimeIntBDFBase<Number>::get_current_order() const
+{
+  if(start_with_low_order == true && time_step_number <= order)
+    return this->time_step_number;
+  return order;
+}
+
+template<typename Number>
+BDFTimeIntegratorConstants const &
+TimeIntBDFBase<Number>::get_bdf_constants() const
+{
+  return bdf;
+}
+
+template<typename Number>
 double
 TimeIntBDFBase<Number>::get_time_step_size() const
 {

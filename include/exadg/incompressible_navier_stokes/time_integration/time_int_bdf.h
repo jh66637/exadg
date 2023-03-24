@@ -81,6 +81,14 @@ public:
                               std::vector<double> &             times) const;
 
   void
+  get_pressures_and_times(std::vector<VectorType const *> & pressures,
+                          std::vector<double> &             times) const;
+
+  void
+  get_pressures_and_times_np(std::vector<VectorType const *> & pressures,
+                             std::vector<double> &             times) const;
+
+  void
   ale_update();
 
   void
@@ -132,6 +140,39 @@ protected:
   std::shared_ptr<HelpersALE<Number> const> helpers_ale;
 
 private:
+  template<typename Lambda>
+  void
+  get_quantity_and_times(std::vector<VectorType const *> & quantities,
+                         std::vector<double> &             times,
+                         Lambda const &                    get_quantity) const
+  {
+    unsigned int const current_order = this->get_current_order();
+
+    quantities.resize(current_order);
+    this->fill_at_previous_times(quantities.begin(), quantities.end(), get_quantity);
+
+    times.resize(current_order);
+    this->fill_with_previous_times(times.begin(), times.end());
+  }
+
+  template<typename Lambda1, typename Lambda2>
+  void
+  get_quantities_and_times_np(std::vector<VectorType const *> & quantities,
+                              std::vector<double> &             times,
+                              Lambda1 const &                   get_quantity,
+                              Lambda2 const &                   get_quantity_np) const
+  {
+    unsigned int const current_order = this->get_current_order();
+
+    quantities.resize(current_order + 1);
+    quantities[0] = get_quantity_np();
+    this->fill_at_previous_times(quantities.begin() + 1, quantities.end(), get_quantity);
+
+    times.resize(current_order + 1);
+    times[0] = this->get_next_time();
+    this->fill_with_previous_times(times.begin() + 1, times.end());
+  }
+
   void
   initialize_vec_convective_term();
 
