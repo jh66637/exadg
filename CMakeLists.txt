@@ -169,6 +169,7 @@ SET(TARGET_SRC
      include/exadg/incompressible_navier_stokes/postprocessor/mean_velocity_calculator.cpp
      include/exadg/incompressible_navier_stokes/postprocessor/flow_rate_calculator.cpp
      include/exadg/incompressible_navier_stokes/postprocessor/postprocessor.cpp
+     include/exadg/incompressible_navier_stokes/postprocessor/pointwise_output_generator.cpp
      include/exadg/incompressible_navier_stokes/driver.cpp
      include/exadg/incompressible_navier_stokes/driver_precursor.cpp
      # incompressible flow with transport

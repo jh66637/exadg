@@ -59,6 +59,7 @@ struct PointwiseOutputDataBase
   std::string filename;
 
   bool update_points_before_evaluation;
+  bool restarted_simulation;
 
   std::vector<dealii::Point<dim>> evaluation_points;
 
@@ -82,7 +83,9 @@ public:
     if(first_evaluation)
     {
       first_evaluation = false;
-      AssertThrow(time_control.get_counter() == 0,
+      // checking time_control.get_counter() == 0 is not enough since a counter can also be nonzero
+      // if the simulation time is reset (e.g. in the case of a precursor)
+      AssertThrow(!pointwise_output_data.restarted_simulation,
                   dealii::ExcMessage(
                     "Only implemented in the case that the simulation is not restarted"));
     }

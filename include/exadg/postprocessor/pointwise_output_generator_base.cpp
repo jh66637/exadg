@@ -27,7 +27,10 @@ namespace ExaDG
 {
 template<int dim>
 PointwiseOutputDataBase<dim>::PointwiseOutputDataBase()
-  : directory("output/"), filename("name"), update_points_before_evaluation(false)
+  : directory("output/"),
+    filename("name"),
+    update_points_before_evaluation(false),
+    restarted_simulation(false)
 {
 }
 
