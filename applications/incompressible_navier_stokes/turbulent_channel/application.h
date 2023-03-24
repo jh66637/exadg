@@ -485,6 +485,26 @@ private:
     pp_data.mass_data.filename               = this->output_parameters.filename;
     pp_data.mass_data.reference_length_scale = 1.0;
 
+    // pointwise output
+    pp_data.pointwise_output_data.time_control_data.is_active  = true;
+    pp_data.pointwise_output_data.time_control_data.start_time = START_TIME;
+    pp_data.pointwise_output_data.time_control_data.end_time   = END_TIME;
+    pp_data.pointwise_output_data.time_control_data.trigger_interval =
+      (END_TIME - START_TIME) / 1000.0;
+    pp_data.pointwise_output_data.directory =
+      this->output_parameters.directory + "pointwise_output/";
+    pp_data.pointwise_output_data.filename       = this->output_parameters.filename;
+    pp_data.pointwise_output_data.write_velocity = true;
+    pp_data.pointwise_output_data.write_pressure = true;
+    pp_data.pointwise_output_data.update_points_before_evaluation = false;
+    if constexpr(dim == 2)
+      pp_data.pointwise_output_data.evaluation_points.emplace_back(
+        dealii::Point<dim>{0.5 * DIMENSIONS_X1, 0.5 * DIMENSIONS_X2});
+    if constexpr(dim == 3)
+      pp_data.pointwise_output_data.evaluation_points.emplace_back(
+        dealii::Point<dim>{0.5 * DIMENSIONS_X1, 0.5 * DIMENSIONS_X2, 0.0});
+
+
     MyPostProcessorData<dim> pp_data_turb_ch;
     pp_data_turb_ch.pp_data = pp_data;
 
@@ -503,6 +523,7 @@ private:
     pp_data_turb_ch.turb_ch_data.viscosity           = VISCOSITY;
     pp_data_turb_ch.turb_ch_data.directory           = this->output_parameters.directory;
     pp_data_turb_ch.turb_ch_data.filename            = this->output_parameters.filename;
+
 
     std::shared_ptr<PostProcessorBase<dim, Number>> pp;
     pp.reset(new MyPostProcessor<dim, Number>(pp_data_turb_ch, this->mpi_comm));

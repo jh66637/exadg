@@ -167,7 +167,6 @@ SET(TARGET_SRC
      include/exadg/compressible_navier_stokes/spatial_discretization/interface.cpp
      include/exadg/compressible_navier_stokes/spatial_discretization/operator.cpp
      include/exadg/compressible_navier_stokes/postprocessor/output_generator.cpp
-     include/exadg/compressible_navier_stokes/postprocessor/pointwise_output_generator.cpp
      include/exadg/compressible_navier_stokes/postprocessor/postprocessor.cpp
      include/exadg/compressible_navier_stokes/driver.cpp
      # elasticity

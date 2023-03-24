@@ -87,7 +87,7 @@ private:
   dealii::SmartPointer<Operator<dim, Number> const> navier_stokes_operator;
 
   OutputGenerator<dim, Number>                 output_generator;
-  PointwiseOutputGenerator<dim, Number>        pointwise_output_generator;
+  PointwiseOutputGenerator<dim, VectorType>    pointwise_output_generator;
   ErrorCalculator<dim, Number>                 error_calculator;
   LiftAndDragCalculator<dim, Number>           lift_and_drag_calculator;
   PressureDifferenceCalculator<dim, Number>    pressure_difference_calculator;
