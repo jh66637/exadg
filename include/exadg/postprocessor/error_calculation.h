@@ -41,6 +41,7 @@ struct ErrorCalculationData
     : calculate_relative_errors(true),
       calculate_H1_seminorm_error(false),
       write_errors_to_file(false),
+      weight(nullptr),
       directory("output/"),
       name("all fields")
   {
@@ -77,6 +78,10 @@ struct ErrorCalculationData
 
   // write errors to file?
   bool write_errors_to_file;
+
+  // If set a spatially weighted norm is computed. This can be used to compute the error only over
+  // parts of the domain
+  std::shared_ptr<dealii::Function<dim>> weight;
 
   // directory and name (used as filename and as identifier for screen output)
   std::string directory;
