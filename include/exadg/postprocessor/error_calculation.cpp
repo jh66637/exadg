@@ -41,6 +41,7 @@ calculate_error(MPI_Comm const &                             mpi_comm,
                 std::shared_ptr<dealii::Function<dim>> const analytical_solution,
                 double const &                               time,
                 dealii::VectorTools::NormType const &        norm_type,
+                dealii::Function<dim> const *                weight,
                 unsigned int const                           additional_quadrature_points = 3)
 {
   double error = 1.0;
@@ -59,7 +60,8 @@ calculate_error(MPI_Comm const &                             mpi_comm,
                                             error_norm_per_cell,
                                             dealii::QGauss<dim>(dof_handler.get_fe().degree +
                                                                 additional_quadrature_points),
-                                            norm_type);
+                                            norm_type,
+                                            weight);
 
   double error_norm =
     std::sqrt(dealii::Utilities::MPI::sum(error_norm_per_cell.norm_sqr(), mpi_comm));
@@ -79,7 +81,8 @@ calculate_error(MPI_Comm const &                             mpi_comm,
                                               solution_norm_per_cell,
                                               dealii::QGauss<dim>(dof_handler.get_fe().degree +
                                                                   additional_quadrature_points),
-                                              norm_type);
+                                              norm_type,
+                                              weight);
 
     double solution_norm =
       std::sqrt(dealii::Utilities::MPI::sum(solution_norm_per_cell.norm_sqr(), mpi_comm));
@@ -161,7 +164,8 @@ ErrorCalculator<dim, Number>::do_evaluate(VectorType const & solution_vector, do
                                             solution_vector,
                                             error_data.analytical_solution,
                                             time,
-                                            dealii::VectorTools::L2_norm);
+                                            dealii::VectorTools::L2_norm,
+                                            error_data.weight.get());
 
   dealii::ConditionalOStream pcout(std::cout,
                                    dealii::Utilities::MPI::this_mpi_process(mpi_comm) == 0);
@@ -205,7 +209,8 @@ ErrorCalculator<dim, Number>::do_evaluate(VectorType const & solution_vector, do
                                               solution_vector,
                                               error_data.analytical_solution,
                                               time,
-                                              dealii::VectorTools::H1_seminorm);
+                                              dealii::VectorTools::H1_seminorm,
+                                              error_data.weight.get());
 
     dealii::ConditionalOStream pcout(std::cout,
                                      dealii::Utilities::MPI::this_mpi_process(mpi_comm) == 0);
