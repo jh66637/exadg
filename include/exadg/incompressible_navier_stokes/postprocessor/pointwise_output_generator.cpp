@@ -59,8 +59,8 @@ PointwiseOutputGenerator<dim, Number>::PointwiseOutputGenerator(MPI_Comm const &
 template<int dim, typename Number>
 void
 PointwiseOutputGenerator<dim, Number>::setup(
-  dealii::DoFHandler<dim> const &  dof_handler_pressure_in,
   dealii::DoFHandler<dim> const &  dof_handler_velocity_in,
+  dealii::DoFHandler<dim> const &  dof_handler_pressure_in,
   dealii::Mapping<dim> const &     mapping_in,
   PointwiseOutputData<dim> const & pointwise_output_data_in)
 {

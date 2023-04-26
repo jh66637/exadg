@@ -69,8 +69,8 @@ public:
   PointwiseOutputGenerator(MPI_Comm const & comm);
 
   void
-  setup(dealii::DoFHandler<dim> const &  dof_handler_pressure_in,
-        dealii::DoFHandler<dim> const &  dof_handler_velocity_in,
+  setup(dealii::DoFHandler<dim> const &  dof_handler_velocity_in,
+        dealii::DoFHandler<dim> const &  dof_handler_pressure_in,
         dealii::Mapping<dim> const &     mapping_in,
         PointwiseOutputData<dim> const & pointwise_output_data_in);
 
