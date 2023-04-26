@@ -12,7 +12,8 @@ namespace ExaDG
 namespace IncNS
 {
 template<int dim, typename Number>
-RHSOperator<dim, Number>::RHSOperator() : matrix_free(nullptr), time(0.0), temperature(nullptr)
+RHSOperator<dim, Number>::RHSOperator()
+  : matrix_free(nullptr), time(0.0), temperature(nullptr), integrated_body_force_term(nullptr)
 {
 }
 
