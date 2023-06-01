@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['update_0',['update',['../classExaDG_1_1GridMotionElasticity.html#a907ae6666decbdcaf5e26ab25fa38fcb',1,'ExaDG::GridMotionElasticity::update()'],['../classExaDG_1_1GridMotionFunction.html#a0faf44888e91d38ef47a66d4d07737b1',1,'ExaDG::GridMotionFunction::update()'],['../classExaDG_1_1GridMotionInterface.html#aad4132e7fd4f7897015b6ae6a9e7d9a7',1,'ExaDG::GridMotionInterface::update()'],['../classExaDG_1_1GridMotionPoisson.html#a9d0c457bb394d7aa920831a8f3ffd091',1,'ExaDG::GridMotionPoisson::update()']]],
-  ['updatedata_1',['UpdateData',['../structExaDG_1_1Newton_1_1UpdateData.html',1,'ExaDG::Newton']]]
+  ['update_0',['update',['../classExaDG_1_1DeformedMappingBase.html#aeb01c0b585f4e754650f62f124d23864',1,'ExaDG::DeformedMappingBase::update()'],['../classExaDG_1_1DeformedMappingFunction.html#a544907f4f6e7e6a034eefe8bd0c3a7d3',1,'ExaDG::DeformedMappingFunction::update()'],['../classExaDG_1_1Poisson_1_1DeformedMapping.html#a981a179b56236b8d45da5bd3d9eca32c',1,'ExaDG::Poisson::DeformedMapping::update()'],['../classExaDG_1_1Structure_1_1DeformedMapping.html#a7c7d6ac13e31296a7b00d0000a36076f',1,'ExaDG::Structure::DeformedMapping::update()']]],
+  ['update_5fpde_5foperator_5fafter_5fgrid_5fmotion_1',['update_pde_operator_after_grid_motion',['../classExaDG_1_1HelpersALE.html#a9978fd3202aa07445be088688b7a704a',1,'ExaDG::HelpersALE']]],
+  ['updatedata_2',['UpdateData',['../structExaDG_1_1Newton_1_1UpdateData.html',1,'ExaDG::Newton']]]
 ];
