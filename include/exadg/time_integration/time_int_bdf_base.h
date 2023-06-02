@@ -72,6 +72,12 @@ public:
   ale_update();
 
   /*
+   * Print iterations
+   */
+  virtual void
+  print_iterations() const = 0;
+
+  /*
    * Get the time step size.
    */
   double

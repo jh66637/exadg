@@ -69,7 +69,7 @@ public:
   ale_update() final;
 
   void
-  print_iterations() const;
+  print_iterations() const final;
 
 private:
   void

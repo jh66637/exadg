@@ -94,9 +94,6 @@ public:
   void
   advance_one_timestep_partitioned_solve(bool const use_extrapolation);
 
-  virtual void
-  print_iterations() const = 0;
-
   bool
   print_solver_info() const final;
 
