@@ -66,7 +66,7 @@ public:
   extrapolate_solution(VectorType & vector);
 
   void
-  ale_update();
+  ale_update() final;
 
   void
   print_iterations() const;
@@ -79,7 +79,7 @@ private:
   initialize_current_solution() final;
 
   void
-  initialize_former_solutions() final;
+  initialize_former_multistep_dof_vectors() final;
 
   void
   initialize_vec_convective_term();

@@ -89,7 +89,7 @@ public:
                              std::vector<double> &             times) const;
 
   void
-  ale_update();
+  ale_update() final;
 
   void
   advance_one_timestep_partitioned_solve(bool const use_extrapolation);

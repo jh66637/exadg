@@ -23,15 +23,15 @@
 
 namespace ExaDG
 {
-TimeIntBDFBase::TimeIntBDFBase(double const        start_time_,
-                               double const        end_time_,
-                               unsigned int const  max_number_of_time_steps_,
-                               unsigned int const  order_,
-                               bool const          start_with_low_order_,
-                               bool const          adaptive_time_stepping_,
-                               RestartData const & restart_data_,
-                               MPI_Comm const &    mpi_comm_,
-                               bool const          is_test_)
+TimeIntMultistepBase::TimeIntMultistepBase(double const        start_time_,
+                                           double const        end_time_,
+                                           unsigned int const  max_number_of_time_steps_,
+                                           unsigned int const  order_,
+                                           bool const          start_with_low_order_,
+                                           bool const          adaptive_time_stepping_,
+                                           RestartData const & restart_data_,
+                                           MPI_Comm const &    mpi_comm_,
+                                           bool const          is_test_)
   : TimeIntBase(start_time_,
                 end_time_,
                 max_number_of_time_steps_,
@@ -39,8 +39,6 @@ TimeIntBDFBase::TimeIntBDFBase(double const        start_time_,
                 mpi_comm_,
                 is_test_),
     order(order_),
-    bdf(order_, start_with_low_order_),
-    extra(order_, start_with_low_order_),
     start_with_low_order(start_with_low_order_),
     adaptive_time_stepping(adaptive_time_stepping_),
     time_steps(order_, -1.0)
@@ -48,9 +46,9 @@ TimeIntBDFBase::TimeIntBDFBase(double const        start_time_,
 }
 
 void
-TimeIntBDFBase::setup(bool const do_restart)
+TimeIntMultistepBase::setup(bool const do_restart)
 {
-  this->pcout << std::endl << "Setup BDF time integrator ..." << std::endl << std::flush;
+  this->pcout << std::endl << "Setup multistep time integrator ..." << std::endl << std::flush;
 
   // allocate global solution vectors
   allocate_vectors();
@@ -65,7 +63,7 @@ TimeIntBDFBase::setup(bool const do_restart)
 }
 
 void
-TimeIntBDFBase::initialize_solution_and_time_step_size(bool do_restart)
+TimeIntMultistepBase::initialize_solution_and_time_step_size(bool do_restart)
 {
   if(do_restart)
   {
@@ -91,19 +89,25 @@ TimeIntBDFBase::initialize_solution_and_time_step_size(bool do_restart)
     // t - dt[1], t - dt[1] - dt[2], etc.
     time_steps[0] = calculate_time_step_size();
 
-    // initialize time_steps array as a preparation for initialize_former_solutions()
+    // initialize time_steps array as a preparation for initialize_former_multistep_dof_vectors()
     for(unsigned int i = 1; i < order; ++i)
       time_steps[i] = time_steps[0];
 
     // Finally, prescribe initial conditions at former instants of time. This is only necessary if
     // the time integrator starts with a high-order scheme in the first time step.
     if(start_with_low_order == false)
-      initialize_former_solutions();
+      initialize_former_multistep_dof_vectors();
   }
 }
 
 void
-TimeIntBDFBase::timeloop_steady_problem()
+TimeIntMultistepBase::ale_update()
+{
+  AssertThrow(false, dealii::ExcMessage("ALE update not implemented."));
+}
+
+void
+TimeIntMultistepBase::timeloop_steady_problem()
 {
   this->global_timer.restart();
 
@@ -115,13 +119,7 @@ TimeIntBDFBase::timeloop_steady_problem()
 }
 
 double
-TimeIntBDFBase::get_scaling_factor_time_derivative_term() const
-{
-  return bdf.get_gamma0() / time_steps[0];
-}
-
-double
-TimeIntBDFBase::get_previous_time(int const i /* t_{n-i} */) const
+TimeIntMultistepBase::get_previous_time(int const i /* t_{n-i} */) const
 {
   /*
    *   time t
@@ -141,27 +139,21 @@ TimeIntBDFBase::get_previous_time(int const i /* t_{n-i} */) const
 }
 
 unsigned int
-TimeIntBDFBase::get_current_order() const
+TimeIntMultistepBase::get_current_order() const
 {
   if(start_with_low_order == true && time_step_number <= order)
     return this->time_step_number;
   return order;
 }
 
-BDFTimeIntegratorConstants const &
-TimeIntBDFBase::get_bdf_constants() const
-{
-  return bdf;
-}
-
 double
-TimeIntBDFBase::get_time_step_size() const
+TimeIntMultistepBase::get_time_step_size() const
 {
   return get_time_step_size(0);
 }
 
 double
-TimeIntBDFBase::get_time_step_size(int const i /* dt[i] */) const
+TimeIntMultistepBase::get_time_step_size(int const i /* dt[i] */) const
 {
   /*
    *   time t
@@ -178,13 +170,13 @@ TimeIntBDFBase::get_time_step_size(int const i /* dt[i] */) const
 }
 
 std::vector<double>
-TimeIntBDFBase::get_time_step_vector() const
+TimeIntMultistepBase::get_time_step_vector() const
 {
   return time_steps;
 }
 
 void
-TimeIntBDFBase::push_back_time_step_sizes()
+TimeIntMultistepBase::push_back_time_step_sizes()
 {
   /*
    * push back time steps
@@ -203,7 +195,7 @@ TimeIntBDFBase::push_back_time_step_sizes()
 }
 
 void
-TimeIntBDFBase::set_current_time_step_size(double const & time_step_size)
+TimeIntMultistepBase::set_current_time_step_size(double const & time_step_size)
 {
   // constant time step sizes: allow setting of time step size only in the first
   // time step or after a restart (where time_step_number is also 1), e.g., to continue
@@ -219,7 +211,7 @@ TimeIntBDFBase::set_current_time_step_size(double const & time_step_size)
 }
 
 void
-TimeIntBDFBase::do_timestep_pre_solve(bool const print_header)
+TimeIntMultistepBase::do_timestep_pre_solve(bool const print_header)
 {
   if(this->print_solver_info() and print_header)
     this->output_solver_info_header();
@@ -228,7 +220,7 @@ TimeIntBDFBase::do_timestep_pre_solve(bool const print_header)
 }
 
 void
-TimeIntBDFBase::do_timestep_post_solve()
+TimeIntMultistepBase::do_timestep_post_solve()
 {
   prepare_vectors_for_next_timestep();
 
@@ -253,21 +245,7 @@ TimeIntBDFBase::do_timestep_post_solve()
 }
 
 void
-TimeIntBDFBase::update_time_integrator_constants()
-{
-  bdf.update(time_step_number, adaptive_time_stepping, time_steps);
-  extra.update(time_step_number, adaptive_time_stepping, time_steps);
-
-  // use this function to check the correctness of the time integrator constants
-  //  std::cout << std::endl << "Time step " << time_step_number << std::endl << std::endl;
-  //  std::cout << "Coefficients BDF time integration scheme:" << std::endl;
-  //  bdf.print();
-  //  std::cout << "Coefficients extrapolation scheme:" << std::endl;
-  //  extra.print();
-}
-
-void
-TimeIntBDFBase::do_read_restart(std::ifstream & in)
+TimeIntMultistepBase::do_read_restart(std::ifstream & in)
 {
   boost::archive::binary_iarchive ia(in);
   read_restart_preamble(ia);
@@ -281,7 +259,7 @@ TimeIntBDFBase::do_read_restart(std::ifstream & in)
 }
 
 void
-TimeIntBDFBase::read_restart_preamble(boost::archive::binary_iarchive & ia)
+TimeIntMultistepBase::read_restart_preamble(boost::archive::binary_iarchive & ia)
 {
   // Note that the operations done here must be in sync with the output.
 
@@ -315,7 +293,7 @@ TimeIntBDFBase::read_restart_preamble(boost::archive::binary_iarchive & ia)
 }
 
 void
-TimeIntBDFBase::do_write_restart(std::string const & filename) const
+TimeIntMultistepBase::do_write_restart(std::string const & filename) const
 {
   std::ostringstream oss;
 
@@ -327,7 +305,7 @@ TimeIntBDFBase::do_write_restart(std::string const & filename) const
 }
 
 void
-TimeIntBDFBase::write_restart_preamble(boost::archive::binary_oarchive & oa) const
+TimeIntMultistepBase::write_restart_preamble(boost::archive::binary_oarchive & oa) const
 {
   unsigned int n_ranks = dealii::Utilities::MPI::n_mpi_processes(mpi_comm);
 
@@ -346,13 +324,13 @@ TimeIntBDFBase::write_restart_preamble(boost::archive::binary_oarchive & oa) con
 }
 
 void
-TimeIntBDFBase::postprocessing_steady_problem() const
+TimeIntMultistepBase::postprocessing_steady_problem() const
 {
   AssertThrow(false, dealii::ExcMessage("This function has to be implemented by derived classes."));
 }
 
 void
-TimeIntBDFBase::solve_steady_problem()
+TimeIntMultistepBase::solve_steady_problem()
 {
   AssertThrow(false, dealii::ExcMessage("This function has to be implemented by derived classes."));
 }

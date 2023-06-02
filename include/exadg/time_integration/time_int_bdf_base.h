@@ -30,26 +30,25 @@
 
 namespace ExaDG
 {
-class TimeIntBDFBase : public TimeIntBase
+class TimeIntMultistepBase : public TimeIntBase
 {
 public:
   /*
    * Constructor.
    */
-  TimeIntBDFBase(double const        start_time_,
-                 double const        end_time_,
-                 unsigned int const  max_number_of_time_steps_,
-                 unsigned const      order_,
-                 bool const          start_with_low_order_,
-                 bool const          adaptive_time_stepping_,
-                 RestartData const & restart_data_,
-                 MPI_Comm const &    mpi_comm_,
-                 bool const          is_test_);
-
+  TimeIntMultistepBase(double const        start_time_,
+                       double const        end_time_,
+                       unsigned int const  max_number_of_time_steps_,
+                       unsigned const      order_,
+                       bool const          start_with_low_order_,
+                       bool const          adaptive_time_stepping_,
+                       RestartData const & restart_data_,
+                       MPI_Comm const &    mpi_comm_,
+                       bool const          is_test_);
   /*
    * Destructor.
    */
-  virtual ~TimeIntBDFBase()
+  virtual ~TimeIntMultistepBase()
   {
   }
 
@@ -67,10 +66,10 @@ public:
   timeloop_steady_problem();
 
   /*
-   * Setters and getters.
+   * Update related to ALE formulation
    */
-  double
-  get_scaling_factor_time_derivative_term() const;
+  virtual void
+  ale_update();
 
   /*
    * Get the time step size.
@@ -136,9 +135,6 @@ public:
     fill_at_previous_times(begin, end, [&](auto const i) { return get_previous_time(i); });
   }
 
-  BDFTimeIntegratorConstants const &
-  get_bdf_constants() const;
-
 protected:
   /*
    * Do one time step including different updates before and after the actual solution of the
@@ -154,7 +150,7 @@ protected:
    * Update the time integrator constants.
    */
   virtual void
-  update_time_integrator_constants();
+  update_time_integrator_constants() = 0;
 
   /*
    * Get reference to vector with time step sizes
@@ -178,15 +174,6 @@ protected:
    * Order of time integration scheme.
    */
   unsigned int const order;
-
-  /*
-   * Time integration constants. The extrapolation scheme is not necessarily used for a BDF time
-   * integration scheme with fully implicit time stepping, implying a violation of the Liskov
-   * substitution principle (OO software design principle). However, it does not appear to be
-   * reasonable to complicate the inheritance due to this fact.
-   */
-  BDFTimeIntegratorConstants bdf;
-  ExtrapolationConstants     extra;
 
   /*
    * Start with low order (1st order) time integration scheme in first time step.
@@ -227,7 +214,7 @@ private:
    * Initializes the solution vectors at time t - dt[1], t - dt[1] - dt[2], etc.
    */
   virtual void
-  initialize_former_solutions() = 0;
+  initialize_former_multistep_dof_vectors() = 0;
 
   /*
    * Setup of derived classes.
@@ -292,6 +279,70 @@ private:
   print_solver_info() const = 0;
 };
 
+class TimeIntBDFBase : public TimeIntMultistepBase
+{
+public:
+  TimeIntBDFBase(double const        start_time_,
+                 double const        end_time_,
+                 unsigned int const  max_number_of_time_steps_,
+                 unsigned const      order_,
+                 bool const          start_with_low_order_,
+                 bool const          adaptive_time_stepping_,
+                 RestartData const & restart_data_,
+                 MPI_Comm const &    mpi_comm_,
+                 bool const          is_test_)
+    : TimeIntMultistepBase(start_time_,
+                           end_time_,
+                           max_number_of_time_steps_,
+                           order_,
+                           start_with_low_order_,
+                           adaptive_time_stepping_,
+                           restart_data_,
+                           mpi_comm_,
+                           is_test_),
+      bdf(order_, start_with_low_order_),
+      extra(order_, start_with_low_order_)
+  {
+  }
+
+  double
+  get_scaling_factor_time_derivative_term() const
+  {
+    return bdf.get_gamma0() / time_steps[0];
+  }
+
+
+  BDFTimeIntegratorConstants const &
+  get_bdf_constants() const
+  {
+    return bdf;
+  }
+
+protected:
+  void
+  update_time_integrator_constants() override
+  {
+    bdf.update(time_step_number, adaptive_time_stepping, time_steps);
+    extra.update(time_step_number, adaptive_time_stepping, time_steps);
+
+    // use this function to check the correctness of the time integrator constants
+    //  std::cout << std::endl << "Time step " << time_step_number << std::endl << std::endl;
+    //  std::cout << "Coefficients BDF time integration scheme:" << std::endl;
+    //  bdf.print();
+    //  std::cout << "Coefficients extrapolation scheme:" << std::endl;
+    //  extra.print();
+  }
+
+  /*
+   * Time integration constants. The extrapolation scheme is not necessarily used for a BDF time
+   * integration scheme with fully implicit time stepping, implying a violation of the Liskov
+   * substitution principle (OO software design principle). However, it does not appear to be
+   * reasonable to complicate the inheritance due to this fact.
+   */
+  BDFTimeIntegratorConstants bdf;
+  ExtrapolationConstants     extra;
+};
 } // namespace ExaDG
+
 
 #endif /* INCLUDE_EXADG_TIME_INTEGRATION_TIME_INT_BDF_BASE_H_ */
