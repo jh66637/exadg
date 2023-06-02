@@ -19,20 +19,21 @@
  *  ______________________________________________________________________
  */
 
-#ifndef INCLUDE_EXADG_TIME_INTEGRATION_TIME_INT_BDF_BASE_H_
-#define INCLUDE_EXADG_TIME_INTEGRATION_TIME_INT_BDF_BASE_H_
+#ifndef INCLUDE_EXADG_TIME_INTEGRATION_TIME_INT_ABM_BASE_H_
+#define INCLUDE_EXADG_TIME_INTEGRATION_TIME_INT_ABM_BASE_H_
 
 // ExaDG
+#include <exadg/time_integration/ab_constants.h>
+#include <exadg/time_integration/am_constants.h>
 #include <exadg/time_integration/bdf_constants.h>
-#include <exadg/time_integration/extrapolation_scheme.h>
 #include <exadg/time_integration/time_int_multistep_base.h>
 
 namespace ExaDG
 {
-class TimeIntBDFBase : public TimeIntMultistepBase
+class TimeIntABMBase : public TimeIntMultistepBase
 {
 public:
-  TimeIntBDFBase(double const        start_time_,
+  TimeIntABMBase(double const        start_time_,
                  double const        end_time_,
                  unsigned int const  max_number_of_time_steps_,
                  unsigned const      order_,
@@ -50,48 +51,28 @@ public:
                            restart_data_,
                            mpi_comm_,
                            is_test_),
-      bdf(order_, start_with_low_order_),
-      extra(order_, start_with_low_order_)
+      // Adams-Bashforth coefficients only need order J-1 to obtain a scheme of order J
+      ab(order_ - 1, start_with_low_order_),
+      am(order_, start_with_low_order_),
+      bdf(order_, start_with_low_order_)
   {
-  }
-
-  double
-  get_scaling_factor_time_derivative_term() const
-  {
-    return bdf.get_gamma0() / time_steps[0];
-  }
-
-
-  BDFTimeIntegratorConstants const &
-  get_bdf_constants() const
-  {
-    return bdf;
   }
 
 protected:
   void
   update_time_integrator_constants() override
   {
+    ab.update(time_step_number - 1, adaptive_time_stepping, time_steps);
+    am.update(time_step_number, adaptive_time_stepping, time_steps);
     bdf.update(time_step_number, adaptive_time_stepping, time_steps);
-    extra.update(time_step_number, adaptive_time_stepping, time_steps);
-
-    // use this function to check the correctness of the time integrator constants
-    //  std::cout << std::endl << "Time step " << time_step_number << std::endl << std::endl;
-    //  std::cout << "Coefficients BDF time integration scheme:" << std::endl;
-    //  bdf.print();
-    //  std::cout << "Coefficients extrapolation scheme:" << std::endl;
-    //  extra.print();
   }
 
-  /*
-   * Time integration constants. The extrapolation scheme is not necessarily used for a BDF time
-   * integration scheme with fully implicit time stepping, implying a violation of the Liskov
-   * substitution principle (OO software design principle). However, it does not appear to be
-   * reasonable to complicate the inheritance due to this fact.
-   */
+  ABTimeIntegratorConstants ab;
+  AMTimeIntegratorConstants am;
+  // needed for ALE
   BDFTimeIntegratorConstants bdf;
-  ExtrapolationConstants     extra;
 };
+
 } // namespace ExaDG
 
-#endif /* INCLUDE_EXADG_TIME_INTEGRATION_TIME_INT_BDF_BASE_H_ */
+#endif /* INCLUDE_EXADG_TIME_INTEGRATION_TIME_INT_AMB_BASE_H_ */
