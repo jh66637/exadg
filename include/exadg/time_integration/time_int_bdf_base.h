@@ -22,12 +22,7 @@
 #ifndef INCLUDE_EXADG_TIME_INTEGRATION_TIME_INT_BDF_BASE_H_
 #define INCLUDE_EXADG_TIME_INTEGRATION_TIME_INT_BDF_BASE_H_
 
-// C++
 #include <vector>
-
-// deal.II
-#include <deal.II/lac/la_parallel_vector.h>
-
 // ExaDG
 #include <exadg/time_integration/bdf_constants.h>
 #include <exadg/time_integration/extrapolation_scheme.h>
@@ -35,12 +30,9 @@
 
 namespace ExaDG
 {
-template<typename Number>
 class TimeIntBDFBase : public TimeIntBase
 {
 public:
-  typedef dealii::LinearAlgebra::distributed::Vector<Number> VectorType;
-
   /*
    * Constructor.
    */
