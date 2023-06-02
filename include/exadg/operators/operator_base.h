@@ -59,6 +59,7 @@ struct OperatorBaseData
   OperatorBaseData()
     : dof_index(0),
       quad_index(0),
+      only_eval_cell_category(dealii::numbers::invalid_unsigned_int),
       operator_is_singular(false),
       use_cell_based_loops(false),
       implement_block_diagonal_preconditioner_matrix_free(false),
@@ -70,6 +71,7 @@ struct OperatorBaseData
 
   unsigned int dof_index;
   unsigned int quad_index;
+  unsigned int only_eval_cell_category;
 
   // Solution of linear systems of equations and preconditioning
   bool operator_is_singular;

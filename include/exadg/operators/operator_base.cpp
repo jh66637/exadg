@@ -993,10 +993,15 @@ OperatorBase<dim, Number, n_components>::cell_loop_dbc(
   VectorType const &                      src,
   Range const &                           range) const
 {
-  (void)matrix_free;
+  bool const check_cell_category =
+    (data.only_eval_cell_category != dealii::numbers::invalid_unsigned_int);
 
   for(auto cell = range.first; cell < range.second; ++cell)
   {
+    if(check_cell_category)
+      if(matrix_free.get_cell_category(cell) != data.only_eval_cell_category)
+        continue;
+
     this->reinit_cell(cell);
 
     integrator->read_dof_values_plain(src);
@@ -1017,10 +1022,15 @@ OperatorBase<dim, Number, n_components>::cell_loop(
   VectorType const &                      src,
   Range const &                           range) const
 {
-  (void)matrix_free;
+  bool const check_cell_category =
+    (data.only_eval_cell_category != dealii::numbers::invalid_unsigned_int);
 
   for(auto cell = range.first; cell < range.second; ++cell)
   {
+    if(check_cell_category)
+      if(matrix_free.get_cell_category(cell) != data.only_eval_cell_category)
+        continue;
+
     this->reinit_cell(cell);
 
     integrator->gather_evaluate(src, integrator_flags.cell_evaluate);
@@ -1179,15 +1189,21 @@ OperatorBase<dim, Number, n_components>::cell_loop_diagonal(
   VectorType const &                      src,
   Range const &                           range) const
 {
-  (void)matrix_free;
   (void)src;
 
   // create temporal array for local diagonal
   unsigned int const                                     dofs_per_cell = integrator->dofs_per_cell;
   dealii::AlignedVector<dealii::VectorizedArray<Number>> local_diag(dofs_per_cell);
 
+  bool const check_cell_category =
+    (data.only_eval_cell_category != dealii::numbers::invalid_unsigned_int);
+
   for(auto cell = range.first; cell < range.second; ++cell)
   {
+    if(check_cell_category)
+      if(matrix_free.get_cell_category(cell) != data.only_eval_cell_category)
+        continue;
+
     this->reinit_cell(cell);
 
     for(unsigned int j = 0; j < dofs_per_cell; ++j)
@@ -1327,8 +1343,15 @@ OperatorBase<dim, Number, n_components>::cell_based_loop_diagonal(
   unsigned int const                                     dofs_per_cell = integrator->dofs_per_cell;
   dealii::AlignedVector<dealii::VectorizedArray<Number>> local_diag(dofs_per_cell);
 
+  bool const check_cell_category =
+    (data.only_eval_cell_category != dealii::numbers::invalid_unsigned_int);
+
   for(auto cell = range.first; cell < range.second; ++cell)
   {
+    if(check_cell_category)
+      if(matrix_free.get_cell_category(cell) != data.only_eval_cell_category)
+        continue;
+
     this->reinit_cell(cell);
 
     for(unsigned int j = 0; j < dofs_per_cell; ++j)
@@ -1399,12 +1422,17 @@ OperatorBase<dim, Number, n_components>::cell_loop_apply_inverse_block_diagonal_
   VectorType const &                      src,
   Range const &                           cell_range) const
 {
-  (void)matrix_free;
-
   unsigned int const dofs_per_cell = integrator->dofs_per_cell;
+
+  bool const check_cell_category =
+    (data.only_eval_cell_category != dealii::numbers::invalid_unsigned_int);
 
   for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
   {
+    if(check_cell_category)
+      if(matrix_free.get_cell_category(cell) != data.only_eval_cell_category)
+        continue;
+
     this->reinit_cell(cell);
 
     integrator->read_dof_values(src);
@@ -1434,12 +1462,17 @@ OperatorBase<dim, Number, n_components>::cell_loop_apply_block_diagonal_matrix_b
   VectorType const &                      src,
   Range const &                           range) const
 {
-  (void)matrix_free;
-
   unsigned int const dofs_per_cell = integrator->dofs_per_cell;
+
+  bool const check_cell_category =
+    (data.only_eval_cell_category != dealii::numbers::invalid_unsigned_int);
 
   for(unsigned int cell = range.first; cell < range.second; ++cell)
   {
+    if(check_cell_category)
+      if(matrix_free.get_cell_category(cell) != data.only_eval_cell_category)
+        continue;
+
     this->reinit_cell(cell);
 
     integrator->read_dof_values(src);
@@ -1472,8 +1505,15 @@ OperatorBase<dim, Number, n_components>::cell_loop_block_diagonal(
 {
   unsigned int const dofs_per_cell = integrator->dofs_per_cell;
 
+  bool const check_cell_category =
+    (data.only_eval_cell_category != dealii::numbers::invalid_unsigned_int);
+
   for(auto cell = range.first; cell < range.second; ++cell)
   {
+    if(check_cell_category)
+      if(matrix_free.get_cell_category(cell) != data.only_eval_cell_category)
+        continue;
+
     unsigned int const n_filled_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
 
     this->reinit_cell(cell);
@@ -1600,8 +1640,15 @@ OperatorBase<dim, Number, n_components>::cell_based_loop_block_diagonal(
 {
   unsigned int const dofs_per_cell = integrator->dofs_per_cell;
 
+  bool const check_cell_category =
+    (data.only_eval_cell_category != dealii::numbers::invalid_unsigned_int);
+
   for(auto cell = range.first; cell < range.second; ++cell)
   {
+    if(check_cell_category)
+      if(matrix_free.get_cell_category(cell) != data.only_eval_cell_category)
+        continue;
+
     unsigned int const n_filled_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
 
     this->reinit_cell(cell);
@@ -1676,8 +1723,15 @@ OperatorBase<dim, Number, n_components>::cell_loop_calculate_system_matrix(
 
   unsigned int const dofs_per_cell = integrator->dofs_per_cell;
 
+  bool const check_cell_category =
+    (data.only_eval_cell_category != dealii::numbers::invalid_unsigned_int);
+
   for(auto cell = range.first; cell < range.second; ++cell)
   {
+    if(check_cell_category)
+      if(matrix_free.get_cell_category(cell) != data.only_eval_cell_category)
+        continue;
+
     unsigned int const n_filled_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
 
     // create a temporal full matrix for the local element matrix of each ...

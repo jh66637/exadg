@@ -35,8 +35,9 @@ namespace ExaDG
 {
 struct InverseMassOperatorData
 {
-  unsigned int dof_index  = 0;
-  unsigned int quad_index = 0;
+  unsigned int dof_index               = 0;
+  unsigned int quad_index              = 0;
+  unsigned int only_eval_cell_category = dealii::numbers::invalid_unsigned_int;
 
   // only relevant if an explicit matrix-free inverse mass operator is not available
   bool implement_block_diagonal_preconditioner_matrix_free = true;
@@ -67,6 +68,7 @@ public:
     : matrix_free(nullptr),
       dof_index(0),
       quad_index(0),
+      only_eval_cell_category(dealii::numbers::invalid_unsigned_int),
       explicit_matrix_free_inverse_mass_available(false)
   {
   }
@@ -75,9 +77,15 @@ public:
   initialize(dealii::MatrixFree<dim, Number> const & matrix_free_in,
              InverseMassOperatorData const           inverse_mass_operator_data)
   {
-    this->matrix_free = &matrix_free_in;
-    dof_index         = inverse_mass_operator_data.dof_index;
-    quad_index        = inverse_mass_operator_data.quad_index;
+    this->matrix_free       = &matrix_free_in;
+    dof_index               = inverse_mass_operator_data.dof_index;
+    quad_index              = inverse_mass_operator_data.quad_index;
+    only_eval_cell_category = inverse_mass_operator_data.only_eval_cell_category;
+    if(only_eval_cell_category != dealii::numbers::invalid_unsigned_int)
+      AssertThrow(
+        explicit_matrix_free_inverse_mass_available,
+        dealii::ExcMessage(
+          "Only evaluation certain cell category currently only supported if explicit_matrix_free_inverse_mass_available."));
 
     dealii::FiniteElement<dim> const & fe = matrix_free->get_dof_handler(dof_index).get_fe();
 
@@ -140,8 +148,15 @@ private:
     Integrator                    integrator(*matrix_free, dof_index, quad_index);
     ExplicitMatrixFreeInverseMass inverse(integrator);
 
+    bool const check_cell_category =
+      (only_eval_cell_category != dealii::numbers::invalid_unsigned_int);
+
     for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
     {
+      if(check_cell_category)
+        if(matrix_free->get_cell_category(cell) != only_eval_cell_category)
+          continue;
+
       integrator.reinit(cell);
       integrator.read_dof_values(src, 0);
 
@@ -153,7 +168,7 @@ private:
 
   dealii::MatrixFree<dim, Number> const * matrix_free;
 
-  unsigned int dof_index, quad_index;
+  unsigned int dof_index, quad_index, only_eval_cell_category;
 
   bool explicit_matrix_free_inverse_mass_available;
 
