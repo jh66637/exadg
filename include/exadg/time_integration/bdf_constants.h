@@ -19,8 +19,8 @@
  *  ______________________________________________________________________
  */
 
-#ifndef INCLUDE_EXADG_TIME_INTEGRATION_BDF_TIME_INTEGRATION_H_
-#define INCLUDE_EXADG_TIME_INTEGRATION_BDF_TIME_INTEGRATION_H_
+#ifndef INCLUDE_EXADG_TIME_INTEGRATION_BDF_CONSTANTS_H_
+#define INCLUDE_EXADG_TIME_INTEGRATION_BDF_CONSTANTS_H_
 
 // C/C++
 #include <algorithm>
@@ -107,4 +107,4 @@ compute_bdf_time_derivative(VectorType &                       derivative,
 
 } // namespace ExaDG
 
-#endif /* INCLUDE_EXADG_TIME_INTEGRATION_BDF_TIME_INTEGRATION_H_ */
+#endif /* INCLUDE_EXADG_TIME_INTEGRATION_BDF_CONSTANTS_H_ */

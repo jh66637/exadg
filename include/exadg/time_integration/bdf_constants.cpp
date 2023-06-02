@@ -23,7 +23,7 @@
 #include <deal.II/base/exceptions.h>
 
 // ExaDG
-#include <exadg/time_integration/bdf_time_integration.h>
+#include <exadg/time_integration/bdf_constants.h>
 
 namespace ExaDG
 {
@@ -96,14 +96,7 @@ BDFTimeIntegratorConstants::set_constant_time_step(unsigned int const current_or
     alpha[3] = -1. / 4.;
   }
 
-  /*
-   * Fill the rest of the vectors with zeros since current_order might be
-   * smaller than order, e.g., when using start_with_low_order = true
-   */
-  for(unsigned int i = current_order; i < order; ++i)
-  {
-    alpha[i] = 0.0;
-  }
+  zero_out_unused_constants(current_order, alpha);
 }
 
 
@@ -174,14 +167,7 @@ BDFTimeIntegratorConstants::set_adaptive_time_step(unsigned int const          c
                 time_steps[3]);
   }
 
-  /*
-   * Fill the rest of the vectors with zeros since current_order might be
-   * smaller than order, e.g. when using start_with_low_order = true
-   */
-  for(unsigned int i = current_order; i < order; ++i)
-  {
-    alpha[i] = 0.0;
-  }
+  zero_out_unused_constants(current_order, alpha);
 }
 
 void

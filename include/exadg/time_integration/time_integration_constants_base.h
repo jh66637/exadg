@@ -22,6 +22,7 @@
 #ifndef INCLUDE_EXADG_TIME_INTEGRATION_TIME_INTEGRATION_CONSTANTS_BASE_H_
 #define INCLUDE_EXADG_TIME_INTEGRATION_TIME_INTEGRATION_CONSTANTS_BASE_H_
 
+#include <vector>
 
 namespace ExaDG
 {
@@ -70,6 +71,19 @@ public:
   print(dealii::ConditionalOStream & pcout) const = 0;
 
 protected:
+  /**
+   * Can be used to fill the unused components of the vector with zeros.
+   * This is needed since current_order might be smaller than order, e.g.,
+   * when using start_with_low_order = true
+   */
+  void
+  zero_out_unused_constants(unsigned int const first_idx, std::vector<double> & constants)
+  {
+    for(unsigned int i = first_idx; i < constants.size(); ++i)
+      constants[i] = 0.0;
+  }
+
+
   // order of time integrator
   unsigned int const order;
 
