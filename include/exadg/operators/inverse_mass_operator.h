@@ -81,11 +81,6 @@ public:
     dof_index               = inverse_mass_operator_data.dof_index;
     quad_index              = inverse_mass_operator_data.quad_index;
     only_eval_cell_category = inverse_mass_operator_data.only_eval_cell_category;
-    if(only_eval_cell_category != dealii::numbers::invalid_unsigned_int)
-      AssertThrow(
-        explicit_matrix_free_inverse_mass_available,
-        dealii::ExcMessage(
-          "Only evaluation certain cell category currently only supported if explicit_matrix_free_inverse_mass_available."));
 
     dealii::FiniteElement<dim> const & fe = matrix_free->get_dof_handler(dof_index).get_fe();
 
@@ -97,6 +92,12 @@ public:
     }
     else
       AssertThrow(false, dealii::ExcMessage("InverseMassOperator only implemented for DG!"));
+
+    if(only_eval_cell_category != dealii::numbers::invalid_unsigned_int)
+      AssertThrow(
+        explicit_matrix_free_inverse_mass_available,
+        dealii::ExcMessage(
+          "Only evaluation certain cell category currently only supported if explicit_matrix_free_inverse_mass_available."));
 
     if(not(explicit_matrix_free_inverse_mass_available))
     {
