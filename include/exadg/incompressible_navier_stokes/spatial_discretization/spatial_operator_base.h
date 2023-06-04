@@ -279,6 +279,12 @@ public:
   set_temperature(VectorType const & temperature);
 
   /*
+   *  Set rhs, which has been computed externally.
+   */
+  void
+  set_integrated_rhs(VectorType const & integrated_body_force_term);
+
+  /*
    * Computation of derived quantities which is needed for postprocessing but some of them are also
    * needed, e.g., for special splitting-type time integration schemes.
    */

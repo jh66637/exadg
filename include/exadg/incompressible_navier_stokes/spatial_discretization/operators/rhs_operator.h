@@ -150,6 +150,9 @@ public:
   void
   set_temperature(VectorType const & T);
 
+  void
+  set_integrated_rhs(VectorType const & rhs_integrated);
+
 private:
   void
   do_cell_integral(Integrator & integrator, IntegratorScalar & integrator_temperature) const;
@@ -169,6 +172,7 @@ private:
   Operators::RHSKernel<dim, Number> kernel;
 
   VectorType const * temperature;
+  VectorType const * integrated_rhs;
 };
 
 } // namespace IncNS

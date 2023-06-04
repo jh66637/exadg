@@ -12,7 +12,8 @@ namespace ExaDG
 namespace IncNS
 {
 template<int dim, typename Number>
-RHSOperator<dim, Number>::RHSOperator() : matrix_free(nullptr), time(0.0), temperature(nullptr)
+RHSOperator<dim, Number>::RHSOperator()
+  : matrix_free(nullptr), time(0.0), temperature(nullptr), integrated_rhs(nullptr)
 {
 }
 
@@ -35,6 +36,9 @@ RHSOperator<dim, Number>::evaluate(VectorType & dst, Number const evaluation_tim
 
   VectorType src;
   matrix_free->cell_loop(&This::cell_loop, this, dst, src, true /*zero_dst_vector = true*/);
+
+  if(integrated_rhs)
+    dst.add(1.0, *integrated_rhs);
 }
 
 template<int dim, typename Number>
@@ -45,6 +49,9 @@ RHSOperator<dim, Number>::evaluate_add(VectorType & dst, Number const evaluation
 
   VectorType src;
   matrix_free->cell_loop(&This::cell_loop, this, dst, src, false /*zero_dst_vector = false*/);
+
+  if(integrated_rhs)
+    dst.add(1.0, *integrated_rhs);
 }
 
 template<int dim, typename Number>
@@ -52,6 +59,13 @@ void
 RHSOperator<dim, Number>::set_temperature(VectorType const & T)
 {
   this->temperature = &T;
+}
+
+template<int dim, typename Number>
+void
+RHSOperator<dim, Number>::set_integrated_rhs(VectorType const & rhs_integrated)
+{
+  this->integrated_rhs = &rhs_integrated;
 }
 
 template<int dim, typename Number>

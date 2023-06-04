@@ -1195,6 +1195,13 @@ SpatialOperatorBase<dim, Number>::set_temperature(VectorType const & temperature
 
 template<int dim, typename Number>
 void
+SpatialOperatorBase<dim, Number>::set_integrated_rhs(VectorType const & integrated_rhs)
+{
+  rhs_operator.set_integrated_rhs(integrated_rhs);
+}
+
+template<int dim, typename Number>
+void
 SpatialOperatorBase<dim, Number>::compute_vorticity(VectorType & dst, VectorType const & src) const
 {
   vorticity_calculator.compute_vorticity(dst, src);
