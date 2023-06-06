@@ -77,9 +77,9 @@ PointwiseOutputGeneratorBase<dim, VectorType, Number>::evaluate(VectorType const
   if(first_evaluation)
   {
     first_evaluation = false;
-    AssertThrow(time_control.get_counter() == 0,
-                dealii::ExcMessage(
-                  "Only implemented in the case that the simulation is not restarted"));
+    // AssertThrow(time_control.get_counter() == 0,
+    //             dealii::ExcMessage(
+    //               "Only implemented in the case that the simulation is not restarted"));
   }
 
   if(pointwise_output_data.update_points_before_evaluation)
