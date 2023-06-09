@@ -36,7 +36,7 @@ public:
   TimeIntABMBase(double const        start_time_,
                  double const        end_time_,
                  unsigned int const  max_number_of_time_steps_,
-                 unsigned const      order_,
+                 unsigned int const  order_,
                  bool const          start_with_low_order_,
                  bool const          adaptive_time_stepping_,
                  RestartData const & restart_data_,
@@ -52,7 +52,9 @@ public:
                            mpi_comm_,
                            is_test_),
       // Adams-Bashforth coefficients only need order J-1 to obtain a scheme of order J
-      ab(order_ - 1, start_with_low_order_),
+      // not using AB0AM1 but AB1AM1 has been observed to increase stability
+      ab_order_reduction(order_ == 1 ? 0 : 1),
+      ab(order_ - ab_order_reduction, start_with_low_order_),
       am(order_, start_with_low_order_),
       bdf(order_, start_with_low_order_)
   {
@@ -62,12 +64,14 @@ protected:
   void
   update_time_integrator_constants() override
   {
-    ab.update(time_step_number - 1, adaptive_time_stepping, time_steps);
+    ab.update(time_step_number - ab_order_reduction, adaptive_time_stepping, time_steps);
     am.update(time_step_number, adaptive_time_stepping, time_steps);
     bdf.update(time_step_number, adaptive_time_stepping, time_steps);
   }
 
+  unsigned int              ab_order_reduction;
   ABTimeIntegratorConstants ab;
+
   AMTimeIntegratorConstants am;
   // needed for ALE
   BDFTimeIntegratorConstants bdf;

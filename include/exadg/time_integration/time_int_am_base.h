@@ -35,7 +35,7 @@ public:
   TimeIntAMBase(double const        start_time_,
                 double const        end_time_,
                 unsigned int const  max_number_of_time_steps_,
-                unsigned const      order_,
+                unsigned int const  order_,
                 bool const          start_with_low_order_,
                 bool const          adaptive_time_stepping_,
                 RestartData const & restart_data_,
