@@ -43,6 +43,7 @@ TimeIntMultistepBase::TimeIntMultistepBase(double const        start_time_,
     adaptive_time_stepping(adaptive_time_stepping_),
     time_steps(order_, -1.0)
 {
+  AssertThrow(order_ > 0, dealii::ExcMessage("Order has to be > 0."));
 }
 
 void

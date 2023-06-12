@@ -46,7 +46,7 @@ public:
     : TimeIntMultistepBase(start_time_,
                            end_time_,
                            max_number_of_time_steps_,
-                           order_,
+                           order_am,
                            start_with_low_order_,
                            adaptive_time_stepping_,
                            restart_data_,
@@ -54,8 +54,10 @@ public:
                            is_test_),
       ab(order_ab, start_with_low_order_),
       am(order_am, start_with_low_order_),
-      bdf(order_, start_with_low_order_)
+      bdf(order_am, start_with_low_order_)
   {
+    AssertThrow(order_am >= order_ab,
+                dealii::ExcMessage("Oder of AM corrector should be >= order of AB predictor."));
   }
 
 protected:
