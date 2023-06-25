@@ -154,7 +154,7 @@ struct FunctionEvaluator<0, dim, Number>
     dealii::VectorizedArray<Number> value = dealii::make_vectorized_array<Number>(0.0);
 
     for(unsigned int v = 0; v < dealii::VectorizedArray<Number>::size(); ++v)
-      value[v] = function.get_data(quad_index, face, q, v, );
+      value[v] = function.get_data(quad_index, face, q, v);
 
     return value;
   }
