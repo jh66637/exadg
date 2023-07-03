@@ -104,6 +104,9 @@ public:
   void
   set_scaling_factor_mass_operator(Number const & scaling_factor);
 
+  void
+  reset_diffusivity(double const diffusivity);
+
 private:
   void
   reinit_cell(unsigned int const cell) const final;

@@ -158,6 +158,13 @@ CombinedOperator<dim, Number>::set_scaling_factor_mass_operator(Number const & s
   scaling_factor_mass = scaling_factor;
 }
 
+void
+reset_diffusivity(double const diffusivity)
+{
+  diffusive_kernel->reset_diffusivity(diffusivity);
+}
+
+
 template<int dim, typename Number>
 void
 CombinedOperator<dim, Number>::reinit_cell(unsigned int const cell) const

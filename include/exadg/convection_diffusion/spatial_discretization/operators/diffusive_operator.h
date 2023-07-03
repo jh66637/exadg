@@ -79,6 +79,12 @@ public:
   }
 
   void
+  reset_diffusivity(double const diffusivity)
+  {
+    data.diffusivity = diffusivity;
+  }
+
+  void
   calculate_penalty_parameter(dealii::MatrixFree<dim, Number> const & matrix_free,
                               unsigned int const                      dof_index)
   {
