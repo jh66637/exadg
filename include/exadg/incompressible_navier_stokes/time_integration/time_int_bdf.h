@@ -72,6 +72,11 @@ public:
   virtual VectorType const &
   get_pressure_np() const = 0;
 
+  virtual void
+  set_pressure_np(VectorType const & vec) = 0;
+  virtual void
+  set_velocity_np(VectorType const & vec) = 0;
+
   void
   get_velocities_and_times(std::vector<VectorType const *> & velocities,
                            std::vector<double> &             times) const;

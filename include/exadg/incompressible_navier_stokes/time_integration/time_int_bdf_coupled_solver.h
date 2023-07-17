@@ -74,6 +74,18 @@ public:
   VectorType const &
   get_pressure_np() const final;
 
+  void
+  set_pressure_np(VectorType const & vec) final
+  {
+    solution_np.block(1) = vec;
+  }
+  void
+  set_velocity_np(VectorType const & vec) final
+  {
+    solution_np.block(0) = vec;
+  }
+
+
 private:
   void
   allocate_vectors() final;
