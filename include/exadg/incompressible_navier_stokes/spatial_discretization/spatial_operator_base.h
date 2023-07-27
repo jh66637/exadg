@@ -149,12 +149,14 @@ protected:
   unsigned int
   get_quad_index_velocity_nonlinear() const;
 
+public:
   unsigned int
   get_quad_index_velocity_gauss_lobatto() const;
 
   unsigned int
   get_quad_index_pressure_gauss_lobatto() const;
 
+private:
   unsigned int
   get_quad_index_velocity_linearized() const;
 
