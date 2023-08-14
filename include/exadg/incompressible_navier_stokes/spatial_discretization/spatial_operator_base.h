@@ -195,6 +195,9 @@ public:
   std::shared_ptr<ContainerInterfaceData<1, dim, double>>
   get_container_interface_data();
 
+  std::shared_ptr<ContainerInterfaceData<0, dim, double>>
+  get_container_interface_data_pressure();
+
   void
   set_velocity_ptr(VectorType const & velocity) const;
 
@@ -511,6 +514,7 @@ private:
    * Interface coupling
    */
   std::shared_ptr<ContainerInterfaceData<1, dim, double>> interface_data_dirichlet_cached;
+  std::shared_ptr<ContainerInterfaceData<0, dim, double>> interface_data_dirichlet_cached_pressure;
 
 protected:
   /*

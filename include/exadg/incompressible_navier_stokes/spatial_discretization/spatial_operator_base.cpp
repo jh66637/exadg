@@ -210,6 +210,21 @@ SpatialOperatorBase<dim, Number>::setup(
     boundary_descriptor->velocity->set_dirichlet_cached_data(interface_data_dirichlet_cached);
   }
 
+  // initialize data container for DirichletCached boundary conditions
+  if(not(boundary_descriptor->velocity->dirichlet_cached_bc.empty()))
+  {
+    interface_data_dirichlet_cached_pressure =
+      std::make_shared<ContainerInterfaceData<0, dim, double>>();
+    interface_data_dirichlet_cached->setup(*matrix_free,
+                                           get_dof_index_pressure(),
+                                           {get_quad_index_pressure()},
+                                           boundary_descriptor->pressure->dirichlet_cached_bc);
+
+    boundary_descriptor->pressure->set_dirichlet_cached_data(
+      interface_data_dirichlet_cached_pressure);
+  }
+
+
   // initialize data structures depending on MatrixFree
   initialize_operators(dof_index_temperature);
 
@@ -925,6 +940,13 @@ std::shared_ptr<ContainerInterfaceData<1, dim, double>>
 SpatialOperatorBase<dim, Number>::get_container_interface_data()
 {
   return interface_data_dirichlet_cached;
+}
+
+template<int dim, typename Number>
+std::shared_ptr<ContainerInterfaceData<0, dim, double>>
+SpatialOperatorBase<dim, Number>::get_container_interface_data_pressure()
+{
+  return interface_data_dirichlet_cached_pressure;
 }
 
 template<int dim, typename Number>

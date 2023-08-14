@@ -73,6 +73,7 @@ enum class BoundaryTypeP
 {
   Undefined,
   Dirichlet,
+  DirichletCached,
   Neumann
 };
 
@@ -197,6 +198,7 @@ struct BoundaryDescriptorP
   std::set<dealii::types::boundary_id> neumann_bc;
 
   // add more types of boundary conditions
+  std::set<dealii::types::boundary_id> dirichlet_cached_bc;
 
 
   // return the boundary type
@@ -206,6 +208,8 @@ struct BoundaryDescriptorP
   {
     if(this->dirichlet_bc.find(boundary_id) != this->dirichlet_bc.end())
       return BoundaryTypeP::Dirichlet;
+    else if(this->dirichlet_cached_bc.find(boundary_id) != this->dirichlet_cached_bc.end())
+      return BoundaryTypeP::DirichletCached;
     else if(this->neumann_bc.find(boundary_id) != this->neumann_bc.end())
       return BoundaryTypeP::Neumann;
 
@@ -227,12 +231,34 @@ struct BoundaryDescriptorP
     if(this->neumann_bc.find(boundary_id) != this->neumann_bc.end())
       counter++;
 
+    if(this->dirichlet_cached_bc.find(boundary_id) != this->dirichlet_cached_bc.end())
+      counter++;
+
     if(periodic_boundary_ids.find(boundary_id) != periodic_boundary_ids.end())
       counter++;
 
     AssertThrow(counter == 1,
                 dealii::ExcMessage("Boundary face with non-unique boundary type found."));
   }
+
+  void
+  set_dirichlet_cached_data(
+    std::shared_ptr<ContainerInterfaceData<0, dim, double> const> interface_data) const
+  {
+    dirichlet_cached_data = interface_data;
+  }
+
+  std::shared_ptr<ContainerInterfaceData<0, dim, double> const>
+  get_dirichlet_cached_data() const
+  {
+    AssertThrow(dirichlet_cached_data.get(),
+                dealii::ExcMessage("Pointer to ContainerInterfaceData has not been initialized."));
+
+    return dirichlet_cached_data;
+  }
+
+private:
+  mutable std::shared_ptr<ContainerInterfaceData<0, dim, double> const> dirichlet_cached_data;
 };
 
 template<int dim>

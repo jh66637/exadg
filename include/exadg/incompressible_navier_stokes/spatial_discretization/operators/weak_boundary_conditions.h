@@ -324,16 +324,27 @@ inline DEAL_II_ALWAYS_INLINE //
 {
   dealii::VectorizedArray<Number> value_p = dealii::make_vectorized_array<Number>(0.0);
 
-  if(boundary_type == BoundaryTypeP::Dirichlet)
+  if(boundary_type == BoundaryTypeP::Dirichlet or boundary_type == BoundaryTypeP::DirichletCached)
   {
     if(operator_type == OperatorType::full or operator_type == OperatorType::inhomogeneous)
     {
-      auto bc       = boundary_descriptor->dirichlet_bc.find(boundary_id)->second;
-      auto q_points = integrator.quadrature_point(q);
+      dealii::VectorizedArray<Number> g;
+      if(boundary_type == BoundaryTypeP::Dirichlet)
+      {
+        auto bc       = boundary_descriptor->dirichlet_bc.find(boundary_id)->second;
+        auto q_points = integrator.quadrature_point(q);
 
-      dealii::VectorizedArray<Number> g =
-        FunctionEvaluator<0, dim, Number>::value(*bc, q_points, time);
-
+        dealii::VectorizedArray<Number> g =
+          FunctionEvaluator<0, dim, Number>::value(*bc, q_points, time);
+      }
+      else if(boundary_type == BoundaryTypeP::DirichletCached)
+      {
+        auto bc = boundary_descriptor->get_dirichlet_cached_data();
+        g       = FunctionEvaluator<0, dim, Number>::value(*bc,
+                                                     integrator.get_current_cell_index(),
+                                                     q,
+                                                     integrator.get_quadrature_index());
+      }
       value_p = -value_m + 2.0 * inverse_scaling_factor * g;
     }
     else if(operator_type == OperatorType::homogeneous)
@@ -369,7 +380,7 @@ inline DEAL_II_ALWAYS_INLINE //
 {
   dealii::VectorizedArray<Number> value_p = dealii::make_vectorized_array<Number>(0.0);
 
-  if(boundary_type == BoundaryTypeP::Dirichlet)
+  if(boundary_type == BoundaryTypeP::Dirichlet or boundary_type == BoundaryTypeP::DirichletCached)
   {
     if(operator_type == OperatorType::full or operator_type == OperatorType::inhomogeneous)
     {
