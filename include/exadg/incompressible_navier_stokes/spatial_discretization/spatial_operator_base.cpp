@@ -1319,6 +1319,16 @@ SpatialOperatorBase<dim, Number>::compute_streamfunction(VectorType &       dst,
               dealii::ExcMessage("Assumption is not fulfilled. Streamfunction calculator is "
                                  "not implemented for this type of boundary conditions."));
 
+
+  // We also need to add DirichletCached boundary conditions. From the
+  // perspective of multigrid, there is no difference between standard
+  // and cached Dirichlet BCs. Since multigrid does not need information
+  // about inhomogeneous boundary data, we simply fill the map with
+  // dealii::Functions::ZeroFunction for DirichletCached BCs.
+  for(auto iter : boundary_descriptor->pressure->dirichlet_cached_bc)
+    boundary_descriptor_streamfunction->dirichlet_bc.insert(
+      std::make_pair(iter, std::make_shared<dealii::Functions::ZeroFunction<dim>>(1)));
+
   laplace_operator_data.bc = boundary_descriptor_streamfunction;
 
   laplace_operator_data.kernel_data.IP_factor = 1.0;
@@ -1326,6 +1336,8 @@ SpatialOperatorBase<dim, Number>::compute_streamfunction(VectorType &       dst,
   typedef Poisson::LaplaceOperator<dim, Number, 1> Laplace;
   Laplace                                          laplace_operator;
   dealii::AffineConstraints<Number>                constraint_dummy;
+
+
   laplace_operator.initialize(*matrix_free, constraint_dummy, laplace_operator_data);
 
   // setup preconditioner
