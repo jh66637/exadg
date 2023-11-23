@@ -87,13 +87,16 @@ Inheritance diagram for ExaDG::TimeIntMultistepBase:</div>
  <div class="center">
   <img src="classExaDG_1_1TimeIntMultistepBase.png" usemap="#ExaDG::TimeIntMultistepBase_map" alt=""/>
   <map id="ExaDG::TimeIntMultistepBase_map" name="ExaDG::TimeIntMultistepBase_map">
-<area href="classExaDG_1_1TimeIntBase.html" alt="ExaDG::TimeIntBase" shape="rect" coords="189,0,557,24"/>
-<area href="classExaDG_1_1TimeIntBDFBase.html" alt="ExaDG::TimeIntBDFBase" shape="rect" coords="189,112,557,136"/>
-<area href="classExaDG_1_1ConvDiff_1_1TimeIntBDF.html" alt="ExaDG::ConvDiff::TimeIntBDF&lt; dim, Number &gt;" shape="rect" coords="0,168,368,192"/>
-<area href="classExaDG_1_1IncNS_1_1TimeIntBDF.html" alt="ExaDG::IncNS::TimeIntBDF&lt; dim, Number &gt;" shape="rect" coords="378,168,746,192"/>
-<area href="classExaDG_1_1IncNS_1_1TimeIntBDFCoupled.html" alt="ExaDG::IncNS::TimeIntBDFCoupled&lt; dim, Number &gt;" shape="rect" coords="0,224,368,248"/>
-<area href="classExaDG_1_1IncNS_1_1TimeIntBDFDualSplitting.html" alt="ExaDG::IncNS::TimeIntBDFDualSplitting&lt; dim, Number &gt;" shape="rect" coords="378,224,746,248"/>
-<area href="classExaDG_1_1IncNS_1_1TimeIntBDFPressureCorrection.html" alt="ExaDG::IncNS::TimeIntBDFPressureCorrection&lt; dim, Number &gt;" shape="rect" coords="756,224,1124,248"/>
+<area href="classExaDG_1_1TimeIntBase.html" alt="ExaDG::TimeIntBase" shape="rect" coords="841,0,1672,24"/>
+<area href="classExaDG_1_1TimeIntAdamsBashforthMoultonBase.html" alt="ExaDG::TimeIntAdamsBashforthMoultonBase&lt; Interface::SpatialOperator&lt; Number &gt;, dealii::LinearAlgebra::distributed::BlockVector&lt; Number &gt; &gt;" shape="rect" coords="0,112,831,136"/>
+<area href="classExaDG_1_1TimeIntAdamsBashforthMoultonBase.html" alt="ExaDG::TimeIntAdamsBashforthMoultonBase&lt; Operator, VectorType &gt;" shape="rect" coords="841,112,1672,136"/>
+<area href="classExaDG_1_1TimeIntBDFBase.html" alt="ExaDG::TimeIntBDFBase" shape="rect" coords="1682,112,2513,136"/>
+<area href="classExaDG_1_1Acoustics_1_1TimeIntAdamsBashforthMoulton.html" alt="ExaDG::Acoustics::TimeIntAdamsBashforthMoulton&lt; Number &gt;" shape="rect" coords="0,168,831,192"/>
+<area href="classExaDG_1_1ConvDiff_1_1TimeIntBDF.html" alt="ExaDG::ConvDiff::TimeIntBDF&lt; dim, Number &gt;" shape="rect" coords="1261,168,2092,192"/>
+<area href="classExaDG_1_1IncNS_1_1TimeIntBDF.html" alt="ExaDG::IncNS::TimeIntBDF&lt; dim, Number &gt;" shape="rect" coords="2102,168,2933,192"/>
+<area href="classExaDG_1_1IncNS_1_1TimeIntBDFCoupled.html" alt="ExaDG::IncNS::TimeIntBDFCoupled&lt; dim, Number &gt;" shape="rect" coords="1261,224,2092,248"/>
+<area href="classExaDG_1_1IncNS_1_1TimeIntBDFDualSplitting.html" alt="ExaDG::IncNS::TimeIntBDFDualSplitting&lt; dim, Number &gt;" shape="rect" coords="2102,224,2933,248"/>
+<area href="classExaDG_1_1IncNS_1_1TimeIntBDFPressureCorrection.html" alt="ExaDG::IncNS::TimeIntBDFPressureCorrection&lt; dim, Number &gt;" shape="rect" coords="2943,224,3774,248"/>
   </map>
 </div></div>
 <table class="memberdecls">
@@ -179,6 +182,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>push_back_time_step_s
 <tr class="memitem:a715f03e413c1efd68f9984788ffee324" id="r_a715f03e413c1efd68f9984788ffee324"><td class="memItemLeft" align="right" valign="top"><a id="a715f03e413c1efd68f9984788ffee324" name="a715f03e413c1efd68f9984788ffee324"></a>
 virtual double&#160;</td><td class="memItemRight" valign="bottom"><b>calculate_time_step_size</b> ()=0</td></tr>
 <tr class="separator:a715f03e413c1efd68f9984788ffee324"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a680ab0c96cdbb946e0c29da5cc031bc3" id="r_a680ab0c96cdbb946e0c29da5cc031bc3"><td class="memItemLeft" align="right" valign="top"><a id="a680ab0c96cdbb946e0c29da5cc031bc3" name="a680ab0c96cdbb946e0c29da5cc031bc3"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>print_solver_info</b> () const =0</td></tr>
+<tr class="separator:a680ab0c96cdbb946e0c29da5cc031bc3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classExaDG_1_1TimeIntBase"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classExaDG_1_1TimeIntBase')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classExaDG_1_1TimeIntBase.html">ExaDG::TimeIntBase</a></td></tr>
 <tr class="memitem:ac2177503910a3bf6367cab21d20561ea inherit pro_methods_classExaDG_1_1TimeIntBase" id="r_ac2177503910a3bf6367cab21d20561ea"><td class="memItemLeft" align="right" valign="top">
 void&#160;</td><td class="memItemRight" valign="bottom"><b>do_timestep</b> ()</td></tr>
