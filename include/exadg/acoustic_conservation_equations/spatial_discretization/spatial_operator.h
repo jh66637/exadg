@@ -37,6 +37,7 @@
 #include <exadg/matrix_free/matrix_free_data.h>
 #include <exadg/operators/inverse_mass_operator.h>
 #include <exadg/operators/rhs_operator.h>
+#include <exadg/utilities/lazy_ptr.h>
 
 namespace ExaDG
 {
@@ -46,6 +47,7 @@ template<int dim, typename Number>
 class SpatialOperator : public Interface::SpatialOperator<Number>
 {
   using BlockVectorType = typename Interface::SpatialOperator<Number>::BlockVectorType;
+  using VectorType      = dealii::LinearAlgebra::distributed::Vector<Number>;
 
 public:
   static unsigned int const block_index_pressure = 0;
@@ -66,7 +68,8 @@ public:
   fill_matrix_free_data(MatrixFreeData<dim, Number> & matrix_free_data) const;
 
   /**
-   * Call this setup() function if the dealii::MatrixFree object can be set up by the present class.
+   * Call this setup() function if the dealii::MatrixFree object can be set up by the present
+   * class.
    */
   void
   setup();
@@ -132,17 +135,29 @@ public:
   dealii::types::global_dof_index
   get_number_of_dofs() const;
 
+  double
+  get_density() const;
+
   /*
    * Initialization of vectors.
    */
   void
   initialize_dof_vector(BlockVectorType & dst) const final;
 
+  void
+  initialize_dof_vector_pressure(VectorType & dst) const;
+
   /*
    * Prescribe initial conditions using a specified analytical/initial solution function.
    */
   void
   prescribe_initial_conditions(BlockVectorType & dst, double const time) const final;
+
+  /*
+   * Set right-hand side vector that has been integrated externally.
+   */
+  void
+  set_integrated_rhs(VectorType const & integrated_rhs_in);
 
   /*
    *  This function is used in case of explicit time integration:
@@ -246,6 +261,11 @@ private:
    * RHS operator
    */
   RHSOperator<dim, Number, 1> rhs_operator;
+
+  // Right-hand side DoF vector that has been computed AND integrated
+  // externally.
+  bool                 integrated_rhs_set;
+  lazy_ptr<VectorType> integrated_rhs;
 
   MPI_Comm const mpi_comm;
 
