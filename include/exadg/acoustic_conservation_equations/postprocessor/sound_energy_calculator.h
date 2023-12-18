@@ -200,9 +200,9 @@ private:
     CellIntegratorP pressure(matrix_free_in, dof_index_pressure, quad_index);
     CellIntegratorU velocity(matrix_free_in, dof_index_velocity, quad_index);
 
-    Number const rho       = static_cast<Number>(data.density);
+    Number const rho_inv   = static_cast<Number>(1.0 / data.density);
     Number const c         = static_cast<Number>(data.speed_of_sound);
-    Number const rhocc_inv = Number{1.0} / (rho * c * c);
+    Number const rhocc_inv = rho_inv / (c * c);
 
     Number energy = 0.0;
 
@@ -222,7 +222,11 @@ private:
       {
         vector u = velocity.get_value(q);
         scalar p = pressure.get_value(q);
-        energy_batch += Number{0.5} * rho * u * u * velocity.JxW(q);
+
+        // We solve for the scaled velocity (rho * u).
+        // 0.5 * rho * u * u = 0.5 / rho * (rho * u) * (rho * u).
+        energy_batch += Number{0.5} * rho_inv * u * u * velocity.JxW(q);
+
         energy_batch += Number{0.5} * rhocc_inv * p * p * pressure.JxW(q);
       }
 
