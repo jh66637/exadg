@@ -94,9 +94,8 @@ public:
     param.check();
 
     // Some AeroAcoustic specific Asserts
-    AssertThrow(param.adaptive_time_stepping == false,
-                dealii::ExcMessage(
-                  "Adaptive timestepping not yet implemented for aero-acoustics."));
+    AssertThrow(param.adaptive_time_stepping == true,
+                dealii::ExcMessage("Adaptive timestepping has to be used for aero-acoustics."));
     param.print(pcout, "List of parameters for acoustic conservation equations:");
 
     // grid

@@ -66,9 +66,6 @@ private:
   set_start_time() const;
 
   void
-  synchronize_time_step_size() const;
-
-  void
   couple_fluid_to_acoustic();
 
   MPI_Comm const mpi_comm;
@@ -91,6 +88,9 @@ private:
 
   // computation time
   mutable TimerTree timer_tree;
+
+  // wall time fluid and acoustic solvers ran together
+  double joint_time;
 };
 
 } // namespace AeroAcoustic
