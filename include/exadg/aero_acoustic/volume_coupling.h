@@ -25,6 +25,7 @@
 #include <exadg/aero_acoustic/calculators/source_term_calculator.h>
 #include <exadg/aero_acoustic/single_field_solvers/acoustics.h>
 #include <exadg/aero_acoustic/single_field_solvers/fluid.h>
+#include <exadg/aero_acoustic/user_interface/blend_in_function.h>
 #include <exadg/aero_acoustic/user_interface/parameters.h>
 
 namespace ExaDG
@@ -40,14 +41,20 @@ class VolumeCoupling
   using VectorType = dealii::LinearAlgebra::distributed::Vector<Number>;
 
 public:
+  VolumeCoupling() : blend_in_finished(false)
+  {
+  }
+
   void
   setup(Parameters const &                           parameters_in,
         std::shared_ptr<SolverAcoustic<dim, Number>> acoustic_solver_in,
-        std::shared_ptr<SolverFluid<dim, Number>>    fluid_solver_in)
+        std::shared_ptr<SolverFluid<dim, Number>>    fluid_solver_in,
+        std::shared_ptr<BlendInFunction>             source_term_blend_in_function_in)
   {
-    parameters      = parameters_in;
-    acoustic_solver = acoustic_solver_in;
-    fluid_solver    = fluid_solver_in;
+    parameters                    = parameters_in;
+    acoustic_solver               = acoustic_solver_in;
+    fluid_solver                  = fluid_solver_in;
+    source_term_blend_in_function = source_term_blend_in_function_in;
 
     acoustic_solver_in->pde_operator->initialize_dof_vector_pressure(source_term_acoustic);
     fluid_solver_in->pde_operator->initialize_vector_pressure(source_term_fluid);
@@ -75,11 +82,19 @@ public:
     data.consider_convection = parameters_in.source_term_with_convection;
 
     source_term_calculator.setup(fluid_solver_in->pde_operator->get_matrix_free(), data);
+
+    // setup blend in function
+    if(parameters.blend_in_source_term)
+    {
+      double const st = acoustic_solver_in->time_integrator->get_start_time();
+      source_term_blend_in_function_in->setup(st, st + parameters.blend_in_duration);
+    }
   }
 
   void
   fluid_to_acoustic()
   {
+    // compute source term and set integrated source term on the acoustic mesh
     if(parameters.fluid_to_acoustic_coupling_strategy ==
        FluidToAcousticCouplingStrategy::NonNestedMGRestriction)
     {
@@ -95,6 +110,15 @@ public:
       AssertThrow(false, dealii::ExcMessage("FluidToAcousticCouplingStrategy not implemented."));
     }
 
+    // blend in source term
+    if(parameters.blend_in_source_term)
+    {
+      double const time = acoustic_solver->time_integrator->get_time();
+      if(not source_term_blend_in_function->is_finished(time))
+        source_term_acoustic *= source_term_blend_in_function->get_scaling_factor(time);
+    }
+
+    // set source term
     acoustic_solver->pde_operator->set_integrated_rhs(source_term_acoustic);
   }
 
@@ -116,6 +140,13 @@ private:
 
   // Aeroacoustic source term defined on the fluid mesh
   VectorType source_term_fluid;
+
+  // If the source term is blended in, this variable captures if the
+  // blend in is finished.
+  bool blend_in_finished;
+
+  // The function that provides the blend in scaling factor
+  std::shared_ptr<BlendInFunction> source_term_blend_in_function;
 };
 } // namespace AeroAcoustic
 } // namespace ExaDG

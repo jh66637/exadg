@@ -315,6 +315,10 @@ public:
 
   virtual void
   set_single_field_solvers(std::string input_file, MPI_Comm const & comm) = 0;
+
+  virtual void
+  set_blend_in_function() = 0;
+
   void
   add_parameters(dealii::ParameterHandler & prm)
   {
@@ -324,6 +328,9 @@ public:
 
   std::shared_ptr<AcousticsAeroAcoustic::ApplicationBase<dim, Number>> acoustic;
   std::shared_ptr<FluidAeroAcoustic::ApplicationBase<dim, Number>>     fluid;
+
+  // Function that can be used to blend in the source term.
+  std::shared_ptr<BlendInFunction> source_term_blend_in_function;
 };
 
 } // namespace AeroAcoustic

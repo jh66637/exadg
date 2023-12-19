@@ -169,6 +169,12 @@ TimeIntBase::get_next_time() const
   return this->get_time() + this->get_time_step_size();
 }
 
+double
+TimeIntBase::get_start_time() const
+{
+  return start_time;
+}
+
 unsigned int
 TimeIntBase::get_number_of_time_steps() const
 {

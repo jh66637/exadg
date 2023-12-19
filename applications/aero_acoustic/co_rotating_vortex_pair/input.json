@@ -14,7 +14,9 @@
     },
     "AeroAcoustic": {
         "SourceTermWithConvection": "false",
-        "FluidToAcousticCouplingStrategy": "NonNestedMGRestriction"
+        "FluidToAcousticCouplingStrategy": "NonNestedMGRestriction",
+        "BlendInSourceTerm" : "true",
+        "BlendInDuration" : "1.0"
     },
     "Application": {
         "StartTimeAcousticsInVortexRotations": "0.05",

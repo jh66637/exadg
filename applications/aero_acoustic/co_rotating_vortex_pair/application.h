@@ -634,6 +634,21 @@ public:
 
 namespace AeroAcoustic
 {
+class SourceTermBlendIn : public BlendInFunction
+{
+  double
+  value(std::pair<double, double> const & start_end_time, double const time) const final
+  {
+    auto const [start, end] = start_end_time;
+
+    double const pi = dealii::numbers::PI;
+    double const T  = end - start;
+    double const t  = time - start;
+
+    return 0.5 * (1.0 - std::cos(pi * std::min(t / T, 1.0)));
+  }
+};
+
 template<int dim, typename Number>
 class Application : public ApplicationBase<dim, Number>
 {
@@ -644,6 +659,12 @@ public:
     this->acoustic =
       std::make_shared<AcousticsAeroAcoustic::Application<dim, Number>>(input_file, comm);
     this->fluid = std::make_shared<FluidAeroAcoustic::Application<dim, Number>>(input_file, comm);
+  }
+
+  void
+  set_blend_in_function() final
+  {
+    this->source_term_blend_in_function = std::make_shared<SourceTermBlendIn>();
   }
 };
 } // namespace AeroAcoustic

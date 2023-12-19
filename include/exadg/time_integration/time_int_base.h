@@ -140,6 +140,12 @@ public:
   get_next_time() const;
 
   /*
+   * Get start time
+   */
+  double
+  get_start_time() const;
+
+  /*
    * Get number of computed time steps
    */
   unsigned int

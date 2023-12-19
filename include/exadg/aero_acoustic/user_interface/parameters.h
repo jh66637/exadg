@@ -41,7 +41,9 @@ class Parameters
 public:
   Parameters()
     : source_term_with_convection(false),
-      fluid_to_acoustic_coupling_strategy(FluidToAcousticCouplingStrategy::Undefined)
+      fluid_to_acoustic_coupling_strategy(FluidToAcousticCouplingStrategy::Undefined),
+      blend_in_source_term(false),
+      blend_in_duration(-1.0)
   {
   }
 
@@ -50,6 +52,9 @@ public:
   {
     AssertThrow(fluid_to_acoustic_coupling_strategy != FluidToAcousticCouplingStrategy::Undefined,
                 dealii::ExcMessage("Coupling strategy has to be set."));
+
+    if(blend_in_source_term)
+      AssertThrow(blend_in_duration > 0.0, dealii::ExcMessage("Blend in duration has to be set."));
   }
 
   void
@@ -58,6 +63,9 @@ public:
     pcout << std::endl << name << std::endl << std::endl;
     print_parameter(pcout, "Source term has convective part", source_term_with_convection);
     print_parameter(pcout, "Fluid to acoustic coupling", fluid_to_acoustic_coupling_strategy);
+    print_parameter(pcout, "Blend in source term", blend_in_source_term);
+    if(blend_in_source_term)
+      print_parameter(pcout, "Blend in duration", blend_in_duration);
   }
 
   void
@@ -76,6 +84,17 @@ public:
                         "Volume coupling strategy from the fluid to the acoustic field.",
                         Patterns::Enum<FluidToAcousticCouplingStrategy>(),
                         true);
+
+      prm.add_parameter("BlendInSourceTerm",
+                        blend_in_source_term,
+                        "Blend in the aeroacoustic source term.",
+                        dealii::Patterns::Bool(),
+                        true);
+
+      prm.add_parameter("BlendInDuration",
+                        blend_in_duration,
+                        "Blend in the aeroacoustic source term.",
+                        dealii::Patterns::Double());
     }
     prm.leave_subsection();
   }
@@ -87,6 +106,12 @@ public:
 
   // Strategy to couple from fluid to acoustic
   FluidToAcousticCouplingStrategy fluid_to_acoustic_coupling_strategy;
+
+  // Blend in the aeroacoustic source term.
+  bool blend_in_source_term;
+
+  // Duration of source term blend in
+  double blend_in_duration;
 };
 
 } // namespace AeroAcoustic

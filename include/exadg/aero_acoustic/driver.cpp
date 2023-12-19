@@ -91,7 +91,7 @@ Driver<dim, Number>::setup_volume_coupling()
 
     pcout << std::endl << "Setup volume coupling fluid -> acoustic ..." << std::endl;
 
-    volume_coupling.setup(parameters, acoustic, fluid);
+    volume_coupling.setup(parameters, acoustic, fluid, application->source_term_blend_in_function);
 
     pcout << std::endl << "... done!" << std::endl;
 

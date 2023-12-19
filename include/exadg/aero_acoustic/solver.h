@@ -64,6 +64,7 @@ run(std::string const & input_file, MPI_Comm const & mpi_comm, bool const is_tes
 
   auto application = AeroAcoustic::get_application<dim, Number>();
   application->set_single_field_solvers(input_file, mpi_comm);
+  application->set_blend_in_function();
 
   auto driver =
     std::make_shared<AeroAcoustic::Driver<dim, Number>>(input_file, mpi_comm, application, is_test);
