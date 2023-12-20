@@ -25,6 +25,7 @@
 #include <deal.II/base/function.h>
 #include <deal.II/distributed/tria.h>
 #include <deal.II/grid/grid_generator.h>
+#include <deal.II/grid/grid_out.h>
 
 #include <exadg/grid/grid_utilities.h>
 
@@ -142,6 +143,9 @@ private:
             face->set_boundary_id(1);
 
         tria.refine_global(global_refinements);
+
+        std::ofstream output_file("mesh.msh");
+        dealii::GridOut().write_msh(tria, output_file);
       };
 
     GridUtilities::create_triangulation<dim>(
