@@ -40,6 +40,12 @@ struct FieldFunctions
    * beginning of the simulation.
    */
   std::shared_ptr<dealii::Function<dim>> initial_solution_velocity;
+
+  /*
+   * The function right_hand_side is used to evaluate the acoustic source term on the right-hand
+   * side of the mass conservation equation of the acoustic conservation equations.
+   */
+  std::shared_ptr<dealii::Function<dim>> right_hand_side;
 };
 
 } // namespace Acoustics
