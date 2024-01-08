@@ -28,8 +28,7 @@ namespace ExaDG
 namespace AeroAcoustic
 {
 template<int dim, typename Number>
-Driver<dim, Number>::Driver(std::string const &                           input_file,
-                            MPI_Comm const &                              comm,
+Driver<dim, Number>::Driver(MPI_Comm const &                              comm,
                             std::shared_ptr<ApplicationBase<dim, Number>> app,
                             bool const                                    is_test)
   : mpi_comm(comm),
@@ -40,13 +39,7 @@ Driver<dim, Number>::Driver(std::string const &                           input_
     fluid(std::make_shared<SolverFluid<dim, Number>>())
 {
   print_general_info<Number>(pcout, mpi_comm, is_test);
-
-  dealii::ParameterHandler prm;
-  parameters.add_parameters(prm, "AeroAcoustic");
-  prm.parse_input(input_file, "", true, true);
-
-  parameters.check();
-  parameters.print(pcout, "List of parameters for aero-acoustic solver");
+  app->parameters.print(pcout, "List of parameters for aero-acoustic solver");
 }
 
 template<int dim, typename Number>
@@ -71,7 +64,7 @@ Driver<dim, Number>::setup()
   {
     dealii::Timer timer_local;
 
-    fluid->setup(application->fluid, mpi_comm, is_test);
+    fluid->setup(application->fluid, application->field_functions, mpi_comm, is_test);
 
     timer_tree.insert({"AeroAcoustic", "Setup", "Fluid"}, timer_local.wall_time());
   }
@@ -91,7 +84,7 @@ Driver<dim, Number>::setup_volume_coupling()
 
     pcout << std::endl << "Setup volume coupling fluid -> acoustic ..." << std::endl;
 
-    volume_coupling.setup(parameters, acoustic, fluid);
+    volume_coupling.setup(application->parameters, acoustic, fluid, application->field_functions);
 
     pcout << std::endl << "... done!" << std::endl;
 
@@ -157,7 +150,17 @@ Driver<dim, Number>::solve()
       couple_fluid_to_acoustic();
     acoustic->time_integrator->advance_one_timestep();
 
-    fluid->advance_one_timestep_with_pressure_time_derivative(acoustic->time_integrator->started());
+    if(application->parameters.use_analytical_source_term ||
+       application->parameters.use_analytical_cfd_solution)
+    {
+      fluid->advance_one_timestep_without_solve(application->parameters.use_analytical_cfd_solution,
+                                                acoustic->time_integrator->started());
+    }
+    else
+    {
+      fluid->advance_one_timestep_with_pressure_time_derivative(
+        acoustic->time_integrator->started());
+    }
   }
 }
 

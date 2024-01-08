@@ -47,6 +47,10 @@
 #include <exadg/acoustic_conservation_equations/user_interface/field_functions.h>
 #include <exadg/acoustic_conservation_equations/user_interface/parameters.h>
 
+// AeroAcoustic
+#include <exadg/aero_acoustic/user_interface/field_functions.h>
+#include <exadg/aero_acoustic/user_interface/parameters.h>
+
 namespace ExaDG
 {
 namespace AcousticsAeroAcoustic
@@ -306,17 +310,42 @@ class ApplicationBase
 public:
   virtual ~ApplicationBase() = default;
 
-  virtual void
-  set_single_field_solvers(std::string input_file, MPI_Comm const & comm) = 0;
   void
+  setup(std::string input_file, MPI_Comm const & comm)
+  {
+    dealii::ParameterHandler prm;
+    parameters.add_parameters(prm, "AeroAcoustic");
+    prm.parse_input(input_file, "", true, true);
+
+    parameters.check();
+
+    set_single_field_solvers(input_file, comm);
+
+    field_functions = std::make_shared<FieldFunctions<dim>>();
+    set_field_functions();
+  }
+
+  Parameters parameters;
+
+  std::shared_ptr<AcousticsAeroAcoustic::ApplicationBase<dim, Number>> acoustic;
+  std::shared_ptr<FluidAeroAcoustic::ApplicationBase<dim, Number>>     fluid;
+
+  std::shared_ptr<FieldFunctions<dim>> field_functions;
+
+protected:
+  virtual void
   add_parameters(dealii::ParameterHandler & prm)
   {
     acoustic->add_parameters(prm);
     fluid->add_parameters(prm);
   }
 
-  std::shared_ptr<AcousticsAeroAcoustic::ApplicationBase<dim, Number>> acoustic;
-  std::shared_ptr<FluidAeroAcoustic::ApplicationBase<dim, Number>>     fluid;
+private:
+  virtual void
+  set_single_field_solvers(std::string input_file, MPI_Comm const & comm) = 0;
+
+  virtual void
+  set_field_functions() = 0;
 };
 
 } // namespace AeroAcoustic

@@ -143,6 +143,20 @@ TimeIntBDFCoupled<dim, Number>::get_pressure(unsigned int i) const
 
 template<int dim, typename Number>
 void
+TimeIntBDFCoupled<dim, Number>::set_pressure_np(VectorType const & src)
+{
+  solution_np.block(1) = src;
+}
+
+template<int dim, typename Number>
+void
+TimeIntBDFCoupled<dim, Number>::set_velocity_np(VectorType const & src)
+{
+  solution_np.block(0) = src;
+}
+
+template<int dim, typename Number>
+void
 TimeIntBDFCoupled<dim, Number>::set_velocity(VectorType const & velocity_in, unsigned int const i)
 {
   solution[i].block(0) = velocity_in;

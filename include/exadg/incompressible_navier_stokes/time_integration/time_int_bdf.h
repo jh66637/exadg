@@ -88,6 +88,12 @@ public:
   get_pressures_and_times_np(std::vector<VectorType const *> & pressures,
                              std::vector<double> &             times) const;
 
+  virtual void
+  set_pressure_np(VectorType const & src) = 0;
+
+  virtual void
+  set_velocity_np(VectorType const & src) = 0;
+
   void
   ale_update();
 

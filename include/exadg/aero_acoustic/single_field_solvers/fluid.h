@@ -55,9 +55,12 @@ public:
 
   void
   setup(std::shared_ptr<FluidAeroAcoustic::ApplicationBase<dim, Number>> application,
-        MPI_Comm const                                                   mpi_comm,
-        bool const                                                       is_test)
+        std::shared_ptr<AeroAcoustic::FieldFunctions<dim>> aero_acoustic_field_functions,
+        MPI_Comm const                                     mpi_comm,
+        bool const                                         is_test)
   {
+    field_functions = aero_acoustic_field_functions;
+
     // setup application
     application->setup(grid, mapping, multigrid_mappings);
 
@@ -98,6 +101,51 @@ public:
   }
 
   void
+  advance_one_timestep_without_solve(bool const use_analytical_solutions, bool const update_dpdt)
+  {
+    time_integrator->advance_one_timestep_pre_solve(true);
+
+    if(use_analytical_solutions)
+    {
+      // This is necessary if Number == float
+      using VectorTypeDouble = dealii::LinearAlgebra::distributed::Vector<double>;
+
+      VectorTypeDouble pressure_double;
+      pressure_double = time_integrator->get_pressure_np();
+      field_functions->analytical_cfd_solution_pressure->set_time(time_integrator->get_next_time());
+      dealii::VectorTools::interpolate(*pde_operator->get_mapping(),
+                                       pde_operator->get_dof_handler_p(),
+                                       *field_functions->analytical_cfd_solution_pressure,
+                                       pressure_double);
+      VectorType pressure;
+      pressure = pressure_double;
+      time_integrator->set_pressure_np(pressure);
+
+      VectorTypeDouble velocity_double;
+      velocity_double = time_integrator->get_velocity_np();
+      field_functions->analytical_cfd_solution_velocity->set_time(time_integrator->get_next_time());
+      dealii::VectorTools::interpolate(*pde_operator->get_mapping(),
+                                       pde_operator->get_dof_handler_u(),
+                                       *field_functions->analytical_cfd_solution_velocity,
+                                       velocity_double);
+      VectorType velocity;
+      velocity = velocity_double;
+      time_integrator->set_velocity_np(velocity);
+
+      if(update_dpdt)
+      {
+        std::vector<VectorType const *> pressures;
+        std::vector<double>             times;
+        time_integrator->get_pressures_and_times_np(pressures, times);
+
+        compute_bdf_time_derivative(pressure_time_derivative, pressures, times);
+      }
+    }
+
+    time_integrator->advance_one_timestep_post_solve();
+  }
+
+  void
   advance_one_timestep_with_pressure_time_derivative(bool const update_dpdt)
   {
     time_integrator->advance_one_timestep_pre_solve(true);
@@ -123,6 +171,18 @@ public:
     return pressure_time_derivative;
   }
 
+  VectorType const &
+  get_velocity() const
+  {
+    return time_integrator->get_velocity();
+  }
+
+  VectorType const &
+  get_pressure() const
+  {
+    return time_integrator->get_pressure();
+  }
+
   // grid and mapping
   std::shared_ptr<Grid<dim>>            grid;
   std::shared_ptr<dealii::Mapping<dim>> mapping;
@@ -142,6 +202,8 @@ public:
   std::shared_ptr<TimerTree> timer_tree;
 
 private:
+  std::shared_ptr<AeroAcoustic::FieldFunctions<dim>> field_functions;
+
   // The aeroacoustic source term needs the pressure time derivative.
   // The update of the vector is performed using
   // advance_one_timestep_with_pressure_time_derivative(true).

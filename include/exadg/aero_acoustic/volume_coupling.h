@@ -43,11 +43,13 @@ public:
   void
   setup(Parameters const &                           parameters_in,
         std::shared_ptr<SolverAcoustic<dim, Number>> acoustic_solver_in,
-        std::shared_ptr<SolverFluid<dim, Number>>    fluid_solver_in)
+        std::shared_ptr<SolverFluid<dim, Number>>    fluid_solver_in,
+        std::shared_ptr<FieldFunctions<dim>>         field_functions_in)
   {
     parameters      = parameters_in;
     acoustic_solver = acoustic_solver_in;
     fluid_solver    = fluid_solver_in;
+    field_functions = field_functions_in;
 
     acoustic_solver_in->pde_operator->initialize_dof_vector_pressure(source_term_acoustic);
     fluid_solver_in->pde_operator->initialize_vector_pressure(source_term_fluid);
@@ -83,10 +85,27 @@ public:
     if(parameters.fluid_to_acoustic_coupling_strategy ==
        FluidToAcousticCouplingStrategy::NonNestedMGRestriction)
     {
-      source_term_calculator.evaluate_integrate(source_term_fluid,
-                                                fluid_solver->time_integrator->get_velocity(),
-                                                fluid_solver->time_integrator->get_pressure(),
-                                                fluid_solver->get_pressure_time_derivative());
+      if(parameters.use_analytical_source_term)
+      {
+        AssertThrow(field_functions->analytical_source_term,
+                    dealii::ExcMessage("Analytical source term not provided."));
+
+        RHSOperatorData<dim> data;
+        data.dof_index     = fluid_solver->pde_operator->get_dof_index_pressure();
+        data.quad_index    = fluid_solver->pde_operator->get_quad_index_pressure();
+        data.kernel_data.f = field_functions->analytical_source_term;
+
+        RHSOperator<dim, Number, 1> rhs_operator;
+        rhs_operator.initialize(fluid_solver->pde_operator->get_matrix_free(), data);
+        rhs_operator.evaluate(source_term_fluid, fluid_solver->time_integrator->get_time());
+      }
+      else
+      {
+        source_term_calculator.evaluate_integrate(source_term_fluid,
+                                                  fluid_solver->get_velocity(),
+                                                  fluid_solver->get_pressure(),
+                                                  fluid_solver->get_pressure_time_derivative());
+      }
 
       non_nested_mg.restrict_and_add(source_term_acoustic, source_term_fluid);
     }
@@ -104,6 +123,9 @@ private:
   // Single field solvers
   std::shared_ptr<SolverAcoustic<dim, Number>> acoustic_solver;
   std::shared_ptr<SolverFluid<dim, Number>>    fluid_solver;
+
+  // Field functions
+  std::shared_ptr<FieldFunctions<dim>> field_functions;
 
   // Transfer operator
   dealii::MGTwoLevelTransferNonNested<dim, VectorType> non_nested_mg;

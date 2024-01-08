@@ -47,8 +47,7 @@ create_input_file(std::string const & input_file)
   using Number           = double;
 
   auto app = AeroAcoustic::get_application<Dim, Number>();
-  app->set_single_field_solvers(input_file, MPI_COMM_WORLD);
-  app->add_parameters(prm);
+  app->setup(input_file, MPI_COMM_WORLD);
 
   prm.print_parameters(input_file,
                        dealii::ParameterHandler::Short |
@@ -63,10 +62,9 @@ run(std::string const & input_file, MPI_Comm const & mpi_comm, bool const is_tes
   timer.restart();
 
   auto application = AeroAcoustic::get_application<dim, Number>();
-  application->set_single_field_solvers(input_file, mpi_comm);
+  application->setup(input_file, mpi_comm);
 
-  auto driver =
-    std::make_shared<AeroAcoustic::Driver<dim, Number>>(input_file, mpi_comm, application, is_test);
+  auto driver = std::make_shared<AeroAcoustic::Driver<dim, Number>>(mpi_comm, application, is_test);
 
   driver->setup();
 

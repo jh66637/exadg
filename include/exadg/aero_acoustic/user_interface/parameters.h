@@ -42,7 +42,9 @@ public:
   Parameters()
     : density(-1.0),
       source_term_with_convection(false),
-      fluid_to_acoustic_coupling_strategy(FluidToAcousticCouplingStrategy::Undefined)
+      fluid_to_acoustic_coupling_strategy(FluidToAcousticCouplingStrategy::Undefined),
+      use_analytical_source_term(false),
+      use_analytical_cfd_solution(false)
   {
   }
 
@@ -53,6 +55,10 @@ public:
 
     AssertThrow(fluid_to_acoustic_coupling_strategy != FluidToAcousticCouplingStrategy::Undefined,
                 dealii::ExcMessage("Coupling strategy has to be set."));
+
+    AssertThrow(not(use_analytical_source_term and use_analytical_cfd_solution),
+                dealii::ExcMessage(
+                  "only use_analytical_source_term OR use_analytical_cfd_solution can be true."));
   }
 
   void
@@ -83,6 +89,16 @@ public:
                         "Volume coupling strategy from the fluid to the acoustic field.",
                         Patterns::Enum<FluidToAcousticCouplingStrategy>(),
                         true);
+
+      prm.add_parameter("UseAnalyticalSourceTerm",
+                        use_analytical_source_term,
+                        "Use an analytical representation of the aeroacoustic source term.",
+                        dealii::Patterns::Bool());
+
+      prm.add_parameter("UseAnalyticalCFDSolution",
+                        use_analytical_cfd_solution,
+                        "Compute the aeroacoustic source term from an analytical CFD solution.",
+                        dealii::Patterns::Bool());
     }
     prm.leave_subsection();
   }
@@ -97,6 +113,15 @@ public:
 
   // Strategy to couple from fluid to acoustic
   FluidToAcousticCouplingStrategy fluid_to_acoustic_coupling_strategy;
+
+  // In case an analytical representation of the aeroacoustic source
+  // term exists we can use it to benchmark the aeroacoustic solver.
+  bool use_analytical_source_term;
+
+  // In case an analytical solution of the CFD is knwon, the aeroacoustic
+  // source terms can be computed from this solution and it is not necessary
+  // to solve the CFD.
+  bool use_analytical_cfd_solution;
 };
 
 } // namespace AeroAcoustic

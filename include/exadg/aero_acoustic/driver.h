@@ -28,7 +28,6 @@
 // AeroAcoustic
 #include <exadg/aero_acoustic/single_field_solvers/acoustics.h>
 #include <exadg/aero_acoustic/single_field_solvers/fluid.h>
-#include <exadg/aero_acoustic/user_interface/parameters.h>
 #include <exadg/aero_acoustic/volume_coupling.h>
 
 // utilities
@@ -44,8 +43,7 @@ class Driver
   using VectorType = dealii::LinearAlgebra::distributed::Vector<Number>;
 
 public:
-  Driver(std::string const &                           input_file,
-         MPI_Comm const &                              comm,
+  Driver(MPI_Comm const &                              comm,
          std::shared_ptr<ApplicationBase<dim, Number>> application,
          bool const                                    is_test);
 
@@ -85,9 +83,6 @@ private:
 
   // class that manages volume coupling
   VolumeCoupling<dim, Number> volume_coupling;
-
-  // parameters for AeroAcoustic
-  Parameters parameters;
 
   // computation time
   mutable TimerTree timer_tree;

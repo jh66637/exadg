@@ -236,6 +236,20 @@ TimeIntBDFPressureCorrection<dim, Number>::get_pressure(unsigned int i) const
 
 template<int dim, typename Number>
 void
+TimeIntBDFPressureCorrection<dim, Number>::set_pressure_np(VectorType const & src)
+{
+  pressure_np = src;
+}
+
+template<int dim, typename Number>
+void
+TimeIntBDFPressureCorrection<dim, Number>::set_velocity_np(VectorType const & src)
+{
+  velocity_np = src;
+}
+
+template<int dim, typename Number>
+void
 TimeIntBDFPressureCorrection<dim, Number>::set_velocity(VectorType const & velocity_in,
                                                         unsigned int const i)
 {
