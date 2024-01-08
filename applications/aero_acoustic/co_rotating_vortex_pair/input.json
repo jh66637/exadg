@@ -14,9 +14,10 @@
     },
     "AeroAcoustic": {
         "Density": "2.0",
-        "SourceTermWithConvection": "false",
+        "SourceTermWithConvection": "true",
         "FluidToAcousticCouplingStrategy": "NonNestedMGRestriction",
-        "UseAnalyticalSourceTerm": "true"
+        "UseAnalyticalSourceTerm": "true",
+        "UseAnalyticalCFDSolution": "false"
     },
     "Application": {
         "StartTimeAcousticsInVortexRotations": "0.05",
