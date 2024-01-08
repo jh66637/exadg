@@ -68,6 +68,10 @@ public:
     print_parameter(pcout, "Density", density);
     print_parameter(pcout, "Source term has convective part", source_term_with_convection);
     print_parameter(pcout, "Fluid to acoustic coupling", fluid_to_acoustic_coupling_strategy);
+    if(use_analytical_source_term)
+      print_parameter(pcout, "Use analytical source term", use_analytical_source_term);
+    if(use_analytical_cfd_solution)
+      print_parameter(pcout, "Use analytical CFD solution", use_analytical_cfd_solution);
   }
 
   void
