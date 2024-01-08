@@ -349,11 +349,8 @@ public:
     if(not material_derivative)
       return intensity * omega / pi * ddt_1 + 0.5 * intensity * intensity / (pi * pi) * ddt_2;
 
-    if(r < 1e-16)
-      return 0.0;
-
-    double const dr_f1     = -2.0 * r * r_0 * r_0 * std::cos(2 * theta - 2 * t * omega);
-    double const dtheta_f1 = 2.0 * r * r * r_0 * r_0 * std::sin(2.0 * theta - 2 * t * omega);
+    double const dr_f1     = -2.0 * r * r_0 * r_0 * std::cos(2.0 * theta - 2.0 * t * omega);
+    double const dtheta_f1 = 2.0 * r * r * r_0 * r_0 * std::sin(2.0 * theta - 2.0 * t * omega);
 
 
     double const dr_f2 =
@@ -379,10 +376,10 @@ public:
 
 
     double const DDt_1 = ddt_1 + (dr_f1 * g - f1 * dr_g) / (g * g) * w_r +
-                         (dtheta_f1 * g - f1 * dtheta_g) / (r * g * g) * w_theta;
+                         (dtheta_f1 * g - f1 * dtheta_g) / (r * g * g + 1e-16) * w_theta;
 
     double const DDt_2 = ddt_2 + (dr_f2 * g - 2.0 * f2 * dr_g) / (g * g * g) * w_r +
-                         (dtheta_f2 * g - 2.0 * f2 * dtheta_g) / (r * g * g * g) * w_theta;
+                         (dtheta_f2 * g - 2.0 * f2 * dtheta_g) / (r * g * g * g + 1e-16) * w_theta;
 
     return intensity * omega / pi * DDt_1 + 0.5 * intensity * intensity / (pi * pi) * DDt_2;
   }
