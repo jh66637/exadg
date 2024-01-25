@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['initialize_5fcoarse_5fmappings_0',['initialize_coarse_mappings',['../classExaDG_1_1Grid.html#a084af7e067c53140ba5e32fed294e5c9',1,'ExaDG::Grid']]]
+  ['fill_5fgrid_5fcoordinates_5fvector_0',['fill_grid_coordinates_vector',['../classExaDG_1_1HelpersALE.html#aa625c1a3873b379b11617e954e2a2111',1,'ExaDG::HelpersALE']]]
 ];
