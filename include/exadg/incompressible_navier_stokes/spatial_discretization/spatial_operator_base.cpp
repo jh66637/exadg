@@ -66,7 +66,7 @@ SpatialOperatorBase<dim, Number>::SpatialOperatorBase(
     pcout(std::cout, dealii::Utilities::MPI::this_mpi_process(mpi_comm) == 0),
     velocity_ptr(nullptr),
     pressure_ptr(nullptr),
-    aero_acoustic_source_term(nullptr)
+    aero_acoustic_feedback_term(nullptr)
 {
   pcout << std::endl
         << "Construct incompressible Navier-Stokes operator ..." << std::endl
@@ -1374,7 +1374,7 @@ SpatialOperatorBase<dim, Number>::evaluate_add_body_force_term(VectorType & dst,
     this->rhs_operator.evaluate_add(dst, time);
   }
 
-  if(param.aero_acoustic_source_term)
+  if(param.aero_acoustic_feedback_term)
   {
     AssertThrow(aero_acoustic_feedback_term,
                 dealii::ExcMessage("Aero-acoustic feedback term not valid."));
