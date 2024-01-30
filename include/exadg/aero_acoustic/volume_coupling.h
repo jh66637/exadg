@@ -107,6 +107,25 @@ public:
   void
   acoustic_to_fluid()
   {
+    if(parameters.acoustic_to_fluid_coupling_strategy ==
+       FluidToAcousticCouplingStrategy::NonNestedGridTransfer)
+    {
+      // TODO: we somehow have to transfer u_a to the fluid mesh. for this we need a different
+      // grid transfer class and different integration rules because we are working with vecotrs
+      // Hence we should split the class!!
+      non_nested_grid_transfer.prolongate_and_add(acoustic_particle_velocity_on_fluid_mesh,
+                                                  acoustic_solver->time_integrator->get_velocity());
+
+      feedback_term_calculator.evaluate_integrate(feedback_term_fluid,
+                                                  fluid_solver->time_integrator->get_velocity(),
+                                                  acoustic_particle_velocity_on_fluid_mesh);
+    }
+    else
+    {
+      AssertThrow(false, dealii::ExcMessage("FluidToAcousticCouplingStrategy not implemented."));
+    }
+
+    fluid_solver->pde_operator->set_aero_acoustic_feedback_term(feedback_term_fluid);
   }
 
 private:
@@ -127,10 +146,14 @@ private:
 
   // Class that knows how to compute the feedback term
   SourceTermCalculator<dim, Number> feedback_term_calculator;
-  VectorType source_term_acoustic;
 
-  // Aeroacoustic source term defined on the fluid mesh
+  // Aeroacoustic source and feedback terms defined on the acoustic mesh
+  VectorType source_term_acoustic;
+  VectorType feedback_term_acoustic;
+
+  // Aeroacoustic source and feedback terms defined on the fluid mesh
   VectorType source_term_fluid;
+  VectorType feedback_term_fluid;
 };
 } // namespace AeroAcoustic
 } // namespace ExaDG
