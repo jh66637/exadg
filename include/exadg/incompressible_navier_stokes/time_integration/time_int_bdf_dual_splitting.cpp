@@ -361,7 +361,7 @@ TimeIntBDFDualSplitting<dim, Number>::convective_step()
   }
 
   // compute body force vector
-  if(this->param.right_hand_side == true)
+  if(this->param.inhomogenous_problem() == true)
   {
     pde_operator->evaluate_add_body_force_term(velocity_np, this->get_next_time());
   }

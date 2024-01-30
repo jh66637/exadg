@@ -65,7 +65,8 @@ SpatialOperatorBase<dim, Number>::SpatialOperatorBase(
     mpi_comm(mpi_comm_in),
     pcout(std::cout, dealii::Utilities::MPI::this_mpi_process(mpi_comm) == 0),
     velocity_ptr(nullptr),
-    pressure_ptr(nullptr)
+    pressure_ptr(nullptr),
+    aero_acoustic_source_term(nullptr)
 {
   pcout << std::endl
         << "Construct incompressible Navier-Stokes operator ..." << std::endl
@@ -1185,6 +1186,15 @@ SpatialOperatorBase<dim, Number>::set_temperature(VectorType const & temperature
 
 template<int dim, typename Number>
 void
+SpatialOperatorBase<dim, Number>::set_aero_acoustic_feedback_term(
+  VectorType const & aero_acoustic_feedback_term_in)
+{
+  aero_acoustic_feedback_term = &aero_acoustic_feedback_term_in;
+}
+
+
+template<int dim, typename Number>
+void
 SpatialOperatorBase<dim, Number>::compute_vorticity(VectorType & dst, VectorType const & src) const
 {
   vorticity_calculator.compute_vorticity(dst, src);
@@ -1359,7 +1369,17 @@ void
 SpatialOperatorBase<dim, Number>::evaluate_add_body_force_term(VectorType & dst,
                                                                double const time) const
 {
-  this->rhs_operator.evaluate_add(dst, time);
+  if(param.right_hand_side)
+  {
+    this->rhs_operator.evaluate_add(dst, time);
+  }
+
+  if(param.aero_acoustic_source_term)
+  {
+    AssertThrow(aero_acoustic_feedback_term,
+                dealii::ExcMessage("Aero-acoustic feedback term not valid."));
+    dst += *aero_acoustic_feedback_term;
+  }
 }
 
 template<int dim, typename Number>

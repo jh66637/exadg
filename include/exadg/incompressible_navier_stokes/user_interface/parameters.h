@@ -52,6 +52,9 @@ public:
   check(dealii::ConditionalOStream const & pcout) const;
 
   bool
+  inhomogenous_problem() const;
+
+  bool
   convective_problem() const;
 
   bool
@@ -165,6 +168,10 @@ public:
   // If Boussinesq term is activated: solves only for dynamic pressure variations if true,
   // and includes hydrostatic component if false.
   bool boussinesq_dynamic_part_only;
+
+  // Use the aero-acoustic feedback term that is internally computed from the acoustic
+  // and fluid solution.
+  bool aero_acoustic_feedback_term;
 
   /**************************************************************************************/
   /*                                                                                    */

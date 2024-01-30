@@ -476,7 +476,7 @@ TimeIntBDFPressureCorrection<dim, Number>::rhs_momentum(VectorType & rhs)
   /*
    *  Body force term
    */
-  if(this->param.right_hand_side == true)
+  if(this->param.inhomogenous_problem())
   {
     pde_operator->evaluate_add_body_force_term(rhs, this->get_next_time());
   }

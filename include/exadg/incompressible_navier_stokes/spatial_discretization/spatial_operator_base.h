@@ -298,6 +298,12 @@ public:
   set_temperature(VectorType const & temperature);
 
   /*
+   * Set aero-acoustic source term.
+   */
+  void
+  set_aero_acoustic_feedback_term(VectorType const & aero_acoustic_feedback_term_in);
+
+  /*
    * Computation of derived quantities which is needed for postprocessing but some of them are also
    * needed, e.g., for special splitting-type time integration schemes.
    */
@@ -655,6 +661,9 @@ private:
   // pressure.
   mutable VectorType const * velocity_ptr;
   mutable VectorType const * pressure_ptr;
+
+  // The aero-acoustic feedback term has been computed externally.
+  VectorType const * aero_acoustic_source_term;
 
   /*
    * Variable viscosity models.

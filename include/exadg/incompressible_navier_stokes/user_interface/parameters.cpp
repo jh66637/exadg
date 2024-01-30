@@ -41,6 +41,7 @@ Parameters::Parameters()
     right_hand_side(false),
     boussinesq_term(false),
     boussinesq_dynamic_part_only(false),
+    aero_acoustic_feedback_term(false),
 
     // ALE
     ale_formulation(false),
@@ -568,6 +569,12 @@ Parameters::check(dealii::ConditionalOStream const & pcout) const
 }
 
 bool
+Parameters::inhomogenous_problem() const
+{
+  return (right_hand_side or aero_acoustic_feedback_term);
+}
+
+bool
 Parameters::convective_problem() const
 {
   return (equation_type == EquationType::NavierStokes or equation_type == EquationType::Euler);
@@ -788,6 +795,7 @@ Parameters::print_parameters_mathematical_model(dealii::ConditionalOStream const
   print_parameter(pcout, "Right-hand side", right_hand_side);
   print_parameter(pcout, "Boussinesq term", boussinesq_term);
   print_parameter(pcout, "Boussinesq - dynamic part only", boussinesq_dynamic_part_only);
+  print_parameter(pcout, "Aero-acoustic feedback term", aero_acoustic_feedback_term);
 
   print_parameter(pcout, "Use ALE formulation", ale_formulation);
   if(ale_formulation)

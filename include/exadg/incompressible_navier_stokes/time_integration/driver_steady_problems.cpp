@@ -161,7 +161,7 @@ DriverSteadyProblems<dim, Number>::do_solve(double const time, bool unsteady_pro
   {
     VectorType rhs(solution.block(0));
     rhs = 0.0;
-    if(this->param.right_hand_side)
+    if(this->param.inhomogenous_problem())
       pde_operator->evaluate_add_body_force_term(rhs, time);
 
     // Newton solver

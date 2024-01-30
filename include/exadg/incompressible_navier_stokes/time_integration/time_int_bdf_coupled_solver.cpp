@@ -255,7 +255,7 @@ TimeIntBDFCoupled<dim, Number>::do_timestep_solve()
   {
     VectorType rhs(sum_alphai_ui);
     pde_operator->apply_mass_operator(rhs, sum_alphai_ui);
-    if(this->param.right_hand_side)
+    if(this->param.inhomogenous_problem())
       pde_operator->evaluate_add_body_force_term(rhs, this->get_next_time());
 
     // Add the convective term to the right-hand side of the equations
