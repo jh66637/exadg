@@ -55,7 +55,9 @@ public:
 
     // setup the transfer operator
     if(parameters.fluid_to_acoustic_coupling_strategy ==
-       FluidToAcousticCouplingStrategy::ConservativeInterpolation)
+         FluidToAcousticCouplingStrategy::ConservativeInterpolation or
+       parameters.acoustic_to_fluid_coupling_strategy ==
+         FluidToAcousticCouplingStrategy::NonNestedGridTransfer)
     {
       non_nested_grid_transfer.reinit(fluid_solver_in->pde_operator->get_dof_handler_p(),
                                       acoustic_solver_in->pde_operator->get_dof_handler_p(),
@@ -102,6 +104,11 @@ public:
     acoustic_solver->pde_operator->set_aero_acoustic_source_term(source_term_acoustic);
   }
 
+  void
+  acoustic_to_fluid()
+  {
+  }
+
 private:
   Parameters parameters;
 
@@ -118,7 +125,8 @@ private:
   // Class that knows how to compute the source term
   SourceTermCalculator<dim, Number> source_term_calculator;
 
-  // Aeroacoustic source term defined on the acoustic mesh
+  // Class that knows how to compute the feedback term
+  SourceTermCalculator<dim, Number> feedback_term_calculator;
   VectorType source_term_acoustic;
 
   // Aeroacoustic source term defined on the fluid mesh

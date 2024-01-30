@@ -119,6 +119,17 @@ Driver<dim, Number>::couple_fluid_to_acoustic()
   timer_tree.insert({"AeroAcoustic", "Coupling fluid -> acoustic"}, sub_timer.wall_time());
 }
 
+void
+Driver<dim, Number>::couple_acoustic_to_fluid()
+{
+  dealii::Timer sub_timer;
+  sub_timer.restart();
+
+  volume_coupling.acoustic_to_fluid();
+
+  timer_tree.insert({"AeroAcoustic", "Coupling acoustic -> fluid"}, sub_timer.wall_time());
+}
+
 template<int dim, typename Number>
 void
 Driver<dim, Number>::solve()
@@ -161,6 +172,9 @@ Driver<dim, Number>::solve()
     bool const acoustic_might_start_during_next_timestep =
       fluid->time_integrator->get_next_time() + fluid->max_next_time_step_size() >
       application->acoustic->get_parameters().start_time;
+
+    if(acoustic->time_integrator->started())
+      couple_acoustic_to_fluid();
 
     fluid->advance_one_timestep_and_compute_pressure_time_derivative(
       acoustic_might_start_during_next_timestep);

@@ -36,6 +36,12 @@ enum class FluidToAcousticCouplingStrategy
   ConservativeInterpolation
 };
 
+enum class AcousticToFluidCouplingStrategy
+{
+  Undefined,
+  NonNestedGridTransfer
+};
+
 class Parameters
 {
 public:
@@ -64,6 +70,7 @@ public:
     print_parameter(pcout, "Source term has convective part", source_term_with_convection);
     print_parameter(pcout, "Blend in source term", blend_in_source_term);
     print_parameter(pcout, "Fluid to acoustic coupling", fluid_to_acoustic_coupling_strategy);
+    print_parameter(pcout, "Acoustic to fluid coupling", acoustic_to_fluid_coupling_strategy);
   }
 
   void
@@ -91,6 +98,12 @@ public:
                         "Volume coupling strategy from the fluid to the acoustic field.",
                         Patterns::Enum<FluidToAcousticCouplingStrategy>(),
                         true);
+
+      prm.add_parameter("AcousticToFluidCouplingStrategy",
+                        acoustic_to_fluid_coupling_strategy,
+                        "Volume coupling strategy from the acoustic to the fluid field.",
+                        Patterns::Enum<AcousticToFluidCouplingStrategy>(),
+                        true);
     }
     prm.leave_subsection();
   }
@@ -108,6 +121,9 @@ public:
 
   // Strategy to couple from fluid to acoustic
   FluidToAcousticCouplingStrategy fluid_to_acoustic_coupling_strategy;
+
+  // Strategy to couple from fluid to acoustic
+  AcousticToFluidCouplingStrategy acoustic_to_fluid_coupling_strategy;
 };
 
 } // namespace AeroAcoustic
