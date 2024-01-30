@@ -663,7 +663,7 @@ private:
   mutable VectorType const * pressure_ptr;
 
   // The aero-acoustic feedback term has been computed externally.
-  VectorType const * aero_acoustic_source_term;
+  VectorType const * aero_acoustic_feedback_term;
 
   /*
    * Variable viscosity models.
