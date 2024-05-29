@@ -66,7 +66,7 @@ public:
         "StartTimeAcousticsInVortexRotations",
         n_rotations_before_start,
         "Number of rotations of the vortices before acoustic simulation is started.",
-        dealii::Patterns::Double(1e-12));
+        dealii::Patterns::Double(0.0));
 
       prm.add_parameter("EndTimeInVortexRotations",
                         n_rotations,
@@ -184,6 +184,27 @@ private:
     pp_data.output_data.write_higher_order = true;
     pp_data.output_data.degree             = this->param.degree_u;
 
+    // pointwise output
+    pp_data.pointwise_output_data.time_control_data.is_active  = true;
+    pp_data.pointwise_output_data.time_control_data.start_time = this->param.start_time;
+    pp_data.pointwise_output_data.time_control_data.end_time   = this->param.end_time;
+    pp_data.pointwise_output_data.time_control_data.trigger_interval =
+      (this->param.end_time - this->param.start_time) / 1000.0;
+    pp_data.pointwise_output_data.directory =
+      this->output_parameters.directory + "pointwise_output/";
+    pp_data.pointwise_output_data.filename       = this->output_parameters.filename;
+    pp_data.pointwise_output_data.write_pressure = true;
+    pp_data.pointwise_output_data.write_velocity = false;
+    pp_data.pointwise_output_data.update_points_before_evaluation = false;
+
+    unsigned int n_sensors = 1000;
+    pp_data.pointwise_output_data.evaluation_points.resize(n_sensors);
+
+    double const delta = domain_radius / static_cast<double>(n_sensors - 1);
+    for(unsigned int i = 0; i < n_sensors; ++i)
+      pp_data.pointwise_output_data.evaluation_points[i][0] = i * delta;
+
+    // generate postprocessor
     std::shared_ptr<PostProcessorBase<dim, Number>> pp;
     pp.reset(new PostProcessor<dim, Number>(pp_data, this->mpi_comm));
 
