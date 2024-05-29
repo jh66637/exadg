@@ -1,0 +1,41 @@
+{
+    "General": {
+        "Precision": "double",
+        "Dim": "2",
+        "IsTest": "false"
+    },
+    "SpatialResolutionAcoustics": {
+        "Degree": "1",
+        "RefineSpace": "6"
+    },
+    "SpatialResolutionFluid": {
+        "Degree": "4",
+        "RefineSpace": "5"
+    },
+    "AeroAcoustic": {
+        "Density": "2.0",
+        "SourceTermWithConvection": "true",
+        "BlendInSourceTerm": "true",
+        "FluidToAcousticCouplingStrategy": "ConservativeInterpolation",
+        "AcousticSourceTermComputation": "FromAnalyticSourceTerm"
+    },
+    "Application": {
+        "StartTimeAcousticsInVortexRotations": "0.0",
+        "EndTimeInVortexRotations": "2.0",
+        "CFLFluid": "0.1",
+        "TemporalDiscretizationFluid": "InterpolateAnalyticalSolution",
+        "CFLAcoustics": "0.125",
+        "SpeedOfSound": "12.0",
+        "AdditionalCFDRefinementsAroundSource": "0",
+        "DomainRadiusFluid": "20.0",
+        "DomainRadiusAcoustics": "62.83037284513119",
+        "Intensity": "7.54",
+        "VortexRadius": "1.0",
+        "VortexCoreRadius": "0.1"
+    },
+    "Output": {
+        "OutputDirectory": "output/co_rotating_vortex_pair/",
+        "OutputName": "ar7k1_fr6k4",
+        "WriteOutput": "false"
+    }
+}
