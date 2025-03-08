@@ -31,8 +31,9 @@ using time_step = unsigned int;
 
 namespace numbers
 {
-types::time_step const invalid_timestep = std::numeric_limits<unsigned int>::max();
-types::time_step const steady_timestep  = std::numeric_limits<unsigned int>::max() - 1;
+types::time_step const           invalid_timestep = std::numeric_limits<unsigned int>::max();
+types::time_step const           steady_timestep  = std::numeric_limits<unsigned int>::max() - 1;
+dealii::types::material_id const pml_material_id  = dealii::numbers::invalid_material_id - 1;
 } // namespace numbers
 
 namespace Utilities

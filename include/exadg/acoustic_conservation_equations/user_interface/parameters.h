@@ -155,6 +155,9 @@ public:
 
   // Polynomial degree of pressure shape functions
   unsigned int degree_p;
+
+  // has perfectly matched layer
+  bool has_pml;
 };
 
 } // namespace Acoustics

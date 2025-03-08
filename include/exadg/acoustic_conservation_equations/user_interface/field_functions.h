@@ -47,6 +47,10 @@ struct FieldFunctions
    * Thus, the right_hand_side is scalar and acts on the pressure DoFs.
    */
   std::shared_ptr<dealii::Function<dim>> right_hand_side;
+
+  // TODO can we get rid of this function, we always want to have shifted inverse distance damping
+  // anyway,
+  std::shared_ptr<dealii::Function<dim>> pml_damping;
 };
 
 } // namespace Acoustics

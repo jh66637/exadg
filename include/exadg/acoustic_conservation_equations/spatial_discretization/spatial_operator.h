@@ -30,6 +30,7 @@
 // ExaDG
 #include <exadg/acoustic_conservation_equations/spatial_discretization/interface.h>
 #include <exadg/acoustic_conservation_equations/spatial_discretization/operators/operator.h>
+#include <exadg/acoustic_conservation_equations/spatial_discretization/operators/pml_operator.h>
 #include <exadg/acoustic_conservation_equations/user_interface/boundary_descriptor.h>
 #include <exadg/acoustic_conservation_equations/user_interface/field_functions.h>
 #include <exadg/acoustic_conservation_equations/user_interface/parameters.h>
@@ -61,6 +62,7 @@ class SpatialOperator : public Interface::SpatialOperator<Number>
 public:
   static unsigned int const block_index_pressure = 0;
   static unsigned int const block_index_velocity = 1;
+  static unsigned int const block_index_pml_aux  = 2;
 
   /*
    * Constructor.
@@ -262,11 +264,18 @@ private:
    */
   Operator<dim, Number> acoustic_operator;
 
+  /**
+   * PML operator
+   */
+  PMLOperator<dim, Number> pml_operator;
+  mutable unsigned int     n_pml_cells = 0;
+
   /*
    * Inverse mass operator
    */
-  InverseMassOperator<dim, 1, Number>   inverse_mass_pressure;
-  InverseMassOperator<dim, dim, Number> inverse_mass_velocity;
+  InverseMassOperator<dim, 1, Number>                             inverse_mass_pressure;
+  InverseMassOperator<dim, dim, Number>                           inverse_mass_velocity;
+  InverseMassOperator<dim, dim, Number, numbers::pml_material_id> inverse_mass_pml;
 
   /*
    * RHS operator that acts on the pressure DoFs

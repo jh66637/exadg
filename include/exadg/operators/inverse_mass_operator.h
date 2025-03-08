@@ -48,13 +48,16 @@ struct InverseMassOperatorData
   InverseMassParameters parameters;
 };
 
-template<int dim, int n_components, typename Number>
+template<int dim,
+         int n_components,
+         typename Number,
+         dealii::types::material_id cell_category = dealii::numbers::invalid_material_id>
 class InverseMassOperator
 {
 private:
   typedef dealii::LinearAlgebra::distributed::Vector<Number> VectorType;
 
-  typedef InverseMassOperator<dim, n_components, Number> This;
+  typedef InverseMassOperator<dim, n_components, Number, cell_category> This;
 
   typedef CellIntegrator<dim, n_components, Number> Integrator;
 
@@ -73,6 +76,14 @@ public:
   initialize(dealii::MatrixFree<dim, Number> const & matrix_free_in,
              InverseMassOperatorData const           inverse_mass_operator_data)
   {
+    if(cell_category != dealii::numbers::invalid_material_id)
+    {
+      AssertThrow(
+        data.implementation_type == InverseMassType::MatrixfreeOperator,
+        dealii::ExcMessage(
+          "Application on a single cell category only implemented for InverseMassType::MatrixfreeOperator"));
+    }
+
     this->matrix_free = &matrix_free_in;
     dof_index         = inverse_mass_operator_data.dof_index;
     quad_index        = inverse_mass_operator_data.quad_index;
@@ -205,7 +216,8 @@ public:
         dst,
         src,
         /*operation before cell operation*/ {}, /*operation after cell operation*/
-        [&](const unsigned int start_range, const unsigned int end_range) {
+        [&](const unsigned int start_range, const unsigned int end_range)
+        {
           for(unsigned int i = start_range; i < end_range; ++i)
             dst.local_element(i) *= scaling_factor;
         },
@@ -231,6 +243,14 @@ private:
 
     for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
     {
+      if constexpr(cell_category != dealii::numbers::invalid_material_id)
+      {
+        if(matrix_free->get_cell_category(cell) != cell_category)
+        {
+          continue;
+        }
+      }
+
       integrator.reinit(cell);
       integrator.read_dof_values(src, 0);
 

@@ -60,7 +60,10 @@ Parameters::Parameters()
     grid(GridData()),
     mapping_degree(1),
     degree_u(1),
-    degree_p(1)
+    degree_p(1),
+
+    // PML
+    has_pml(false)
 {
 }
 
@@ -168,6 +171,8 @@ Parameters::print_parameters_spatial_discretization(dealii::ConditionalOStream c
 
   print_parameter(pcout, "Polynomial degree pressure", degree_p);
   print_parameter(pcout, "Polynomial degree velocity", degree_u);
+
+  print_parameter(pcout, "Treat PML Regions", has_pml);
 }
 
 } // namespace Acoustics

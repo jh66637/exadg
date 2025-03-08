@@ -73,6 +73,9 @@ SpatialOperator<dim, Number>::fill_matrix_free_data(
   // append mapping flags
   matrix_free_data.append_mapping_flags(Operators::Kernel<dim, Number>::get_mapping_flags());
 
+  if(param.has_pml)
+    matrix_free_data.append_mapping_flags(Operators::PMLKernel<dim, Number>::get_mapping_flags());
+
   if(param.right_hand_side)
     matrix_free_data.append_mapping_flags(
       ExaDG::Operators::RHSKernel<dim, Number>::get_mapping_flags());
@@ -98,7 +101,7 @@ SpatialOperator<dim, Number>::fill_matrix_free_data(
     create_quadrature<dim>(param.grid.element_type, param.degree_p + 1);
   matrix_free_data.insert_quadrature(*quadrature_p, field + quad_index_p);
 
-  // quadrature for velocity
+  // quadrature for velocity and PML auxiliary variable
   std::shared_ptr<dealii::Quadrature<dim>> quadrature_u =
     create_quadrature<dim>(param.grid.element_type, param.degree_u + 1);
   matrix_free_data.insert_quadrature(*quadrature_u, field + quad_index_u);
@@ -107,6 +110,17 @@ SpatialOperator<dim, Number>::fill_matrix_free_data(
   std::shared_ptr<dealii::Quadrature<dim>> quadrature_p_u =
     create_quadrature<dim>(param.grid.element_type, std::max(param.degree_p, param.degree_u) + 1);
   matrix_free_data.insert_quadrature(*quadrature_p_u, field + quad_index_p_u);
+
+  if(param.has_pml)
+  {
+    // divide into pml cells and pure acoustic cells to be able to evaluate
+    // pml only in a subset of cells
+    n_pml_cells =
+      PML::Utilities::categorize_pml_cells(dof_handler_p.get_triangulation(),
+                                           matrix_free_data.data.cell_vectorization_category);
+
+    matrix_free_data.data.cell_vectorization_categories_strict = true;
+  }
 }
 
 template<int dim, typename Number>
@@ -260,7 +274,7 @@ template<int dim, typename Number>
 dealii::types::global_dof_index
 SpatialOperator<dim, Number>::get_number_of_dofs() const
 {
-  return dof_handler_u.n_dofs() + dof_handler_p.n_dofs();
+  return dof_handler_u.n_dofs() + dof_handler_p.n_dofs() + n_pml_cells * fe_u->n_dofs_per_cell();
 }
 
 /*
@@ -270,10 +284,12 @@ template<int dim, typename Number>
 void
 SpatialOperator<dim, Number>::initialize_dof_vector(BlockVectorType & dst) const
 {
-  dst.reinit(2);
+  dst.reinit(param.has_pml ? 3 : 2);
 
   matrix_free->initialize_dof_vector(dst.block(block_index_pressure), get_dof_index_pressure());
   matrix_free->initialize_dof_vector(dst.block(block_index_velocity), get_dof_index_velocity());
+  if(param.has_pml)
+    matrix_free->initialize_dof_vector(dst.block(block_index_pml_aux), get_dof_index_velocity());
 
   dst.collect_sizes();
 }
@@ -331,6 +347,13 @@ SpatialOperator<dim, Number>::evaluate(BlockVectorType &       dst,
 {
   evaluate_acoustic_operator(dst, src, time);
 
+  if(param.has_pml)
+  {
+    // add contributions to mass and momentum equation, and reset pml equation
+    dst.block(block_index_pml_aux) = 0.0;
+    pml_operator.evaluate_add(dst, src);
+  }
+
   // shift to the right-hand side of the equation
   dst *= -1.0;
 
@@ -365,6 +388,9 @@ SpatialOperator<dim, Number>::apply_scaled_inverse_mass_operator(BlockVectorType
                                     param.speed_of_sound * param.speed_of_sound,
                                     src.block(block_index_pressure));
   inverse_mass_velocity.apply(dst.block(block_index_velocity), src.block(block_index_velocity));
+
+  if(param.has_pml)
+    inverse_mass_pml.apply(dst.block(block_index_pml_aux), src.block(block_index_pml_aux));
 }
 
 template<int dim, typename Number>
@@ -416,10 +442,24 @@ SpatialOperator<dim, Number>::initialize_dof_handler_and_constraints()
   print_parameter(pcout, "number of dofs per cell", fe_u->n_dofs_per_cell());
   print_parameter(pcout, "number of dofs (total)", dof_handler_u.n_dofs());
 
-  pcout << "Pressure and velocity:" << std::endl;
+  if(param.has_pml)
+  {
+    pcout << "PML auxiliary:" << std::endl;
+    print_parameter(pcout, "degree of 1D polynomials", param.degree_u);
+    print_parameter(pcout, "number of dofs per cell", fe_u->n_dofs_per_cell());
+    print_parameter(pcout, "number of dofs (total)", n_pml_cells * fe_u->n_dofs_per_cell());
+  }
+
+  pcout << "Total:" << std::endl;
   print_parameter(pcout,
                   "number of dofs per cell",
                   fe_p->n_dofs_per_cell() + fe_u->n_dofs_per_cell());
+  if(param.has_pml)
+  {
+    print_parameter(pcout,
+                    "number of dofs per PML cell",
+                    fe_p->n_dofs_per_cell() + 2 * fe_u->n_dofs_per_cell());
+  }
   print_parameter(pcout, "number of dofs (total)", get_number_of_dofs());
 
   pcout << std::flush;
@@ -445,6 +485,14 @@ SpatialOperator<dim, Number>::initialize_operators()
     inverse_mass_velocity.initialize(*matrix_free, data);
   }
 
+  // inverse mass operator pml
+  {
+    InverseMassOperatorData data;
+    data.dof_index  = get_dof_index_velocity();
+    data.quad_index = get_quad_index_velocity();
+    inverse_mass_pml.initialize(*matrix_free, data);
+  }
+
   // acoustic operator
   {
     OperatorData<dim> data;
@@ -459,12 +507,29 @@ SpatialOperator<dim, Number>::initialize_operators()
     acoustic_operator.initialize(*matrix_free, data);
   }
 
+  // pml operator
+  if(param.has_pml)
+  {
+    PMLOperatorData<dim> data;
+    data.dof_index_pressure    = get_dof_index_pressure();
+    data.dof_index_velocity    = get_dof_index_velocity();
+    data.quad_index            = get_quad_index_pressure_velocity();
+    data.block_index_pressure  = block_index_pressure;
+    data.block_index_velocity  = block_index_velocity;
+    data.block_index_auxiliary = block_index_pml_aux;
+    data.pml_damping           = field_functions->pml_damping;
+
+    pml_operator.initialize(*matrix_free, data);
+  }
+
   // rhs operator
   if(param.right_hand_side)
   {
     RHSOperatorData<dim> data;
-    data.dof_index     = get_dof_index_pressure();
-    data.quad_index    = get_quad_index_pressure();
+    data.dof_index  = get_dof_index_pressure();
+    data.quad_index = get_quad_index_pressure();
+    // no source terms are allowed inside a PML, so we have to skip them during the cell loop.
+    data.has_pml       = param.has_pml;
     data.kernel_data.f = field_functions->right_hand_side;
     rhs_operator.initialize(*matrix_free, data);
   }

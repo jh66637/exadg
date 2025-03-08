@@ -20,6 +20,7 @@
  */
 
 #include <exadg/operators/rhs_operator.h>
+#include <exadg/utilities/numbers.h>
 
 namespace ExaDG
 {
@@ -86,6 +87,12 @@ RHSOperator<dim, Number, n_components>::cell_loop(
 
   for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
   {
+    if(data.has_pml && matrix_free.get_cell_category(cell) == numbers::pml_material_id)
+    {
+      continue;
+    }
+
+
     integrator.reinit(cell);
 
     do_cell_integral(integrator);

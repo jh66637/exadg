@@ -92,12 +92,15 @@ private:
 template<int dim>
 struct RHSOperatorData
 {
-  RHSOperatorData() : dof_index(0), quad_index(0)
+  RHSOperatorData() : dof_index(0), quad_index(0), has_pml(false)
   {
   }
 
   unsigned int dof_index;
   unsigned int quad_index;
+
+  // no source terms are allowed inside pmls
+  bool has_pml;
 
   Operators::RHSKernelData<dim> kernel_data;
 };
