@@ -60,6 +60,15 @@ SpatialOperator<dim, Number>::SpatialOperator(
         << "Construct acoustic conservation equations operator ..." << std::endl
         << std::flush;
 
+  if(param.has_pml)
+  {
+    // TODO: quick fix. currently categorize_pml_cells is called twice to ensure n_pml_cells is
+    // always correct
+    std::vector<unsigned int> temp;
+    n_pml_cells = PML::Utilities::categorize_pml_cells(dof_handler_p.get_triangulation(), temp);
+    AssertThrow(n_pml_cells != 0, dealii::ExcMessage("Could not find a PML"));
+  }
+
   initialize_dof_handler_and_constraints();
 
   pcout << std::endl << "... done!" << std::endl << std::flush;
@@ -115,9 +124,8 @@ SpatialOperator<dim, Number>::fill_matrix_free_data(
   {
     // divide into pml cells and pure acoustic cells to be able to evaluate
     // pml only in a subset of cells
-    n_pml_cells =
-      PML::Utilities::categorize_pml_cells(dof_handler_p.get_triangulation(),
-                                           matrix_free_data.data.cell_vectorization_category);
+    PML::Utilities::categorize_pml_cells(dof_handler_p.get_triangulation(),
+                                         matrix_free_data.data.cell_vectorization_category);
 
     matrix_free_data.data.cell_vectorization_categories_strict = true;
   }

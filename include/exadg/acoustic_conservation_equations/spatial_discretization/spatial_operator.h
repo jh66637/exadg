@@ -268,7 +268,7 @@ private:
    * PML operator
    */
   PMLOperator<dim, Number> pml_operator;
-  mutable unsigned int     n_pml_cells = 0;
+  unsigned int             n_pml_cells = 0;
 
   /*
    * Inverse mass operator
