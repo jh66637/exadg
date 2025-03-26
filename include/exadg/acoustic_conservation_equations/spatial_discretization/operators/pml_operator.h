@@ -22,6 +22,7 @@
 #pragma once
 
 #include <deal.II/lac/la_parallel_block_vector.h>
+#include <deal.II/matrix_free/fe_remote_evaluation.h>
 
 #include <exadg/matrix_free/integrators.h>
 #include <exadg/operators/mapping_flags.h>
@@ -57,6 +58,62 @@ categorize_pml_cells(dealii::Triangulation<dim> const & tria, std::vector<unsign
   }
   return n_pml_cells;
 }
+
+// Similar as FERemoteEvaluation, but no need for communication between different meshes.
+// @Kraxi: I forgot to add inline specifiers for some symbols in
+// deal.II/matrix_free/fe_remote_evaluation.h. In case nobody fixed it by now you have to add them:
+// 1) inline unsigned int PrecomputedEvaluationDataView::get_shift(unsigned int) const
+// 2) inline unsigned int PrecomputedEvaluationDataView::get_shift(unsigned int, unsigned int) const
+// 3) inline unsigned int PrecomputedEvaluationDataView::size() const
+template<int dim, typename Number>
+class PrecomputedSigmaDiago
+{
+  using value_type = dealii::VectorizedArray<Number>;
+
+public:
+  void
+  reinit(dealii::MatrixFree<dim, Number> const & mf,
+         unsigned int                            dof_index,
+         unsigned int                            quad_index,
+         dealii::Function<dim> &                 pml_damping)
+  {
+    CellIntegrator<dim, dim, Number> damping(mf, dof_index, quad_index);
+
+    unsigned int const n_cells = mf.n_cell_batches();
+
+    view.start = 0;
+    view.ptrs.resize(n_cells + 1);
+    view.ptrs[0] = 0;
+
+    for(unsigned int cell = 0; cell < n_cells; ++cell)
+    {
+      if(mf.get_cell_category(cell) == numbers::pml_material_id)
+      {
+        damping.reinit(cell);
+        for(unsigned int q = 0; q < damping.n_q_points; ++q)
+        {
+          data.values.push_back(FunctionEvaluator<1, dim, Number>::value(
+            pml_damping, damping.quadrature_point(q), std::numeric_limits<double>::max()));
+        }
+        view.ptrs[cell + 1] = view.ptrs[cell] + damping.n_q_points;
+      }
+      else
+      {
+        view.ptrs[cell + 1] = view.ptrs[cell];
+      }
+    }
+  }
+
+  dealii::internal::PrecomputedEvaluationDataAccessor<dim, dim, value_type>
+  get_data_accessor() const
+  {
+    return dealii::internal::PrecomputedEvaluationDataAccessor(data, view);
+  }
+
+private:
+  dealii::internal::PrecomputedEvaluationData<dim, dim, value_type> data;
+  dealii::internal::PrecomputedEvaluationDataView                   view;
+};
 
 } // namespace PML::Utilities
 
@@ -118,6 +175,11 @@ public:
     AssertThrow(data_in.pml_damping, dealii::ExcMessage("No PML damping function provided"));
     this->matrix_free = &matrix_free_in;
     this->data        = data_in;
+
+    precomputed_sigma_diago.reinit(matrix_free_in,
+                                   data_in.dof_index_velocity,
+                                   data_in.quad_index,
+                                   *data.pml_damping);
   }
 
   void
@@ -164,6 +226,7 @@ private:
     CellIntegratorU auxiliary(matrix_free_in, data.dof_index_velocity, data.quad_index);
     CellIntegratorU velocity(matrix_free_in, data.dof_index_velocity, data.quad_index);
     CellIntegratorP pressure(matrix_free_in, data.dof_index_pressure, data.quad_index);
+    auto            sigma_diago = precomputed_sigma_diago.get_data_accessor();
 
     for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
     {
@@ -181,6 +244,8 @@ private:
       auxiliary.gather_evaluate(src.block(data.block_index_auxiliary),
                                 dealii::EvaluationFlags::values);
 
+      sigma_diago.reinit(cell);
+
       for(unsigned int q = 0; q < auxiliary.n_q_points; ++q)
       {
         // sigma_d is the diagonal of the damping tensor. since we restrict ourselfs to
@@ -189,13 +254,9 @@ private:
         // TODO: can we somehow use a vector that only holds required PML values? currently we
         // use the same amout of storage for PML auxiliary and velocity. (will not make anything
         // faster but still...)
-        // TODO: optimize performance by precomputing these values
         // TODO: maybe Patrick knows right away how we can generalize the PML. We have to
         // look at the derivation of the PML formulation in detail.
-        vector sigma_d =
-          FunctionEvaluator<1, dim, Number>::value(*data.pml_damping,
-                                                   auxiliary.quadrature_point(q),
-                                                   std::numeric_limits<double>::max());
+        vector const sigma_d = sigma_diago.get_value(q);
 
         // (q, -sigma_d * auxiliary)
         pressure.submit_value(-sigma_d * auxiliary.get_value(q), q);
@@ -223,6 +284,8 @@ private:
   PMLOperatorData<dim> data;
 
   Operators::PMLKernel<dim, Number> kernel;
+
+  PML::Utilities::PrecomputedSigmaDiago<dim, Number> precomputed_sigma_diago;
 };
 
 } // namespace ExaDG::Acoustics

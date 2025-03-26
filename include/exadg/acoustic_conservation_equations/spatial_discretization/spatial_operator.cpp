@@ -127,6 +127,15 @@ SpatialOperator<dim, Number>::fill_matrix_free_data(
     PML::Utilities::categorize_pml_cells(dof_handler_p.get_triangulation(),
                                          matrix_free_data.data.cell_vectorization_category);
 
+    // TODO: probably we don't need the strict categorization because for mixed batches
+    // matrix free returns the maximum category which is always the pml category.
+    // Not using strict categories will make us compute the pml equation in a few unnecessary cells
+    // but this will not have any implications on the result. Not using strict categories enables
+    // matrix free to run faster, so this is probably the way to go.
+    // Note: For local time stepping this means that smaller cells need larger numbers since we
+    // are allowed to perform smaller timesteps on larger cells.
+    // @Kraxi: can you test if you get the same results with true and false and if you see
+    // differences in the runtime?
     matrix_free_data.data.cell_vectorization_categories_strict = true;
   }
 }
