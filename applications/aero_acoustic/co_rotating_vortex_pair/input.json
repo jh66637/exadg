@@ -14,15 +14,15 @@
     },
     "AeroAcoustic": {
         "Density": "2.0",
-        "SourceTermWithConvection": "true",
+      "SourceTermWithConvection": "true",
         "BlendInSourceTerm": "true",
         "FluidToAcousticCouplingStrategy": "ConservativeInterpolation",
-        "AcousticSourceTermComputation": "FromFluid"
+      "AcousticSourceTermComputation": "FromFluid"
     },
     "Application": {
-        "StartTimeAcousticsInVortexRotations": "0.0",
-        "EndTimeInVortexRotations": "4",
-        "CFLFluid": "0.5",
+      "StartTimeAcousticsInVortexRotations": "0.0",
+      "EndTimeInVortexRotations": "4",
+      "CFLFluid": "0.5",
         "TemporalDiscretizationFluid": "InterpolateAnalyticalSolution",
         "CFLAcoustics": "0.25",
         "AdditionalCFDRefinementsAroundSource": "4",
@@ -37,6 +37,6 @@
     "Output": {
         "OutputDirectory": "output/co_rotating_vortex_pair/",
         "OutputName": "co_rotating_vortex_pair",
-        "WriteOutput": "true"
+      "WriteOutput": "true"
     }
 }
