@@ -48,16 +48,13 @@ struct InverseMassOperatorData
   InverseMassParameters parameters;
 };
 
-template<int dim,
-         int n_components,
-         typename Number,
-         dealii::types::material_id cell_category = dealii::numbers::invalid_material_id>
+template<int dim, int n_components, typename Number>
 class InverseMassOperator
 {
 private:
   typedef dealii::LinearAlgebra::distributed::Vector<Number> VectorType;
 
-  typedef InverseMassOperator<dim, n_components, Number, cell_category> This;
+  typedef InverseMassOperator<dim, n_components, Number> This;
 
   typedef CellIntegrator<dim, n_components, Number> Integrator;
 
@@ -76,14 +73,6 @@ public:
   initialize(dealii::MatrixFree<dim, Number> const & matrix_free_in,
              InverseMassOperatorData const           inverse_mass_operator_data)
   {
-    if(cell_category != dealii::numbers::invalid_material_id)
-    {
-      AssertThrow(
-        data.implementation_type == InverseMassType::MatrixfreeOperator,
-        dealii::ExcMessage(
-          "Application on a single cell category only implemented for InverseMassType::MatrixfreeOperator"));
-    }
-
     this->matrix_free = &matrix_free_in;
     dof_index         = inverse_mass_operator_data.dof_index;
     quad_index        = inverse_mass_operator_data.quad_index;
@@ -184,8 +173,12 @@ public:
 
   // dst = M^-1 * src
   void
-  apply(VectorType & dst, VectorType const & src) const
+  apply(VectorType &                     dst,
+        VectorType const &               src,
+        dealii::types::material_id const cell_category = dealii::numbers::invalid_material_id) const
   {
+    m_cell_category = cell_category;
+
     dst.zero_out_ghost_values();
 
     if(data.implementation_type == InverseMassType::MatrixfreeOperator)
@@ -194,14 +187,26 @@ public:
     }
     else // ElementwiseKrylovSolver or BlockMatrices
     {
+      AssertThrow(
+        cell_category == dealii::numbers::invalid_material_id,
+        dealii::ExcMessage(
+          "Application on a single cell category only implemented for InverseMassType::MatrixfreeOperator"));
       block_jacobi_preconditioner->vmult(dst, src);
     }
+
+    m_cell_category = dealii::numbers::invalid_material_id;
   }
 
   // dst = scaling_factor * (M^-1 * src)
   void
-  apply_scale(VectorType & dst, double const scaling_factor, VectorType const & src) const
+  apply_scale(
+    VectorType &                     dst,
+    double const                     scaling_factor,
+    VectorType const &               src,
+    dealii::types::material_id const cell_category = dealii::numbers::invalid_material_id) const
   {
+    m_cell_category = cell_category;
+
     if(data.implementation_type == InverseMassType::MatrixfreeOperator)
     {
       // In the InverseMassType::MatrixfreeOperator case we can avoid
@@ -210,28 +215,27 @@ public:
       // ghost have to be zeroed out before MatrixFree::cell_loop().
       dst.zero_out_ghost_values();
 
-      matrix_free->cell_loop(
-        &This::cell_loop_matrix_free_operator,
-        this,
-        dst,
-        src,
-        /*operation before cell operation*/ {}, /*operation after cell operation*/
-        [&](const unsigned int start_range, const unsigned int end_range)
-        {
-          for(unsigned int i = start_range; i < end_range; ++i)
-            dst.local_element(i) *= scaling_factor;
-        },
-        dof_index);
+      m_scale = scaling_factor;
+      matrix_free->cell_loop(&This::cell_loop_matrix_free_operator, this, dst, src);
+      m_scale = 1.0;
     }
     else
     {
+      AssertThrow(
+        cell_category == dealii::numbers::invalid_material_id,
+        dealii::ExcMessage(
+          "Application on a single cell category only implemented for InverseMassType::MatrixfreeOperator"));
       apply(dst, src);
       dst *= scaling_factor;
     }
+
+    m_cell_category = dealii::numbers::invalid_material_id;
   }
 
-
 private:
+  mutable dealii::types::material_id m_cell_category = dealii::numbers::invalid_material_id;
+  mutable Number                     m_scale         = 1.0;
+
   void
   cell_loop_matrix_free_operator(dealii::MatrixFree<dim, Number> const &,
                                  VectorType &       dst,
@@ -243,18 +247,21 @@ private:
 
     for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
     {
-      if constexpr(cell_category != dealii::numbers::invalid_material_id)
+      if(m_cell_category != dealii::numbers::invalid_material_id &&
+         matrix_free->get_cell_category(cell) != m_cell_category)
       {
-        if(matrix_free->get_cell_category(cell) != cell_category)
-        {
-          continue;
-        }
+        continue;
       }
 
       integrator.reinit(cell);
       integrator.read_dof_values(src, 0);
 
       inverse_mass.apply(integrator.begin_dof_values(), integrator.begin_dof_values());
+
+      for(unsigned int i = 0; i < integrator.dofs_per_component; ++i)
+      {
+        integrator.submit_dof_value(m_scale * integrator.get_dof_value(i), i);
+      }
 
       integrator.set_dof_values(dst, 0);
     }

@@ -249,25 +249,157 @@ public:
   }
 
   void
-  evaluate(BlockVectorType & dst, BlockVectorType const & src, double const time) const
+  add_vectors(BlockVectorType &                dst,
+              Number                           factor,
+              BlockVectorType const &          src,
+              dealii::types::material_id const cell_category) const
   {
-    do_evaluate(dst, src, time, true);
-  }
+    AssertThrow(cell_category != dealii::numbers::invalid_material_id,
+                dealii::ExcMessage("Not implemented."));
 
-  void
-  evaluate_add(BlockVectorType & dst, BlockVectorType const & src, double const time) const
-  {
-    do_evaluate(dst, src, time, true);
+    m_cell_category = cell_category;
+    m_factor        = factor;
+
+    matrix_free->loop(&This::cell_loop_add_vectors, {}, {}, this, dst, src, false
+                      // ,dealii::MatrixFree<dim, Number>::DataAccessOnFaces::none,
+                      // dealii::MatrixFree<dim, Number>::DataAccessOnFaces::none
+    );
+
+    m_cell_category = dealii::numbers::invalid_material_id;
+    m_factor        = 0.0;
   }
 
 private:
+  mutable Number m_factor = 0.0;
   void
-  do_evaluate(BlockVectorType &       dst,
-              BlockVectorType const & src,
-              double const            time,
-              bool const              zero_dst_vector) const
+  cell_loop_add_vectors(dealii::MatrixFree<dim, Number> const & matrix_free_in,
+                        BlockVectorType &                       dst,
+                        BlockVectorType const &                 src,
+                        Range const &                           cell_range) const
   {
+    CellIntegratorP pressure(matrix_free_in, data.dof_index_pressure, data.quad_index);
+    CellIntegratorU velocity(matrix_free_in, data.dof_index_velocity, data.quad_index);
+
+    std::vector<typename CellIntegratorP::value_type> buffer_p(pressure.dofs_per_component);
+    std::vector<typename CellIntegratorU::value_type> buffer_u(velocity.dofs_per_component);
+
+    for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
+    {
+      if(matrix_free->get_cell_category(cell) != m_cell_category)
+      {
+        continue;
+      }
+      std::cerr << "add_vectors_loop " << m_cell_category << std::endl;
+
+      // copy dof values of src to buffers
+      pressure.reinit(cell);
+      velocity.reinit(cell);
+      pressure.read_dof_values(src.block(data.block_index_pressure));
+      velocity.read_dof_values(src.block(data.block_index_velocity));
+      for(unsigned int i = 0; i < pressure.dofs_per_component; ++i)
+      {
+        buffer_p[i] = pressure.get_dof_value(i);
+      }
+      for(unsigned int i = 0; i < velocity.dofs_per_component; ++i)
+      {
+        buffer_u[i] = velocity.get_dof_value(i);
+      }
+
+      // make integrators internally store dof added dof values
+      pressure.read_dof_values(dst.block(data.block_index_pressure));
+      velocity.read_dof_values(dst.block(data.block_index_velocity));
+      for(unsigned int i = 0; i < pressure.dofs_per_component; ++i)
+      {
+        pressure.submit_dof_value(pressure.get_dof_value(i) + m_factor * buffer_p[i], i);
+      }
+      for(unsigned int i = 0; i < velocity.dofs_per_component; ++i)
+      {
+        velocity.submit_dof_value(velocity.get_dof_value(i) + m_factor * buffer_u[i], i);
+      }
+
+      // set the dof values to the global vector
+      pressure.set_dof_values(dst.block(data.block_index_pressure));
+      velocity.set_dof_values(dst.block(data.block_index_velocity));
+    }
+  }
+
+  void
+  zero_out_dofs(dealii::MatrixFree<dim, Number> const & matrix_free_in,
+                BlockVectorType &                       dst,
+                BlockVectorType const &,
+                Range const & cell_range) const
+  {
+    CellIntegratorP pressure(matrix_free_in, data.dof_index_pressure, data.quad_index);
+    CellIntegratorU velocity(matrix_free_in, data.dof_index_velocity, data.quad_index);
+
+    typename CellIntegratorP::value_type zero_p = dealii::make_vectorized_array<Number>(0.0);
+    typename CellIntegratorU::value_type zero_u;
+    std::fill(zero_u.begin_raw(), zero_u.end_raw(), 0.0);
+
+
+    for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
+    {
+      if(matrix_free->get_cell_category(cell) != m_cell_category)
+      {
+        continue;
+      }
+
+      pressure.reinit(cell);
+      velocity.reinit(cell);
+      for(unsigned int i = 0; i < pressure.dofs_per_component; ++i)
+      {
+        pressure.submit_dof_value(zero_p, i);
+      }
+      for(unsigned int i = 0; i < velocity.dofs_per_component; ++i)
+      {
+        velocity.submit_dof_value(zero_u, i);
+      }
+      // set the dof values to the global vector
+      pressure.set_dof_values(dst.block(data.block_index_pressure));
+      velocity.set_dof_values(dst.block(data.block_index_velocity));
+    }
+  }
+
+
+public:
+  void
+  evaluate(
+    BlockVectorType &                dst,
+    BlockVectorType const &          src,
+    double const                     time,
+    dealii::types::material_id const cell_category = dealii::numbers::invalid_material_id) const
+  {
+    do_evaluate(dst, src, time, true, cell_category);
+  }
+
+  void
+  evaluate_add(
+    BlockVectorType &                dst,
+    BlockVectorType const &          src,
+    double const                     time,
+    dealii::types::material_id const cell_category = dealii::numbers::invalid_material_id) const
+  {
+    do_evaluate(dst, src, time, false, cell_category);
+  }
+
+private:
+  mutable dealii::types::material_id m_cell_category = dealii::numbers::invalid_material_id;
+
+  void
+  do_evaluate(BlockVectorType &                dst,
+              BlockVectorType const &          src,
+              double const                     time,
+              bool const                       zero_dst_vector,
+              dealii::types::material_id const cell_category) const
+  {
+    m_cell_category = cell_category;
+
     evaluation_time = (Number)time;
+
+    if(zero_dst_vector)
+    {
+      matrix_free->cell_loop(&This::zero_out_dofs, this, dst, src, false);
+    }
 
     matrix_free->loop(&This::cell_loop,
                       &This::face_loop,
@@ -275,9 +407,11 @@ private:
                       this,
                       dst,
                       src,
-                      zero_dst_vector,
+                      false,
                       dealii::MatrixFree<dim, Number>::DataAccessOnFaces::values,
                       dealii::MatrixFree<dim, Number>::DataAccessOnFaces::values);
+
+    m_cell_category = dealii::numbers::invalid_material_id;
   }
 
   void
@@ -405,6 +539,12 @@ private:
 
     for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
     {
+      if(m_cell_category != dealii::numbers::invalid_material_id &&
+         matrix_free->get_cell_category(cell) != m_cell_category)
+      {
+        continue;
+      }
+
       pressure.reinit(cell);
       pressure.gather_evaluate(src.block(data.block_index_pressure),
                                integrator_flags_p.cell_evaluate);
@@ -434,8 +574,17 @@ private:
     FaceIntegratorU velocity_m(matrix_free_in, true, data.dof_index_velocity, data.quad_index);
     FaceIntegratorU velocity_p(matrix_free_in, false, data.dof_index_velocity, data.quad_index);
 
-    for(unsigned int face = face_range.first; face < face_range.second; face++)
+    for(unsigned int face = face_range.first; face < face_range.second; ++face)
     {
+      auto const [c_m, c_p] = matrix_free->get_face_category(face);
+      // TODO:!!!!!!
+      //  if(m_cell_category != dealii::numbers::invalid_material_id ||
+      //     (c_m != m_cell_category && c_p != m_cell_category))
+      //  {
+      //    continue;
+      //  }
+
+
       pressure_m.reinit(face);
       pressure_m.gather_evaluate(src.block(data.block_index_pressure),
                                  integrator_flags_p.face_evaluate);
@@ -450,17 +599,36 @@ private:
       velocity_p.gather_evaluate(src.block(data.block_index_velocity),
                                  integrator_flags_u.face_evaluate);
 
-      do_face_integral<true>(pressure_m, pressure_p, velocity_m, velocity_p);
 
-      pressure_m.integrate_scatter(integrator_flags_p.face_integrate,
-                                   dst.block(data.block_index_pressure));
-      pressure_p.integrate_scatter(integrator_flags_p.face_integrate,
-                                   dst.block(data.block_index_pressure));
+      if(c_m == m_cell_category && c_p == m_cell_category)
+      {
+        do_face_integral<true>(pressure_m, pressure_p, velocity_m, velocity_p);
+        pressure_m.integrate_scatter(integrator_flags_p.face_integrate,
+                                     dst.block(data.block_index_pressure));
+        velocity_m.integrate_scatter(integrator_flags_u.face_integrate,
+                                     dst.block(data.block_index_velocity));
+        pressure_p.integrate_scatter(integrator_flags_p.face_integrate,
+                                     dst.block(data.block_index_pressure));
 
-      velocity_m.integrate_scatter(integrator_flags_u.face_integrate,
-                                   dst.block(data.block_index_velocity));
-      velocity_p.integrate_scatter(integrator_flags_u.face_integrate,
-                                   dst.block(data.block_index_velocity));
+        velocity_p.integrate_scatter(integrator_flags_u.face_integrate,
+                                     dst.block(data.block_index_velocity));
+      }
+      else if(c_m == m_cell_category)
+      {
+        do_face_integral<false>(pressure_m, pressure_p, velocity_m, velocity_p);
+        pressure_m.integrate_scatter(integrator_flags_p.face_integrate,
+                                     dst.block(data.block_index_pressure));
+        velocity_m.integrate_scatter(integrator_flags_u.face_integrate,
+                                     dst.block(data.block_index_velocity));
+      }
+      else if(c_p == m_cell_category)
+      {
+        do_face_integral<false>(pressure_p, pressure_m, velocity_p, velocity_m);
+        pressure_p.integrate_scatter(integrator_flags_p.face_integrate,
+                                     dst.block(data.block_index_pressure));
+        velocity_p.integrate_scatter(integrator_flags_u.face_integrate,
+                                     dst.block(data.block_index_velocity));
+      }
     }
   }
 
@@ -479,8 +647,17 @@ private:
                                                     data.speed_of_sound,
                                                     *data.bc);
 
-    for(unsigned int face = face_range.first; face < face_range.second; face++)
+    for(unsigned int face = face_range.first; face < face_range.second; ++face)
     {
+      if(m_cell_category != dealii::numbers::invalid_material_id)
+      {
+        auto const [c_m, c_p] = matrix_free->get_face_category(face);
+        if(c_m != m_cell_category && c_p != m_cell_category)
+        {
+          continue;
+        }
+      }
+
       pressure_m.reinit(face);
       pressure_m.gather_evaluate(src.block(data.block_index_pressure),
                                  integrator_flags_p.face_evaluate);

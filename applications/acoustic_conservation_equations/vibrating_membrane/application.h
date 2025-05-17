@@ -169,7 +169,7 @@ private:
     this->param.end_time   = number_of_periods * compute_period_duration();
 
     // TEMPORAL DISCRETIZATION
-    this->param.start_with_low_order = false;
+    this->param.start_with_low_order = true;
 
     // output of solver information
     this->param.solver_info_data.interval_time = (this->param.end_time - this->param.start_time);
@@ -189,15 +189,20 @@ private:
           std::vector<dealii::GridTools::PeriodicFacePair<
             typename dealii::Triangulation<dim>::cell_iterator>> & /*periodic_face_pairs*/,
           unsigned int const global_refinements,
-          std::vector<unsigned int> const & /* vector_local_refinements*/) {
-        dealii::GridGenerator::hyper_cube(tria, left, right);
+          std::vector<unsigned int> const & /* vector_local_refinements*/)
+    {
+      dealii::GridGenerator::hyper_cube(tria, left, right);
 
-        for(const auto & face : tria.active_face_iterators())
-          if(face->at_boundary())
-            face->set_boundary_id(1);
+      for(const auto & face : tria.active_face_iterators())
+        if(face->at_boundary())
+          face->set_boundary_id(1);
 
-        tria.refine_global(global_refinements);
-      };
+      tria.refine_global(global_refinements);
+
+      constexpr unsigned int additional_refinements_around_source = 1;
+
+      refine_triangulation_around_center(tria, additional_refinements_around_source, 0.1);
+    };
 
     GridUtilities::create_triangulation<dim>(
       grid, this->mpi_comm, this->param.grid, lambda_create_triangulation, {});
@@ -206,6 +211,35 @@ private:
                                   this->param.grid.element_type,
                                   this->param.mapping_degree);
   }
+
+  void
+  refine_triangulation_around_center(dealii::Triangulation<dim> & tria,
+                                     unsigned int const           n_ref,
+                                     double const                 radius)
+  {
+    if(n_ref > 0)
+    {
+      auto const center = 0.5 * (right + left);
+      for(unsigned int r = 0; r < n_ref; ++r)
+      {
+        for(auto const & cell : tria.active_cell_iterators())
+          if(cell->is_locally_owned())
+          {
+            for(const unsigned int i : dealii::GeometryInfo<dim>::vertex_indices())
+            {
+              if(cell->vertex(i)[0] > center - radius && cell->vertex(i)[0] < center + radius &&
+                 cell->vertex(i)[1] > center - radius && cell->vertex(i)[1] < center + radius)
+              {
+                cell->set_refine_flag();
+              }
+            }
+          }
+
+        tria.execute_coarsening_and_refinement();
+      }
+    }
+  }
+
 
   void
   set_boundary_descriptor() final

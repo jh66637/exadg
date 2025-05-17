@@ -76,31 +76,38 @@ private:
   {
     pcout << std::endl << "Calculation of time step size:" << std::endl << std::endl;
 
-    if(param.calculation_of_time_step_size == TimeStepCalculation::UserSpecified)
-    {
-      initial_time_step_size = calculate_const_time_step(param.time_step_size, param.n_refine_time);
+    // if(param.calculation_of_time_step_size == TimeStepCalculation::UserSpecified)
+    // {
+    //   initial_time_step_size = calculate_const_time_step(param.time_step_size,
+    //   param.n_refine_time);
+    //
+    //   print_parameter(pcout, "time step size", initial_time_step_size);
+    // }
+    // else if(param.calculation_of_time_step_size == TimeStepCalculation::CFL)
+    // {
+    //   double const cfl = param.cfl / std::pow(2.0, param.n_refine_time);
+    //
+    //   initial_time_step_size = cfl * this->get_underlying_operator().calculate_time_step_cfl();
+    //
+    //   this->pcout << std::endl
+    //               << "Calculation of time step size according to CFL condition:" << std::endl
+    //               << std::endl;
+    //   print_parameter(this->pcout, "CFL", cfl);
+    //   print_parameter(this->pcout, "time step size", initial_time_step_size);
+    // }
+    // else if()
+    auto lts_time_step_batches = this->get_underlying_operator().calculate_time_step_lts();
+    auto const global_time_step = std::get<0>(lts_time_step_batches[1]);
+    this->set_lts_time_step_batches(std::move(lts_time_step_batches));
 
-      print_parameter(pcout, "time step size", initial_time_step_size);
-    }
-    else if(param.calculation_of_time_step_size == TimeStepCalculation::CFL)
-    {
-      double const cfl = param.cfl / std::pow(2.0, param.n_refine_time);
-
-      initial_time_step_size = cfl * this->get_underlying_operator().calculate_time_step_cfl();
-
-      this->pcout << std::endl
-                  << "Calculation of time step size according to CFL condition:" << std::endl
-                  << std::endl;
-      print_parameter(this->pcout, "CFL", cfl);
-      print_parameter(this->pcout, "time step size", initial_time_step_size);
-    }
-
+    initial_time_step_size = global_time_step;
     return initial_time_step_size;
   }
 
   double
   recalculate_time_step_size() const final
   {
+    AssertThrow(false, dealii::ExcMessage("can not end up here"));
     // Currently the time step sice can not vary since the
     // it depends only on the speed of sound that is
     // constant over time. This changes once ALE is used

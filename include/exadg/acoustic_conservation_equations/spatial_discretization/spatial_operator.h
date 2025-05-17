@@ -174,7 +174,18 @@ public:
    *  and finally applies the inverse mass operator.
    */
   void
-  evaluate(BlockVectorType & dst, BlockVectorType const & src, double const time) const final;
+  evaluate(
+    BlockVectorType &          dst,
+    BlockVectorType const &    src,
+    double const               time,
+    dealii::types::material_id cell_category = dealii::numbers::invalid_material_id) const final;
+
+  void
+  add_dofs_of_cell_category(
+    BlockVectorType &          dst,
+    Number                     factor,
+    BlockVectorType const &    src,
+    dealii::types::material_id cell_category) const final;
 
   /*
    * Operators.
@@ -182,9 +193,12 @@ public:
 
   // acoustic operator
   void
-  evaluate_acoustic_operator(BlockVectorType &       dst,
-                             BlockVectorType const & src,
-                             double const            time) const;
+  evaluate_acoustic_operator(
+    BlockVectorType &          dst,
+    BlockVectorType const &    src,
+    double const               time,
+    dealii::types::material_id cell_category = dealii::numbers::invalid_material_id) const;
+
 
   /**
    * This function applies the inverse mass matrix and scales the pressure by c^2. This is because
@@ -194,7 +208,17 @@ public:
    *       du/dt + grad p = 0
    */
   void
-  apply_scaled_inverse_mass_operator(BlockVectorType & dst, BlockVectorType const & src) const;
+  apply_scaled_inverse_mass_operator(
+    BlockVectorType &          dst,
+    BlockVectorType const &    src,
+    dealii::types::material_id cell_category = dealii::numbers::invalid_material_id) const;
+
+
+  std::vector<std::tuple<double,
+                         std::vector<unsigned int>,
+                         std::vector<unsigned int>,
+                         std::vector<unsigned int>>>
+  calculate_time_step_lts() const final;
 
   // Calculate time step size according to local CFL criterion
   double
@@ -273,9 +297,8 @@ private:
   /*
    * Inverse mass operator
    */
-  InverseMassOperator<dim, 1, Number>                             inverse_mass_pressure;
-  InverseMassOperator<dim, dim, Number>                           inverse_mass_velocity;
-  InverseMassOperator<dim, dim, Number, numbers::pml_material_id> inverse_mass_pml;
+  InverseMassOperator<dim, 1, Number>   inverse_mass_pressure;
+  InverseMassOperator<dim, dim, Number> inverse_mass_velocity;
 
   /*
    * RHS operator that acts on the pressure DoFs

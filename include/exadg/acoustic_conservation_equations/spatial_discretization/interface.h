@@ -50,10 +50,26 @@ public:
 
   // time integration: evaluate
   virtual void
-  evaluate(BlockVectorType & dst, BlockVectorType const & src, double const time) const = 0;
+  evaluate(
+    BlockVectorType &          dst,
+    BlockVectorType const &    src,
+    double const               time,
+    dealii::types::material_id cell_category = dealii::numbers::invalid_material_id) const = 0;
+
+  virtual void
+  add_dofs_of_cell_category(BlockVectorType &          dst,
+                            Number                     factor,
+                            BlockVectorType const &    src,
+                            dealii::types::material_id cell_category) const = 0;
 
   virtual double
   calculate_time_step_cfl() const = 0;
+
+  virtual std::vector<std::tuple<double,
+                                 std::vector<unsigned int>,
+                                 std::vector<unsigned int>,
+                                 std::vector<unsigned int>>>
+  calculate_time_step_lts() const = 0;
 };
 
 } // namespace Interface
