@@ -255,12 +255,106 @@ private:
 
 
     VectorType solution_old = solution;
+    do_timestep_predict_large(prediction, solution_old, dealii::numbers::invalid_material_id);
+    // pde_operator->evaluate(evaluated_operator_np_large,
+    //                        prediction,
+    //                        t + dt_large,
+    //                        dealii::numbers::invalid_material_id);
+    // correct_solution(solution,
+    //                  evaluated_operator_np_large,
+    //                  vec_evaluated_operators_large,
+    //                  std::get<0>(lts_time_step_batches[1]),
+    //                  dealii::numbers::invalid_material_id);
+    // pde_operator->evaluate(evaluated_operator_np_large,
+    //                        solution,
+    //                        t + dt_large,
+    //                        dealii::numbers::invalid_material_id);
+
     do_timestep_predict_large(prediction, solution_old, 1);
-    do_timestep_correct_large(solution, prediction, t + dt_large, 1);
-    do_timestep_predict_large(prediction, solution_old, 2);
-    do_timestep_correct_large(solution, prediction, t + dt_large, 2);
-    do_timestep_predict_large(prediction, solution_old, 3);
-    do_timestep_correct_large(solution, prediction, t + dt_large, 3);
+    do_timestep_predict_large(prediction, solution_old, 7);
+    pde_operator->evaluate(evaluated_operator_np_large, prediction, t + dt_large, 1);
+    pde_operator->evaluate(evaluated_operator_np_large, prediction, t + dt_large, 7);
+    correct_solution(solution,
+                     evaluated_operator_np_large,
+                     vec_evaluated_operators_large,
+                     std::get<0>(lts_time_step_batches[1]),
+                     1);
+    correct_solution(solution,
+                     evaluated_operator_np_large,
+                     vec_evaluated_operators_large,
+                     std::get<0>(lts_time_step_batches[1]),
+                     7);
+    pde_operator->evaluate(evaluated_operator_np_large, solution, t + dt_large, 1);
+    pde_operator->evaluate(evaluated_operator_np_large, solution, t + dt_large, 7);
+
+
+
+    /*
+       std::cerr <<"ALL"<<std::endl;
+        solution=0;
+        pde_operator->evaluate(evaluated_operator_np_large, solution_old, t + dt_large,
+       dealii::numbers::invalid_material_id); correct_solution(solution,
+                         evaluated_operator_np_large,
+                         vec_evaluated_operators_large,
+                         std::get<0>(lts_time_step_batches[1]),
+                          dealii::numbers::invalid_material_id);
+        // correct operator by evaluating operator with correct solution
+        pde_operator->evaluate(evaluated_operator_np_large, solution, t + dt_large,
+       dealii::numbers::invalid_material_id);
+
+        std::cerr <<std::endl;
+        std::cerr <<std::endl;
+
+
+        std::cerr <<"Only 7"<<std::endl;
+        // do_timestep_predict_large(prediction, solution_old, 7);
+        // std::cerr<<"dst before"<<solution.l2_norm()<<std::endl;
+
+        // evaluate operator given the predicted solution
+        // pde_operator->evaluate(evaluated_operator_np_large, solution_old, t + dt_large, 7);
+        // pde_operator->evaluate(evaluated_operator_np_large, solution_old, t + dt_large, 1);
+
+        // correct solution
+        solution=0;
+        pde_operator->evaluate(evaluated_operator_np_large, solution_old, t + dt_large, 7);
+        pde_operator->evaluate(evaluated_operator_np_large, solution_old, t + dt_large, 1);
+
+        correct_solution(solution,
+                         evaluated_operator_np_large,
+                         vec_evaluated_operators_large,
+                         std::get<0>(lts_time_step_batches[1]),
+                         7);
+        correct_solution(solution,
+                         evaluated_operator_np_large,
+                         vec_evaluated_operators_large,
+                         std::get<0>(lts_time_step_batches[1]),
+                         1);
+
+        // correct operator by evaluating operator with correct solution
+        pde_operator->evaluate(evaluated_operator_np_large, solution, t + dt_large, 7);
+        pde_operator->evaluate(evaluated_operator_np_large, solution, t + dt_large, 1);
+    */
+
+    //
+    // std::cerr<<"dst after"<<solution.l2_norm()<<std::endl;
+    //
+    // std::cerr <<std::endl;
+    // std::cerr <<std::endl;
+    //
+    // std::cerr <<"Only 1"<<std::endl;
+    // // do_timestep_predict_large(prediction, solution_old, 1);
+    // std::cerr<<"dst before"<<solution.l2_norm()<<std::endl;
+    // do_timestep_correct_large(solution, solution_old, t + dt_large, 1);
+    // std::cerr<<"dst after"<<solution.l2_norm()<<std::endl;
+
+
+    // do_timestep_predict_large(prediction, solution_old, 2);
+    // do_timestep_correct_large(solution, prediction, t + dt_large, 2);
+    // do_timestep_predict_large(prediction, solution_old, 3);
+    // do_timestep_correct_large(solution, prediction, t + dt_large, 3);
+
+    // AssertThrow(false, dealii::ExcMessage("stop"));
+
     prepare_vectors_for_next_timestep_large();
     return;
 
@@ -356,10 +450,7 @@ private:
                     double                          dt,
                     dealii::types::material_id      cell_category) const
   {
-    // TODO: in theory we only have to update the dofs of the cell category here but
-    //  it does not matter for dst aka prediction
-
-    dst = src;
+    pde_operator->copy_dofs_of_cell_category(dst, src, cell_category);
     for(unsigned int i = 0; i < this->ab.get_order(); ++i)
     {
       pde_operator->add_dofs_of_cell_category(dst,

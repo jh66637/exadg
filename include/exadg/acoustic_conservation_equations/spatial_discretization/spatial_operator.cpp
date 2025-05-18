@@ -165,14 +165,15 @@ SpatialOperator<dim, Number>::fill_matrix_free_data(
       }
       else if(p[0] > 0.25 && p[0] < 0.75 && p[1] > 0.25 && p[1] < 0.75)
       {
-        cell_categories[cell->active_cell_index()] = 2;
+        cell_categories[cell->active_cell_index()] = 1;
       }
       else
       {
-        cell_categories[cell->active_cell_index()] = 3;
+        cell_categories[cell->active_cell_index()] = 1;
       }
     }
   }
+  cell_categories[0] = 7;
 
   matrix_free_data.data.cell_vectorization_categories_strict = true;
   // }
@@ -444,6 +445,17 @@ SpatialOperator<dim, Number>::add_dofs_of_cell_category(
 {
   acoustic_operator.add_vectors(dst, factor, src, cell_category);
 }
+
+template<int dim, typename Number>
+void
+SpatialOperator<dim, Number>::copy_dofs_of_cell_category(
+  BlockVectorType &          dst,
+  BlockVectorType const &    src,
+  dealii::types::material_id cell_category) const
+{
+  acoustic_operator.copy_dofs_of_cell_category(dst, src, cell_category);
+}
+
 
 template<int dim, typename Number>
 void

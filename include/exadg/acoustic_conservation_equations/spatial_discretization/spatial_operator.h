@@ -181,11 +181,15 @@ public:
     dealii::types::material_id cell_category = dealii::numbers::invalid_material_id) const final;
 
   void
-  add_dofs_of_cell_category(
-    BlockVectorType &          dst,
-    Number                     factor,
-    BlockVectorType const &    src,
-    dealii::types::material_id cell_category) const final;
+  add_dofs_of_cell_category(BlockVectorType &          dst,
+                            Number                     factor,
+                            BlockVectorType const &    src,
+                            dealii::types::material_id cell_category) const final;
+
+  void
+  copy_dofs_of_cell_category(BlockVectorType &          dst,
+                             BlockVectorType const &    src,
+                             dealii::types::material_id cell_category) const final;
 
   /*
    * Operators.

@@ -62,6 +62,11 @@ public:
                             BlockVectorType const &    src,
                             dealii::types::material_id cell_category) const = 0;
 
+  virtual void
+  copy_dofs_of_cell_category(BlockVectorType &          dst,
+                             BlockVectorType const &    src,
+                             dealii::types::material_id cell_category) const = 0;
+
   virtual double
   calculate_time_step_cfl() const = 0;
 
