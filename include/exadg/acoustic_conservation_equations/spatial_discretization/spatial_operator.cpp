@@ -165,15 +165,14 @@ SpatialOperator<dim, Number>::fill_matrix_free_data(
       }
       else if(p[0] > 0.25 && p[0] < 0.75 && p[1] > 0.25 && p[1] < 0.75)
       {
-        cell_categories[cell->active_cell_index()] = 1;
+        cell_categories[cell->active_cell_index()] = 2;
       }
       else
       {
-        cell_categories[cell->active_cell_index()] = 1;
+        cell_categories[cell->active_cell_index()] = 3;
       }
     }
   }
-  cell_categories[0] = 7;
 
   matrix_free_data.data.cell_vectorization_categories_strict = true;
   // }

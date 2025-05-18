@@ -251,29 +251,18 @@ private:
   {
     double const t        = get_time();
     double const dt_large = std::get<0>(lts_time_step_batches[1]);
-    double const dt_small = dt_large; // std::get<0>(lts_time_step_batches[0]);
+    double const dt_small = std::get<0>(lts_time_step_batches[0]);
 
 
     VectorType solution_old = solution;
-    do_timestep_predict_large(prediction, solution_old, dealii::numbers::invalid_material_id);
-    // pde_operator->evaluate(evaluated_operator_np_large,
-    //                        prediction,
-    //                        t + dt_large,
-    //                        dealii::numbers::invalid_material_id);
-    // correct_solution(solution,
-    //                  evaluated_operator_np_large,
-    //                  vec_evaluated_operators_large,
-    //                  std::get<0>(lts_time_step_batches[1]),
-    //                  dealii::numbers::invalid_material_id);
-    // pde_operator->evaluate(evaluated_operator_np_large,
-    //                        solution,
-    //                        t + dt_large,
-    //                        dealii::numbers::invalid_material_id);
 
+    /*
     do_timestep_predict_large(prediction, solution_old, 1);
-    do_timestep_predict_large(prediction, solution_old, 7);
+    do_timestep_predict_large(prediction, solution_old, 2);
+    do_timestep_predict_large(prediction, solution_old, 3);
     pde_operator->evaluate(evaluated_operator_np_large, prediction, t + dt_large, 1);
-    pde_operator->evaluate(evaluated_operator_np_large, prediction, t + dt_large, 7);
+    pde_operator->evaluate(evaluated_operator_np_large, prediction, t + dt_large, 2);
+    pde_operator->evaluate(evaluated_operator_np_large, prediction, t + dt_large, 3);
     correct_solution(solution,
                      evaluated_operator_np_large,
                      vec_evaluated_operators_large,
@@ -283,90 +272,84 @@ private:
                      evaluated_operator_np_large,
                      vec_evaluated_operators_large,
                      std::get<0>(lts_time_step_batches[1]),
-                     7);
+                     2);
+    correct_solution(solution,
+                     evaluated_operator_np_large,
+                     vec_evaluated_operators_large,
+                     std::get<0>(lts_time_step_batches[1]),
+                     3);
     pde_operator->evaluate(evaluated_operator_np_large, solution, t + dt_large, 1);
-    pde_operator->evaluate(evaluated_operator_np_large, solution, t + dt_large, 7);
-
-
-
-    /*
-       std::cerr <<"ALL"<<std::endl;
-        solution=0;
-        pde_operator->evaluate(evaluated_operator_np_large, solution_old, t + dt_large,
-       dealii::numbers::invalid_material_id); correct_solution(solution,
-                         evaluated_operator_np_large,
-                         vec_evaluated_operators_large,
-                         std::get<0>(lts_time_step_batches[1]),
-                          dealii::numbers::invalid_material_id);
-        // correct operator by evaluating operator with correct solution
-        pde_operator->evaluate(evaluated_operator_np_large, solution, t + dt_large,
-       dealii::numbers::invalid_material_id);
-
-        std::cerr <<std::endl;
-        std::cerr <<std::endl;
-
-
-        std::cerr <<"Only 7"<<std::endl;
-        // do_timestep_predict_large(prediction, solution_old, 7);
-        // std::cerr<<"dst before"<<solution.l2_norm()<<std::endl;
-
-        // evaluate operator given the predicted solution
-        // pde_operator->evaluate(evaluated_operator_np_large, solution_old, t + dt_large, 7);
-        // pde_operator->evaluate(evaluated_operator_np_large, solution_old, t + dt_large, 1);
-
-        // correct solution
-        solution=0;
-        pde_operator->evaluate(evaluated_operator_np_large, solution_old, t + dt_large, 7);
-        pde_operator->evaluate(evaluated_operator_np_large, solution_old, t + dt_large, 1);
-
-        correct_solution(solution,
-                         evaluated_operator_np_large,
-                         vec_evaluated_operators_large,
-                         std::get<0>(lts_time_step_batches[1]),
-                         7);
-        correct_solution(solution,
-                         evaluated_operator_np_large,
-                         vec_evaluated_operators_large,
-                         std::get<0>(lts_time_step_batches[1]),
-                         1);
-
-        // correct operator by evaluating operator with correct solution
-        pde_operator->evaluate(evaluated_operator_np_large, solution, t + dt_large, 7);
-        pde_operator->evaluate(evaluated_operator_np_large, solution, t + dt_large, 1);
-    */
-
-    //
-    // std::cerr<<"dst after"<<solution.l2_norm()<<std::endl;
-    //
-    // std::cerr <<std::endl;
-    // std::cerr <<std::endl;
-    //
-    // std::cerr <<"Only 1"<<std::endl;
-    // // do_timestep_predict_large(prediction, solution_old, 1);
-    // std::cerr<<"dst before"<<solution.l2_norm()<<std::endl;
-    // do_timestep_correct_large(solution, solution_old, t + dt_large, 1);
-    // std::cerr<<"dst after"<<solution.l2_norm()<<std::endl;
-
-
-    // do_timestep_predict_large(prediction, solution_old, 2);
-    // do_timestep_correct_large(solution, prediction, t + dt_large, 2);
-    // do_timestep_predict_large(prediction, solution_old, 3);
-    // do_timestep_correct_large(solution, prediction, t + dt_large, 3);
-
-    // AssertThrow(false, dealii::ExcMessage("stop"));
+    pde_operator->evaluate(evaluated_operator_np_large, solution, t + dt_large, 2);
+    pde_operator->evaluate(evaluated_operator_np_large, solution, t + dt_large, 3);
 
     prepare_vectors_for_next_timestep_large();
+    */
+
+    // VectorType prediction_small = prediction;
+    // VectorType prediction_large = prediction;
+
+    do_timestep_predict_small(prediction, solution_old, 1);
+
+    time_steps[0]   = dt_small;
+    ab.update(get_current_order(), true, time_steps);
+    am.update(get_current_order(), true, time_steps);
+    do_timestep_predict_large(prediction, solution_old, 2);
+    do_timestep_predict_large(prediction, solution_old, 3);
+    time_steps[0]   = dt_large;
+    ab.update(get_current_order(), false, time_steps);
+    am.update(get_current_order(), false, time_steps);
+
+    pde_operator->evaluate(evaluated_operator_np_small, prediction, t + dt_small, 1);
+    pde_operator->evaluate(evaluated_operator_np_small, prediction, t + dt_small, 2);
+
+    correct_solution(solution, evaluated_operator_np_small, vec_evaluated_operators_small, dt_small, 1);
+    correct_solution(solution, evaluated_operator_np_small, vec_evaluated_operators_small, dt_small, 2);
+
+    pde_operator->evaluate(evaluated_operator_np_small, solution, t + dt_small, 1);
+    prepare_vectors_for_next_timestep_small();
+
+    do_timestep_predict_small(prediction, solution, 1);
+    do_timestep_predict_large(prediction, solution_old, 2);
+    do_timestep_predict_large(prediction, solution_old, 3);
+
+    pde_operator->evaluate(evaluated_operator_np_small, prediction, t + 2.0*dt_small, 1);
+    pde_operator->evaluate(evaluated_operator_np_large, prediction, t + dt_large, 2);
+    pde_operator->evaluate(evaluated_operator_np_large, prediction, t + dt_large, 3);
+
+    correct_solution(solution, evaluated_operator_np_small, vec_evaluated_operators_small, dt_small, 1);
+    correct_solution(solution, evaluated_operator_np_large, vec_evaluated_operators_large, dt_large, 2);
+    correct_solution(solution, evaluated_operator_np_large, vec_evaluated_operators_large, dt_large, 3);
+
+    pde_operator->evaluate(evaluated_operator_np_small, solution, t + 2 * dt_small, 1);
+    pde_operator->evaluate(evaluated_operator_np_large, solution, t + dt_large, 2);
+    pde_operator->evaluate(evaluated_operator_np_large, solution, t + dt_large, 3);
+
+    prepare_vectors_for_next_timestep_small();
+    prepare_vectors_for_next_timestep_large();
+
+
+
+
+    //
+    // // add second smnall timestep here
+    //
+    // // override predictor
+    //
+    // do_timestep_predict_large(prediction, solution_old, 3);
+    // do_timestep_predict_large(prediction, solution_old, 2);
+    // pde_operator->evaluate(evaluated_operator_np_large, prediction, t + dt_large, 3);
+    // pde_operator->evaluate(evaluated_operator_np_large, prediction, t + dt_large, 2);
+    // correct_solution(solution, evaluated_operator_np_large, vec_evaluated_operators_large,dt_large, 3);
+    //
+    // pde_operator->evaluate(evaluated_operator_np_large, solution, t + dt_large, 3);
+    // pde_operator->evaluate(evaluated_operator_np_large, solution, t + dt_large, 2);
+    // prepare_vectors_for_next_timestep_large();
+
     return;
 
 
-
-    // VectorType solution_old = solution;
-
-    VectorType prediction_small = prediction;
-    VectorType solution_temp    = solution;
-
-    do_timestep_predict_large(prediction_small, solution_old, 1);
-    do_timestep_correct_large(solution, prediction_small, t + dt_small, 1);
+    // do_timestep_predict_large(prediction_small, solution_old, 1);
+    // do_timestep_correct_large(solution, prediction_small, t + dt_small, 1);
     //    prepare_vectors_for_next_timestep_small();
 
     // change time integration constants
@@ -374,8 +357,8 @@ private:
     // time_steps[0]   = dt_small;
     // ab.update(get_current_order(), true, time_steps);
     // am.update(get_current_order(), true, time_steps);
-    do_timestep_predict_large(prediction_small, solution_old, 2);
-    do_timestep_correct_large(solution, prediction_small, t + dt_small, 2);
+    // do_timestep_predict_large(prediction_small, solution_old, 2);
+    // do_timestep_correct_large(solution, prediction_small, t + dt_small, 2);
     // change back time intetration consts
     // time_steps[0]   = dt_large;
     // ab.update(get_current_order(), false, time_steps);
@@ -387,14 +370,14 @@ private:
 
 
 
-    VectorType prediction_large = prediction_small;
-    // // do_timestep_predict_large(prediction_large, solution_old, 2);
-    // do_timestep_correct_large(solution, prediction_large, t + dt_large, 2);
-
-    do_timestep_predict_large(prediction_large, solution_old, 3);
-    do_timestep_correct_large(solution, prediction_large, t + dt_large, 3);
-
-    prepare_vectors_for_next_timestep_large();
+    // VectorType prediction_large = prediction_small;
+    // // // do_timestep_predict_large(prediction_large, solution_old, 2);
+    // // do_timestep_correct_large(solution, prediction_large, t + dt_large, 2);
+    //
+    // do_timestep_predict_large(prediction_large, solution_old, 3);
+    // do_timestep_correct_large(solution, prediction_large, t + dt_large, 3);
+    //
+    // prepare_vectors_for_next_timestep_large();
   }
 
   void
