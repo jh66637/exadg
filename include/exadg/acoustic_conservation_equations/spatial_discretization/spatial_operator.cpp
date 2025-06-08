@@ -161,15 +161,23 @@ SpatialOperator<dim, Number>::fill_matrix_free_data(
       auto const p = cell->center();
       if(p[0] > 0.375 && p[0] < 0.625 && p[1] > 0.375 && p[1] < 0.625)
       {
+        cell_categories[cell->active_cell_index()] = 0;
+      }
+      else if(p[0] > 0.3125 && p[0] < 0.6875 && p[1] > 0.3125 && p[1] < 0.6875)
+      {
         cell_categories[cell->active_cell_index()] = 1;
       }
       else if(p[0] > 0.25 && p[0] < 0.75 && p[1] > 0.25 && p[1] < 0.75)
       {
         cell_categories[cell->active_cell_index()] = 2;
       }
-      else
+      else if(p[0] > 0.125 && p[0] < 0.875 && p[1] > 0.125 && p[1] < 0.825)
       {
         cell_categories[cell->active_cell_index()] = 3;
+      }
+      else
+      {
+        cell_categories[cell->active_cell_index()] = 4;
       }
     }
   }
