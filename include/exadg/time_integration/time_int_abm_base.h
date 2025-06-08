@@ -186,12 +186,13 @@ private:
   // TODO:
 
   void
-  do_timestep_predict(VectorType &               p,
-                      VectorType const &         s,
-                      double const               dt,
-                      dealii::types::material_id cell_category)
+  do_timestep_predict(VectorType &                      p,
+                      VectorType const &                s,
+                      double const                      dt,
+                      dealii::types::material_id        cell_category,
+                      ABTimeIntegratorConstants const & ab_in)
   {
-    predrict_solution(p, s, vec_evaluated_operators, dt, cell_category);
+    predrict_solution(p, s, vec_evaluated_operators, dt, cell_category, ab_in);
   }
   void
   do_timestep_correct(VectorType &               s,
@@ -208,41 +209,81 @@ private:
     pde_operator->evaluate(evaluated_operator_np, s, next_time, cell_category);
   }
 
+  struct CellBatchInfo
+  {
+    double                                  dt;
+    std::vector<dealii::types::material_id> cell_categories;
+    dealii::types::material_id              attached_cell_category;
+  };
+
+  void
+  do_substep_timestep_solve_1(VectorType &       dst,
+                            VectorType const & src,
+                            double             time,
+                            double             dt,
+                            unsigned int       category,
+                            unsigned int       attached)
+  {
+    auto ts = get_time_step_vector();
+    ts[0] *= 0.5;
+    auto ab_intermediate = ab;
+    ab_intermediate.update(get_current_order(), true, ts);
+
+    do_timestep_predict(dst, src, dt, attached, ab_intermediate);
+    do_timestep_predict(dst, src, dt, category, ab);
+    pde_operator->evaluate(evaluated_operator_np, dst, time + dt, category);
+    prepare_vectors_for_next_timestep(category);
+  }
+
+  void
+  do_substep_timestep_solve_2(VectorType &       dst,
+                            VectorType const & src,
+                            VectorType const & src_old,
+                            double             time,
+                            double             dt,
+                            unsigned int       category,
+                            unsigned int       attached)
+  {
+    do_timestep_predict(dst, src_old, dt, attached, ab);
+    do_timestep_predict(dst, src, dt, category, ab);
+    pde_operator->evaluate(evaluated_operator_np, dst, time + 2.0 * dt, category);
+    prepare_vectors_for_next_timestep(category);
+  }
+
+
+  void
+do_substep_timestep_solve(VectorType &       dst,
+                          VectorType const & src,
+                          double             time,
+                          double             dt,
+                          unsigned int const category1,
+                          unsigned int const category2
+                          )
+  {
+    do_timestep_predict(dst, src, dt, category1, ab);
+    do_timestep_predict(dst, src, dt, category2, ab);
+    pde_operator->evaluate(evaluated_operator_np, dst, time + dt, category1);
+    pde_operator->evaluate(evaluated_operator_np, dst, time + dt, category2);
+    prepare_vectors_for_next_timestep(category1);
+    prepare_vectors_for_next_timestep(category2);
+  }
+
+
   void
   do_timestep_solve() final
   {
     double const t        = get_time();
-    double const dt_large = std::get<0>(lts_time_step_batches[1]);
     double const dt_small = std::get<0>(lts_time_step_batches[0]);
+    double const dt_large = 2.0 * dt_small;
 
     VectorType solution_old = solution;
-
     auto & intermediate = prediction;
 
-    auto ts = get_time_step_vector();
-    ts[0]   = dt_small;
-    ab.update(get_current_order(), true, ts);
-    am.update(get_current_order(), true, ts);
-    do_timestep_predict(intermediate, solution_old, dt_small, 2);
-    ts[0] = dt_large;
-    ab.update(get_current_order(), false, ts);
-    am.update(get_current_order(), false, ts);
-    do_timestep_predict(intermediate, solution_old, dt_small, 1);
-    pde_operator->evaluate(evaluated_operator_np, intermediate, t + dt_small, 1);
-    prepare_vectors_for_next_timestep(1);
-
-    do_timestep_predict(solution, solution_old, dt_large, 3);
-    do_timestep_predict(solution, solution_old, dt_large, 2);
-    do_timestep_predict(solution, intermediate, dt_small, 1);
-
-    pde_operator->evaluate(evaluated_operator_np, solution, t + 2.0 * dt_small, 1);
-    pde_operator->evaluate(evaluated_operator_np, solution, t + dt_large, 2);
-    pde_operator->evaluate(evaluated_operator_np, solution, t + dt_large, 3);
-
-    prepare_vectors_for_next_timestep(2);
-    prepare_vectors_for_next_timestep(3);
-    prepare_vectors_for_next_timestep(1);
+    do_substep_timestep_solve_1(intermediate, solution_old, t, dt_small, 1, 2);
+    do_substep_timestep_solve_2(solution, intermediate,solution_old, t, dt_small, 1, 2);
+    do_substep_timestep_solve(solution, solution_old, t, dt_large, 2, 3);
   }
+
 
   void
   prepare_vectors_for_next_timestep(dealii::types::material_id cell_category)
@@ -290,17 +331,18 @@ private:
   }
 
   void
-  predrict_solution(VectorType &                    dst,
-                    VectorType const &              src,
-                    std::vector<VectorType> const & ops,
-                    double                          dt,
-                    dealii::types::material_id      cell_category) const
+  predrict_solution(VectorType &                      dst,
+                    VectorType const &                src,
+                    std::vector<VectorType> const &   ops,
+                    double                            dt,
+                    dealii::types::material_id        cell_category,
+                    ABTimeIntegratorConstants const & ab_in) const
   {
     pde_operator->copy_dofs_of_cell_category(dst, src, cell_category);
-    for(unsigned int i = 0; i < this->ab.get_order(); ++i)
+    for(unsigned int i = 0; i < ab_in.get_order(); ++i)
     {
       pde_operator->add_dofs_of_cell_category(dst,
-                                              static_cast<Number>(dt * ab.get_alpha(i)),
+                                              static_cast<Number>(dt * ab_in.get_alpha(i)),
                                               ops[i],
                                               cell_category);
     }
