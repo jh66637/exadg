@@ -218,11 +218,11 @@ private:
 
   void
   do_substep_timestep_solve_1(VectorType &       dst,
-                              VectorType const & src,
-                              double             time,
-                              double             dt,
-                            std::vector<unsigned int> const& categories,
-                              unsigned int       attached)
+                              VectorType const &                src,
+                              double                            time,
+                              double                            dt,
+                              std::vector<unsigned int> const & categories,
+                              unsigned int                      attached)
   {
     auto ts = get_time_step_vector();
     ts[0] *= 0.5;
@@ -245,13 +245,13 @@ private:
   }
 
   void
-  do_substep_timestep_solve_2(VectorType &       dst,
-                              VectorType const & src,
-                              VectorType const & src_old,
-                              double             time,
-                              double             dt,
-                            std::vector<unsigned int> const& categories,
-                              unsigned int       attached)
+  do_substep_timestep_solve_2(VectorType &                      dst,
+                              VectorType const &                src,
+                              VectorType const &                src_old,
+                              double                            time,
+                              double                            dt,
+                              std::vector<unsigned int> const & categories,
+                              unsigned int                      attached)
   {
     do_timestep_predict(dst, src_old, dt, attached, ab);
     for(auto const category : categories)
@@ -270,11 +270,11 @@ private:
 
 
   void
-  do_substep_timestep_solve(VectorType &       dst,
-                            VectorType const & src,
-                            double             time,
-                            double             dt,
-                            std::vector<unsigned int> const& categories)
+  do_substep_timestep_solve(VectorType &                      dst,
+                            VectorType const &                src,
+                            double                            time,
+                            double                            dt,
+                            std::vector<unsigned int> const & categories)
   {
     for(auto const category : categories)
     {
@@ -294,22 +294,25 @@ private:
   void
   do_timestep_solve() final
   {
-    double const t        = get_time();
-    double const dt_small = get_time_step_size()/4.0;
+    double const t         = get_time();
+    double const dt_small  = get_time_step_size() / 4.0;
     double const dt_medium = 2.0 * dt_small;
-    double const dt_large = 2.0 * dt_medium;
+    double const dt_large  = 2.0 * dt_medium;
 
-    VectorType solution_old = solution;
-    auto &     intermediate = prediction;
-    auto      intermediate2 = prediction;
+    VectorType solution_old  = solution;
+    auto &     intermediate  = prediction;
+    auto       intermediate2 = prediction;
 
     do_substep_timestep_solve_1(intermediate, solution_old, t, dt_small, {1}, 2);
-    do_substep_timestep_solve_2(solution, intermediate, solution_old, t+dt_small, dt_small, {1}, 2);
-    do_substep_timestep_solve_1(intermediate2, solution_old, t, dt_medium, {2,3},4);
+    do_substep_timestep_solve_2(
+      solution, intermediate, solution_old, t + dt_small, dt_small, {1}, 2);
+    do_substep_timestep_solve_1(intermediate2, solution_old, t, dt_medium, {2, 3}, 4);
 
     auto solution_intermediate = solution;
-    do_substep_timestep_solve_1(intermediate, solution_intermediate, t+dt_medium, dt_small, {1}, 2);
-    do_substep_timestep_solve_2(solution, intermediate, solution_intermediate, t+dt_medium+dt_small, dt_small, {1}, 2);
+    do_substep_timestep_solve_1(
+      intermediate, solution_intermediate, t + dt_medium, dt_small, {1}, 2);
+    do_substep_timestep_solve_2(
+      solution, intermediate, solution_intermediate, t+dt_medium+dt_small, dt_small, {1}, 2);
     do_substep_timestep_solve_2(solution, intermediate2,solution_old, t+dt_medium, dt_medium, {2,3},4);
 
     do_substep_timestep_solve(solution, solution_old, t, dt_large, {4,5});
