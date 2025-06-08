@@ -199,7 +199,7 @@ private:
 
       tria.refine_global(global_refinements);
 
-      constexpr unsigned int additional_refinements_around_source = 1;
+      constexpr unsigned int additional_refinements_around_source = 2;
 
       refine_triangulation_around_center(tria, additional_refinements_around_source, 0.1);
     };
