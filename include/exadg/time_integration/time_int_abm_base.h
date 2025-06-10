@@ -221,15 +221,17 @@ private:
                               VectorType const &                src,
                               double                            time,
                               double                            dt,
-                              std::vector<unsigned int> const & categories,
-                              unsigned int                      attached)
+                              std::vector<  dealii::types::material_id> const & categories,
+                             dealii::types::material_id const  attached = dealii::numbers::invalid_material_id)
   {
+    if(attached != dealii::numbers::invalid_material_id)
+    {
     auto ts = get_time_step_vector();
     ts[0] *= 0.5;
     auto ab_intermediate = ab;
     ab_intermediate.update(get_current_order(), true, ts);
-
     do_timestep_predict(dst, src, dt, attached, ab_intermediate);
+    }
     for(auto const category : categories)
     {
       do_timestep_predict(dst, src, dt, category, ab);
@@ -250,8 +252,8 @@ private:
                               VectorType const &                src_old,
                               double                            time,
                               double                            dt,
-                              std::vector<unsigned int> const & categories,
-                              unsigned int                      attached)
+                              std::vector<  dealii::types::material_id> const & categories,
+                             dealii::types::material_id const  attached )
   {
     do_timestep_predict(dst, src_old, dt, attached, ab);
     for(auto const category : categories)
@@ -268,54 +270,40 @@ private:
     }
   }
 
-
-  void
-  do_substep_timestep_solve(VectorType &                      dst,
-                            VectorType const &                src,
-                            double                            time,
-                            double                            dt,
-                            std::vector<unsigned int> const & categories)
+  void do_subtimesteps_recursively(VectorType& dst, VectorType const& src, double t, double const dt, unsigned int index, std::vector<CellBatchInfo>const&infos )
   {
-    for(auto const category : categories)
+    if(index>0)
     {
-      do_timestep_predict(dst, src, dt, category, ab);
+     auto intermediate = src;
+     do_subtimesteps_recursively(intermediate,src,t,0.5*dt,index-1,infos);
+     do_substep_timestep_solve_1(intermediate, src, t, dt, infos[index].cell_categories, infos[index].attached_cell_category);
+     do_subtimesteps_recursively(dst,intermediate,t+dt,0.5*dt,index-1,infos);
+     do_substep_timestep_solve_2(dst, intermediate,src, t+dt, dt, infos[index].cell_categories, infos[index].attached_cell_category);
     }
-    for(auto const category : categories)
+    else
     {
-      pde_operator->evaluate(evaluated_operator_np, dst, time + dt, category);
-    }
-    for(auto const category : categories)
-    {
-      prepare_vectors_for_next_timestep(category);
+      auto intermediate = src;
+      do_substep_timestep_solve_1(intermediate, src, t, dt, infos[index].cell_categories, infos[index].attached_cell_category);
+      do_substep_timestep_solve_2(dst, intermediate,src, t+dt, dt, infos[index].cell_categories, infos[index].attached_cell_category);
     }
   }
-
 
   void
   do_timestep_solve() final
   {
-    double const t         = get_time();
-    double const dt_small  = get_time_step_size() / 4.0;
-    double const dt_medium = 2.0 * dt_small;
-    double const dt_large  = 2.0 * dt_medium;
+     double const t         = get_time();
+     double const dt         = get_time_step_size();
 
-    VectorType solution_old  = solution;
-    auto &     intermediate  = prediction;
-    auto       intermediate2 = prediction;
+     VectorType solution_old  = solution;
 
-    do_substep_timestep_solve_1(intermediate, solution_old, t, dt_small, {1}, 2);
-    do_substep_timestep_solve_2(
-      solution, intermediate, solution_old, t + dt_small, dt_small, {1}, 2);
-    do_substep_timestep_solve_1(intermediate2, solution_old, t, dt_medium, {2, 3}, 4);
+     std::vector<CellBatchInfo> infos;
+     infos.push_back({get_time_step_size() / 4.0,{1},2});
+     infos.push_back({get_time_step_size() / 2.0,{2,3},4});
+     infos.push_back({get_time_step_size() / 1.0,{4,5},dealii::numbers::invalid_material_id});
+     std::sort(infos.begin(), infos.end(), [](auto const&a, auto const&b){return a.dt<b.dt;});
 
-    auto solution_intermediate = solution;
-    do_substep_timestep_solve_1(
-      intermediate, solution_intermediate, t + dt_medium, dt_small, {1}, 2);
-    do_substep_timestep_solve_2(
-      solution, intermediate, solution_intermediate, t+dt_medium+dt_small, dt_small, {1}, 2);
-    do_substep_timestep_solve_2(solution, intermediate2,solution_old, t+dt_medium, dt_medium, {2,3},4);
-
-    do_substep_timestep_solve(solution, solution_old, t, dt_large, {4,5});
+    do_subtimesteps_recursively(solution,solution_old,t, 0.5*dt, infos.size()-2,infos);
+    do_substep_timestep_solve_1(solution, solution_old, t, dt, infos.back().cell_categories, infos.back().attached_cell_category);
   }
 
 
