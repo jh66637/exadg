@@ -19,8 +19,8 @@
  *  ______________________________________________________________________
  */
 
-#ifndef EXADG_ACOUSTIC_CONSERVATION_EQUATIONS_TIME_INTEGRATION_TIME_INT_ABM_H_
-#define EXADG_ACOUSTIC_CONSERVATION_EQUATIONS_TIME_INTEGRATION_TIME_INT_ABM_H_
+#ifndef EXADG_ACOUSTIC_CONSERVATION_EQUATIONS_TIME_INTEGRATION_TIME_INT_AB_LTS_H_
+#define EXADG_ACOUSTIC_CONSERVATION_EQUATIONS_TIME_INTEGRATION_TIME_INT_AB_LTS_H_
 
 
 #include <exadg/acoustic_conservation_equations/spatial_discretization/interface.h>
@@ -96,8 +96,8 @@ private:
     //   print_parameter(this->pcout, "time step size", initial_time_step_size);
     // }
     // else if()
-    auto lts_time_step_batches = this->get_underlying_operator().calculate_time_step_lts();
-    auto const global_time_step = std::get<0>(lts_time_step_batches[1]);
+    auto       lts_time_step_batches = this->get_underlying_operator().calculate_time_step_lts();
+    auto const global_time_step      = std::get<0>(lts_time_step_batches[1]);
     this->set_lts_time_step_batches(std::move(lts_time_step_batches));
 
     initial_time_step_size = global_time_step;
@@ -143,4 +143,4 @@ private:
 } // namespace Acoustics
 } // namespace ExaDG
 
-#endif /* EXADG_ACOUSTIC_CONSERVATION_EQUATIONS_TIME_INTEGRATION_TIME_INT_ABM_H_*/
+#endif /* EXADG_ACOUSTIC_CONSERVATION_EQUATIONS_TIME_INTEGRATION_TIME_INT_AB_LTS_H_*/
