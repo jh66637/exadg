@@ -140,7 +140,10 @@ public:
    * Evaluate operator and add to dst-vector.
    */
   void
-  evaluate_add(VectorType & dst, double const evaluation_time) const;
+  evaluate_add(
+    VectorType &               dst,
+    double const               evaluation_time,
+    dealii::types::material_id cell_category = dealii::numbers::invalid_material_id) const;
 
 private:
   void
@@ -153,7 +156,7 @@ private:
   void
   cell_loop(dealii::MatrixFree<dim, Number> const & matrix_free,
             VectorType &                            dst,
-            VectorType const &                      src,
+            dealii::types::material_id const &      cell_category,
             Range const &                           cell_range) const;
 
   dealii::MatrixFree<dim, Number> const * matrix_free;

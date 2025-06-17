@@ -60,15 +60,14 @@ SpatialOperator<dim, Number>::SpatialOperator(
         << "Construct acoustic conservation equations operator ..." << std::endl
         << std::flush;
 
-  // TODO:
-  //  if(param.has_pml)
-  //  {
-  //    // TODO: quick fix. currently categorize_pml_cells is called twice to ensure n_pml_cells is
-  //    // always correct
-  //    std::vector<unsigned int> temp;
-  //    n_pml_cells = PML::Utilities::categorize_pml_cells(dof_handler_p.get_triangulation(), temp);
-  //    AssertThrow(n_pml_cells != 0, dealii::ExcMessage("Could not find a PML"));
-  //  }
+  if(param.has_pml)
+  {
+    // TODO: quick fix. currently categorize_pml_cells is called twice to ensure n_pml_cells is
+    // always correct
+    std::vector<unsigned int> temp;
+    n_pml_cells = PML::Utilities::categorize_pml_cells(dof_handler_p.get_triangulation(), temp);
+    AssertThrow(n_pml_cells != 0, dealii::ExcMessage("Could not find a PML"));
+  }
 
   initialize_dof_handler_and_constraints();
 
@@ -83,10 +82,8 @@ SpatialOperator<dim, Number>::fill_matrix_free_data(
   // append mapping flags
   matrix_free_data.append_mapping_flags(Operators::Kernel<dim, Number>::get_mapping_flags());
 
-  // TODO:
-  //  if(param.has_pml)
-  //    matrix_free_data.append_mapping_flags(Operators::PMLKernel<dim,
-  //    Number>::get_mapping_flags());
+  if(param.has_pml)
+    matrix_free_data.append_mapping_flags(Operators::PMLKernel<dim, Number>::get_mapping_flags());
 
   if(param.right_hand_side)
     matrix_free_data.append_mapping_flags(
@@ -123,67 +120,59 @@ SpatialOperator<dim, Number>::fill_matrix_free_data(
     create_quadrature<dim>(param.grid.element_type, std::max(param.degree_p, param.degree_u) + 1);
   matrix_free_data.insert_quadrature(*quadrature_p_u, field + quad_index_p_u);
 
-  // TODO:
-  //  if(param.has_pml)
-  //  {
-  //    // divide into pml cells and pure acoustic cells to be able to evaluate
-  //    // pml only in a subset of cells
-  //    PML::Utilities::categorize_pml_cells(dof_handler_p.get_triangulation(),
-  //                                         matrix_free_data.data.cell_vectorization_category);
-  //
-  //    // TODO: probably we don't need the strict categorization because for mixed batches
-  //    // matrix free returns the maximum category which is always the pml category.
-  //    // Not using strict categories will make us compute the pml equation in a few unnecessary
-  //    cells
-  //    // but this will not have any implications on the result. Not using strict categories
-  //    enables
-  //    // matrix free to run faster, so this is probably the way to go.
-  //    // Note: For local time stepping this means that smaller cells need larger numbers since we
-  //    // are allowed to perform smaller timesteps on larger cells.
-  //    // @Kraxi: can you test if you get the same results with true and false and if you see
-  //    // differences in the runtime?
-  //    matrix_free_data.data.cell_vectorization_categories_strict = true;
-  //  }
-
-
-  // if(lts)
-  //  {
-  auto const & tria            = dof_handler_p.get_triangulation();
-  auto &       cell_categories = matrix_free_data.data.cell_vectorization_category;
-  cell_categories.resize(tria.n_active_cells());
-
-  for(const auto & cell : tria.active_cell_iterators())
+  if(param.has_pml)
   {
-    if(cell->is_locally_owned())
-    {
-      AssertIndexRange(cell->active_cell_index(), tria.n_active_cells());
+    // divide into pml cells and pure acoustic cells to be able to evaluate
+    // pml only in a subset of cells
+    PML::Utilities::categorize_pml_cells(dof_handler_p.get_triangulation(),
+                                         matrix_free_data.data.cell_vectorization_category);
 
-      auto const p = cell->center();
-      if(p[0] > 0.375 && p[0] < 0.625 && p[1] > 0.375 && p[1] < 0.625)
-      {
-        cell_categories[cell->active_cell_index()] = 1;
-      }
-      else if(p[0] > 0.3125 && p[0] < 0.6875 && p[1] > 0.3125 && p[1] < 0.6875)
-      {
-        cell_categories[cell->active_cell_index()] = 2;
-      }
-      else if(p[0] > 0.25 && p[0] < 0.75 && p[1] > 0.25 && p[1] < 0.75)
-      {
-        cell_categories[cell->active_cell_index()] = 3;
-      }
-      else if(p[0] > 0.125 && p[0] < 0.875 && p[1] > 0.125 && p[1] < 0.825)
-      {
-        cell_categories[cell->active_cell_index()] = 4;
-      }
-      else
-      {
-        cell_categories[cell->active_cell_index()] = 5;
-      }
-    }
+    matrix_free_data.data.cell_vectorization_categories_strict = true;
   }
 
-  matrix_free_data.data.cell_vectorization_categories_strict = true;
-  // }
+
+  if(param.local_time_stepping)
+  {
+    auto const & tria            = dof_handler_p.get_triangulation();
+    auto &       cell_categories = matrix_free_data.data.cell_vectorization_category;
+    cell_categories.resize(tria.n_active_cells());
+
+    for(const auto & cell : tria.active_cell_iterators())
+    {
+      if(cell->is_locally_owned())
+      {
+        AssertIndexRange(cell->active_cell_index(), tria.n_active_cells());
+
+        // TODO: automatically categorize the cells for lts + pml
+        if(cell->material_id() == numbers::pml_material_id)
+        {
+          auto const p = cell->center();
+          if(p[0] > 0.375 && p[0] < 0.625 && p[1] > 0.375 && p[1] < 0.625)
+          {
+            cell_categories[cell->active_cell_index()] = 1;
+          }
+          else if(p[0] > 0.3125 && p[0] < 0.6875 && p[1] > 0.3125 && p[1] < 0.6875)
+          {
+            cell_categories[cell->active_cell_index()] = 2;
+          }
+          else if(p[0] > 0.25 && p[0] < 0.75 && p[1] > 0.25 && p[1] < 0.75)
+          {
+            cell_categories[cell->active_cell_index()] = 3;
+          }
+          else if(p[0] > 0.125 && p[0] < 0.875 && p[1] > 0.125 && p[1] < 0.825)
+          {
+            cell_categories[cell->active_cell_index()] = 4;
+          }
+          else
+          {
+            cell_categories[cell->active_cell_index()] = 5;
+          }
+        }
+      }
+    }
+
+    matrix_free_data.data.cell_vectorization_categories_strict = true;
+  }
 }
 
 template<int dim, typename Number>
@@ -347,16 +336,12 @@ template<int dim, typename Number>
 void
 SpatialOperator<dim, Number>::initialize_dof_vector(BlockVectorType & dst) const
 {
-  // TODO:
-  // dst.reinit(param.has_pml ? 3 : 2);
-  dst.reinit(2);
+  dst.reinit(param.has_pml ? 3 : 2);
 
   matrix_free->initialize_dof_vector(dst.block(block_index_pressure), get_dof_index_pressure());
   matrix_free->initialize_dof_vector(dst.block(block_index_velocity), get_dof_index_velocity());
-  // TODO:
-  //  if(param.has_pml)
-  //    matrix_free->initialize_dof_vector(dst.block(block_index_pml_aux),
-  //    get_dof_index_velocity());
+  if(param.has_pml)
+    matrix_free->initialize_dof_vector(dst.block(block_index_pml_aux), get_dof_index_velocity());
 
   dst.collect_sizes();
 }
@@ -415,29 +400,38 @@ SpatialOperator<dim, Number>::evaluate(BlockVectorType &          dst,
 {
   evaluate_acoustic_operator(dst, src, time, cell_category);
 
-  // TODO:
-  //  if(param.has_pml)
-  //  {
-  //    // add contributions to mass and momentum equation, and reset pml equation
-  //    dst.block(block_index_pml_aux) = 0.0;
-  //    pml_operator.evaluate_add(dst, src);
-  //  }
+  if(param.has_pml && (cell_category == numbers::pml_material_id ||
+                       cell_category == dealii::numbers::invalid_material_id))
+  {
+    // add contributions to mass and momentum equation, and reset pml equation
+    dst.block(block_index_pml_aux) = 0.0;
+    pml_operator.evaluate_add(dst, src);
+  }
 
   // shift to the right-hand side of the equation
-  // TODO: we have do this here and remove -1.0 from apply_scaled_inverse_mass_operator
-  // dst *= -1.0;
+  if(cell_category == dealii::numbers::invalid_material_id)
+  {
+    dst *= -1.0;
+  }
+  else
+  {
+    // TODO: dst_minus could be skipped
+    auto dst_minus = dst;
+    dst_minus *= -1.0;
+    copy_dofs_of_cell_category(dst, dst_minus, cell_category);
+  }
 
-  // TODO:
-  //  if(param.right_hand_side)
-  //    rhs_operator.evaluate_add(dst.block(block_index_pressure), time);
+  if(param.right_hand_side)
+  {
+    rhs_operator.evaluate_add(dst.block(block_index_pressure), time, cell_category);
+  }
 
-  // TODO:
-  //  if(param.aero_acoustic_source_term)
-  //  {
-  //    AssertThrow(aero_acoustic_source_term,
-  //                dealii::ExcMessage("Aero-acoustic source term not valid."));
-  //    dst.block(block_index_pressure) += *aero_acoustic_source_term;
-  //  }
+  if(param.aero_acoustic_source_term)
+  {
+    AssertThrow(aero_acoustic_source_term,
+                dealii::ExcMessage("Aero-acoustic source term not valid."));
+    dst.block(block_index_pressure) += *aero_acoustic_source_term;
+  }
 
   apply_scaled_inverse_mass_operator(dst, dst, cell_category);
 }
@@ -483,180 +477,21 @@ SpatialOperator<dim, Number>::apply_scaled_inverse_mass_operator(
   dealii::types::material_id cell_category) const
 {
   inverse_mass_pressure.apply_scale(dst.block(block_index_pressure),
-                                    -1.0 * param.speed_of_sound * param.speed_of_sound,
+                                    param.speed_of_sound * param.speed_of_sound,
                                     src.block(block_index_pressure),
                                     cell_category);
-  inverse_mass_velocity.apply_scale(dst.block(block_index_velocity),
-                                    -1.0,
-                                    src.block(block_index_velocity),
-                                    cell_category);
+  inverse_mass_velocity.apply(dst.block(block_index_velocity),
+                              src.block(block_index_velocity),
+                              cell_category);
 
-
-  // inverse_mass_pressure.apply_scale(dst.block(block_index_pressure),
-  //                                   param.speed_of_sound * param.speed_of_sound,
-  //                                   src.block(block_index_pressure),
-  //                                   cell_category);
-  // inverse_mass_velocity.apply(dst.block(block_index_velocity),
-  //                             src.block(block_index_velocity),
-  //                             cell_category);
-
-  // TODO:
-  //  if(param.has_pml)
-  //    inverse_mass_velocity.apply(dst.block(block_index_pml_aux), src.block(block_index_pml_aux),
-  //    numbers::pml_material_id);
-}
-
-template<int dim, typename Number>
-std::vector<
-  std::
-    tuple<double, std::vector<unsigned int>, std::vector<unsigned int>, std::vector<unsigned int>>>
-SpatialOperator<dim, Number>::calculate_time_step_lts() const
-{
-  // TODO: this function is very basic and has to be extended!
-  // TODO: WE HAVE TO USE CELL CATEGORIES AND ENSURE CELL BATCHES WITH THE SAME CATEGORY ARE
-  // STRICTLY SEPARATED!!!!
-  // TODO: ENSURE WE COMMUNICATE IN CASE OF MULTIPLE PROCESSORS
-
-  using scalar = dealii::VectorizedArray<Number>;
-  using vector = dealii::Tensor<1, dim, scalar>;
-
-  auto const small_dt = calculate_time_step_cfl();
-  auto const large_dt = 2.0 * small_dt;
-
-  std::cerr << "FK: small_dt " << small_dt << std::endl;
-
-  auto const &                     mf = get_matrix_free();
-  CellIntegrator<dim, dim, Number> fe_eval(mf);
-
-  std::vector<unsigned int> large_cell_batches;
-  std::vector<unsigned int> small_cell_batches;
-  // std::vector<unsigned int> small_cell_adjacent_batches;
-
-  for(unsigned int cell = 0; cell < mf.n_cell_batches(); ++cell)
+  if(param.has_pml && (cell_category == numbers::pml_material_id ||
+                       cell_category == dealii::numbers::invalid_material_id))
   {
-    fe_eval.reinit(cell);
-    auto p = fe_eval.quadrature_point(0);
-
-    std::cerr << "x " << p[0] << std::endl;
-    std::cerr << "y " << p[1] << std::endl << std::endl;
-
-    auto x_min = std::min_element(p[0].begin(), p[0].end());
-    auto y_min = std::min_element(p[1].begin(), p[1].end());
-    auto x_max = std::max_element(p[0].begin(), p[0].end());
-    auto y_max = std::max_element(p[1].begin(), p[1].end());
-    if(*x_min > 0.375 && *x_max < 0.625 && *y_min > 0.375 && *y_max < 0.625)
-    {
-      std::cerr << "small bactch " << cell << std::endl;
-      small_cell_batches.push_back(cell);
-    }
-    else if(*x_min > 0.25 && *x_max < 0.75 && *y_min > 0.25 && *y_max < 0.75)
-    {
-      std::cerr << "small and large bactch " << cell << std::endl;
-      // small_cell_adjacent_batches.push_back(cell);
-      small_cell_batches.push_back(cell);
-      large_cell_batches.push_back(cell);
-    }
-    else
-    {
-      std::cerr << "large bactch " << cell << std::endl;
-      large_cell_batches.push_back(cell);
-    }
+    inverse_mass_velocity.apply(dst.block(block_index_pml_aux),
+                                src.block(block_index_pml_aux),
+                                numbers::pml_material_id);
   }
-
-  FaceIntegrator<dim, dim, Number> fe_face_eval(mf);
-  std::vector<unsigned int>        large_face_batches;
-  std::vector<unsigned int>        small_face_batches;
-  for(unsigned int face = 0; face < mf.n_inner_face_batches(); ++face)
-  {
-    fe_face_eval.reinit(face);
-    auto p = fe_face_eval.quadrature_point(0);
-
-    std::cerr << "face x " << p[0] << std::endl;
-    std::cerr << "face y " << p[1] << std::endl << std::endl;
-
-    auto x_min = std::min_element(p[0].begin(), p[0].end());
-    auto y_min = std::min_element(p[1].begin(), p[1].end());
-    auto x_max = std::max_element(p[0].begin(), p[0].end());
-    auto y_max = std::max_element(p[1].begin(), p[1].end());
-
-    // eps to ensure we pick up every face batch, in reality we only need faces that are originated
-    // in the same cell category and faces that touch the same cell category and its neighbors
-    auto const eps = 0.1;
-    if(*x_min > 0.375 - eps && *x_max < 0.625 + eps && *y_min > 0.375 - eps && *y_max < 0.625 + eps)
-    {
-      std::cerr << "small face bactch " << face << std::endl;
-      small_face_batches.push_back(face);
-    }
-    else
-    {
-      std::cerr << "large face bactch " << face << std::endl;
-      large_face_batches.push_back(face);
-    }
-  }
-
-  std::vector<unsigned int> small_face_bnd_batches;
-  std::vector<unsigned int> large_face_bnd_batches;
-  large_face_bnd_batches.resize(mf.n_boundary_face_batches());
-  std::iota(large_face_bnd_batches.begin(),
-            large_face_bnd_batches.end(),
-            mf.n_inner_face_batches());
-
-  // loop over cells of processor
-  /*
-    // optimization opportuniy. dont store cell_id
-    std::vector<std::pair<unsigned int, double>> cell_id_size(mf.n_cell_batches());
-
-    for(unsigned int cell = 0; cell < mf.n_cell_batches(); ++cell)
-    {
-      scalar dt_min = dealii::make_vectorized_array<Number>(std::numeric_limits<Number>::max());
-      fe_eval.reinit(cell);
-      for(unsigned int q = 0; q < fe_eval.n_q_points; ++q)
-      {
-        // TODO: assume spped of sound is 1 for now, we are only interested in cell sizes
-        vector c;
-        c             = 1.0;
-        auto   invJ   = fe_eval.inverse_jacobian(q);
-        std::cerr<< invJ << std::endl;
-        invJ = transpose(invJ);
-        std::cerr<< invJ << std::endl;
-        scalar factor = 1.0 / (invJ * c).norm();
-        dt_min        = std::min(dt_min, factor);
-
-      }
-      auto const dt_min_batch = *std::min_element(dt_min.begin(), dt_min.end());
-      cell_id_size[cell]      = std::make_pair(cell, dt_min_batch);
-
-    }
-
-    auto max_el =
-      *std::max_element(cell_id_size.begin(),
-                        cell_id_size.end(),
-                        [](auto const & a, auto const & b) { return a.second < b.second; });
-
-    std::cerr << "Numer of cells in batch " << scalar::size() << std::endl;
-    for(auto [i, s] : cell_id_size)
-    {
-      (s < 0.9 * max_el.second) ? small_cell_batches.push_back(i) : large_cell_batches.push_back(i);
-      std::cerr << ((s < 0.9 * max_el.second) ? "small" : "large") << std::endl;
-    }
-  */
-
-
-  // TODO: remove this once it works with once cell category
-
-  large_face_batches.resize(mf.n_inner_face_batches());
-  std::iota(large_face_batches.begin(), large_face_batches.end(), 0);
-  large_cell_batches.resize(mf.n_cell_batches());
-  std::iota(large_cell_batches.begin(), large_cell_batches.end(), 0);
-  return {{small_dt, {}, {}, {}},
-          {large_dt, large_cell_batches, large_face_batches, large_face_bnd_batches}};
-
-
-
-  return {{small_dt, small_cell_batches, small_face_batches, small_face_bnd_batches},
-          {large_dt, large_cell_batches, large_face_batches, large_face_bnd_batches}};
 }
-
 
 template<int dim, typename Number>
 double
@@ -669,27 +504,17 @@ SpatialOperator<dim, Number>::calculate_time_step_cfl() const
   // a constant function to pass in the speed of sound, even though it is
   // possible to optimize calculate_time_step_cfl_local() for this case.
 
-
-  auto small_dt =
-    this->param.cfl *
-    calculate_time_step_cfl_local<dim, Number>(
-      get_matrix_free(),
-      get_dof_index_velocity(),
-      get_quad_index_pressure_velocity(),
-      std::make_shared<dealii::Functions::ConstantFunction<dim>>(param.speed_of_sound, dim),
-      param.start_time /* will not be used (ConstantFunction) */,
-      std::max(param.degree_p, param.degree_u),
-      param.cfl_exponent_fe_degree,
-      CFLConditionType::VelocityNorm,
-      mpi_comm);
-
-  std::cerr << "SMALLLL DTR" << small_dt << std::endl;
-
-  // // testing purposes
-  // calculate_time_step_lts<dim, Number>(small_dt, get_matrix_free());
-
-
-  return small_dt;
+  return this->param.cfl *
+         calculate_time_step_cfl_local<dim, Number>(
+           get_matrix_free(),
+           get_dof_index_velocity(),
+           get_quad_index_pressure_velocity(),
+           std::make_shared<dealii::Functions::ConstantFunction<dim>>(param.speed_of_sound, dim),
+           param.start_time /* will not be used (ConstantFunction) */,
+           std::max(param.degree_p, param.degree_u),
+           param.cfl_exponent_fe_degree,
+           CFLConditionType::VelocityNorm,
+           mpi_comm);
 }
 
 
@@ -719,26 +544,24 @@ SpatialOperator<dim, Number>::initialize_dof_handler_and_constraints()
   print_parameter(pcout, "number of dofs per cell", fe_u->n_dofs_per_cell());
   print_parameter(pcout, "number of dofs (total)", dof_handler_u.n_dofs());
 
-  // TODO:
-  //  if(param.has_pml)
-  //  {
-  //    pcout << "PML auxiliary:" << std::endl;
-  //    print_parameter(pcout, "degree of 1D polynomials", param.degree_u);
-  //    print_parameter(pcout, "number of dofs per cell", fe_u->n_dofs_per_cell());
-  //    print_parameter(pcout, "number of dofs (total)", n_pml_cells * fe_u->n_dofs_per_cell());
-  //  }
+  if(param.has_pml)
+  {
+    pcout << "PML auxiliary:" << std::endl;
+    print_parameter(pcout, "degree of 1D polynomials", param.degree_u);
+    print_parameter(pcout, "number of dofs per cell", fe_u->n_dofs_per_cell());
+    print_parameter(pcout, "number of dofs (total)", n_pml_cells * fe_u->n_dofs_per_cell());
+  }
 
   pcout << "Total:" << std::endl;
   print_parameter(pcout,
                   "number of dofs per cell",
                   fe_p->n_dofs_per_cell() + fe_u->n_dofs_per_cell());
-  // TODO:
-  //  if(param.has_pml)
-  //  {
-  //    print_parameter(pcout,
-  //                    "number of dofs per PML cell",
-  //                    fe_p->n_dofs_per_cell() + 2 * fe_u->n_dofs_per_cell());
-  //  }
+  if(param.has_pml)
+  {
+    print_parameter(pcout,
+                    "number of dofs per PML cell",
+                    fe_p->n_dofs_per_cell() + 2 * fe_u->n_dofs_per_cell());
+  }
   print_parameter(pcout, "number of dofs (total)", get_number_of_dofs());
 
   pcout << std::flush;
@@ -779,20 +602,19 @@ SpatialOperator<dim, Number>::initialize_operators()
   }
 
   // pml operator
-  // TODO:
-  // if(param.has_pml)
-  // {
-  //   PMLOperatorData<dim> data;
-  //   data.dof_index_pressure    = get_dof_index_pressure();
-  //   data.dof_index_velocity    = get_dof_index_velocity();
-  //   data.quad_index            = get_quad_index_pressure_velocity();
-  //   data.block_index_pressure  = block_index_pressure;
-  //   data.block_index_velocity  = block_index_velocity;
-  //   data.block_index_auxiliary = block_index_pml_aux;
-  //   data.pml_damping           = field_functions->pml_damping;
-  //
-  //   pml_operator.initialize(*matrix_free, data);
-  // }
+  if(param.has_pml)
+  {
+    PMLOperatorData<dim> data;
+    data.dof_index_pressure    = get_dof_index_pressure();
+    data.dof_index_velocity    = get_dof_index_velocity();
+    data.quad_index            = get_quad_index_pressure_velocity();
+    data.block_index_pressure  = block_index_pressure;
+    data.block_index_velocity  = block_index_velocity;
+    data.block_index_auxiliary = block_index_pml_aux;
+    data.pml_damping           = field_functions->pml_damping;
+
+    pml_operator.initialize(*matrix_free, data);
+  }
 
   // rhs operator
   if(param.right_hand_side)
@@ -801,9 +623,7 @@ SpatialOperator<dim, Number>::initialize_operators()
     data.dof_index  = get_dof_index_pressure();
     data.quad_index = get_quad_index_pressure();
     // no source terms are allowed inside a PML, so we have to skip them during the cell loop.
-    data.has_pml = false;
-    // TODO:
-    // data.has_pml       = param.has_pml;
+    data.has_pml       = param.has_pml;
     data.kernel_data.f = field_functions->right_hand_side;
     rhs_operator.initialize(*matrix_free, data);
   }

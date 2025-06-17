@@ -217,13 +217,6 @@ public:
     BlockVectorType const &    src,
     dealii::types::material_id cell_category = dealii::numbers::invalid_material_id) const;
 
-
-  std::vector<std::tuple<double,
-                         std::vector<unsigned int>,
-                         std::vector<unsigned int>,
-                         std::vector<unsigned int>>>
-  calculate_time_step_lts() const final;
-
   // Calculate time step size according to local CFL criterion
   double
   calculate_time_step_cfl() const final;

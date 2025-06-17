@@ -53,6 +53,7 @@ Parameters::Parameters()
     start_with_low_order(true),
     restarted_simulation(false),
     adaptive_time_stepping(false),
+    local_time_stepping(false),
     restart_data(RestartData()),
     solver_info_data(SolverInfoData()),
 
@@ -81,6 +82,12 @@ Parameters::check() const
   // TEMPORAL DISCRETIZATION
   AssertThrow(calculation_of_time_step_size != TimeStepCalculation::Undefined,
               dealii::ExcMessage("parameter must be defined"));
+
+  if(local_time_stepping)
+  {
+    AssertThrow(calculation_of_time_step_size != TimeStepCalculation::CFL,
+            dealii::ExcMessage("local timestepping only implemented with CFL"));
+  }
 
   if(calculation_of_time_step_size == TimeStepCalculation::UserSpecified)
     AssertThrow(time_step_size > 0., dealii::ExcMessage("parameter must be defined"));
@@ -158,6 +165,7 @@ Parameters::print_parameters_temporal_discretization(dealii::ConditionalOStream 
 
   // adaptive time-stepping
   print_parameter(pcout, "Adaptive time stepping", adaptive_time_stepping);
+  print_parameter(pcout, "Local time stepping", local_time_stepping);
 }
 
 void

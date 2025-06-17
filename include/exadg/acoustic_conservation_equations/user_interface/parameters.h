@@ -129,8 +129,9 @@ public:
   // set this variable to true to start the simulation from restart files
   bool restarted_simulation;
 
-  // use adaptive timestepping
+  // use adaptive and/or timestepping
   bool adaptive_time_stepping;
+  bool local_time_stepping;
 
   // restart
   RestartData restart_data;

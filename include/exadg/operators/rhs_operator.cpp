@@ -52,13 +52,12 @@ RHSOperator<dim, Number, n_components>::evaluate(VectorType & dst,
 
 template<int dim, typename Number, int n_components>
 void
-RHSOperator<dim, Number, n_components>::evaluate_add(VectorType & dst,
-                                                     double const evaluation_time) const
+RHSOperator<dim, Number, n_components>::evaluate_add(VectorType &               dst,
+                                                     double const               evaluation_time,
+                                                     dealii::types::material_id cell_category) const
 {
   this->time = evaluation_time;
-
-  VectorType src;
-  matrix_free->cell_loop(&This::cell_loop, this, dst, src);
+  matrix_free->cell_loop(&This::cell_loop, this, dst, cell_category);
 }
 
 template<int dim, typename Number, int n_components>
@@ -78,16 +77,19 @@ void
 RHSOperator<dim, Number, n_components>::cell_loop(
   dealii::MatrixFree<dim, Number> const & matrix_free,
   VectorType &                            dst,
-  VectorType const &                      src,
+  dealii::types::material_id const &      cell_category,
   Range const &                           cell_range) const
 {
-  (void)src;
-
   IntegratorCell integrator(matrix_free, data.dof_index, data.quad_index);
 
   for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
   {
-    if(data.has_pml && matrix_free.get_cell_category(cell) == numbers::pml_material_id)
+    auto const this_cell_category = matrix_free.get_cell_category(cell);
+    if(data.has_pml && this_cell_category == numbers::pml_material_id)
+    {
+      continue;
+    }
+    if(cell_category != dealii::numbers::invalid_material_id && this_cell_category != cell_category)
     {
       continue;
     }

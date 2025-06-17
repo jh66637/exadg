@@ -170,6 +170,7 @@ private:
 
     // TEMPORAL DISCRETIZATION
     this->param.start_with_low_order = true;
+    this->param.local_time_stepping = true;
 
     // output of solver information
     this->param.solver_info_data.interval_time = (this->param.end_time - this->param.start_time);

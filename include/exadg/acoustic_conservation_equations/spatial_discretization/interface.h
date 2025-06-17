@@ -69,12 +69,6 @@ public:
 
   virtual double
   calculate_time_step_cfl() const = 0;
-
-  virtual std::vector<std::tuple<double,
-                                 std::vector<unsigned int>,
-                                 std::vector<unsigned int>,
-                                 std::vector<unsigned int>>>
-  calculate_time_step_lts() const = 0;
 };
 
 } // namespace Interface

@@ -19,8 +19,8 @@
  *  ______________________________________________________________________
  */
 
-#ifndef EXADG_ACOUSTIC_CONSERVATION_EQUATIONS_TIME_INTEGRATION_TIME_INT_ABM_H_
-#define EXADG_ACOUSTIC_CONSERVATION_EQUATIONS_TIME_INTEGRATION_TIME_INT_ABM_H_
+#ifndef EXADG_ACOUSTIC_CONSERVATION_EQUATIONS_TIME_INTEGRATION_TIME_INT_AB_LTS_H_
+#define EXADG_ACOUSTIC_CONSERVATION_EQUATIONS_TIME_INTEGRATION_TIME_INT_AB_LTS_H_
 
 
 #include <exadg/acoustic_conservation_equations/spatial_discretization/interface.h>
@@ -52,6 +52,7 @@ public:
         param_in.order_time_integrator,
         param_in.start_with_low_order,
         param_in.adaptive_time_stepping,
+        param_in.local_time_stepping,
         param_in.restart_data,
         mpi_comm_in,
         is_test_in),
@@ -101,6 +102,7 @@ private:
   double
   recalculate_time_step_size() const final
   {
+    AssertThrow(false, dealii::ExcMessage("can not end up here"));
     // Currently the time step sice can not vary since the
     // it depends only on the speed of sound that is
     // constant over time. This changes once ALE is used
@@ -136,4 +138,4 @@ private:
 } // namespace Acoustics
 } // namespace ExaDG
 
-#endif /* EXADG_ACOUSTIC_CONSERVATION_EQUATIONS_TIME_INTEGRATION_TIME_INT_ABM_H_*/
+#endif /* EXADG_ACOUSTIC_CONSERVATION_EQUATIONS_TIME_INTEGRATION_TIME_INT_AB_LTS_H_*/
