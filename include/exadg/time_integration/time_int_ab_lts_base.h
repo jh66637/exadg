@@ -145,8 +145,32 @@ private:
       }
       else
       {
-        // TODO:
-        AssertThrow(false, dealii::ExcMessage("not yet implemented"));
+        std::vector<CellBatchInfo> infos;
+        infos.push_back({get_time_step_size() / 4.0, {1}, 2});
+        infos.push_back({get_time_step_size() / 2.0, {2, 3}, 4});
+        infos.push_back({get_time_step_size() / 1.0, {4, 5}, dealii::numbers::invalid_material_id});
+        std::sort(infos.begin(),
+                  infos.end(),
+                  [](auto const & a, auto const & b) { return a.dt < b.dt; });
+
+        // fill evaluated operators
+        VectorType temp_sol;
+        pde_operator->initialize_dof_vector(temp_sol);
+        for(unsigned int i = 0; i < vec_evaluated_operators.size(); ++i)
+        {
+          for(auto info : infos)
+          {
+            double const previous_time = get_time() - i * info.dt;
+            pde_operator->prescribe_initial_conditions(temp_sol, previous_time);
+            for(auto cell_category : info.cell_categories)
+            {
+              pde_operator->evaluate(vec_evaluated_operators[i],
+                                     temp_sol,
+                                     get_previous_time(i),
+                                     cell_category);
+            }
+          }
+        }
       }
     }
   }
