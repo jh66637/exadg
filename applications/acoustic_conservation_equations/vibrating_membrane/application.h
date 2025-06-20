@@ -170,7 +170,7 @@ private:
 
     // TEMPORAL DISCRETIZATION
     this->param.start_with_low_order = true;
-    this->param.local_time_stepping = true;
+    this->param.local_time_stepping  = true;
 
     // output of solver information
     this->param.solver_info_data.interval_time = (this->param.end_time - this->param.start_time);
@@ -203,6 +203,10 @@ private:
       constexpr unsigned int additional_refinements_around_source = 2;
 
       refine_triangulation_around_center(tria, additional_refinements_around_source, 0.1);
+      if(this->param.local_time_stepping)
+      {
+        this->param.lts_batch_info = set_lts_material_ids(tria);
+      }
     };
 
     GridUtilities::create_triangulation<dim>(
@@ -211,6 +215,46 @@ private:
     GridUtilities::create_mapping(mapping,
                                   this->param.grid.element_type,
                                   this->param.mapping_degree);
+  }
+
+  std::vector<std::pair<std::vector<dealii::types::material_id>, dealii::types::material_id>>
+  set_lts_material_ids(dealii::Triangulation<dim> & tria)
+  {
+    // keep in mind that this->param.lts_batch_info currenty has to be sorted
+    // from small to large time steps.
+    std::vector<std::pair<std::vector<dealii::types::material_id>, dealii::types::material_id>>
+      cell_categories;
+
+    for(const auto & cell : tria.active_cell_iterators())
+    {
+      auto const p = cell->center();
+      if(p[0] > 0.375 && p[0] < 0.625 && p[1] > 0.375 && p[1] < 0.625)
+      {
+        cell->set_material_id(1);
+      }
+      else if(p[0] > 0.3125 && p[0] < 0.6875 && p[1] > 0.3125 && p[1] < 0.6875)
+      {
+        cell->set_material_id(2);
+      }
+      else if(p[0] > 0.25 && p[0] < 0.75 && p[1] > 0.25 && p[1] < 0.75)
+      {
+        cell->set_material_id(3);
+      }
+      else if(p[0] > 0.125 && p[0] < 0.875 && p[1] > 0.125 && p[1] < 0.825)
+      {
+        cell->set_material_id(4);
+      }
+      else
+      {
+        cell->set_material_id(5);
+      }
+    }
+
+    cell_categories.push_back({{1}, 2});
+    cell_categories.push_back({{2, 3}, 4});
+    cell_categories.push_back({{4, 5}, dealii::numbers::invalid_material_id});
+
+    return cell_categories;
   }
 
   void

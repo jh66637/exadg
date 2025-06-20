@@ -137,37 +137,14 @@ SpatialOperator<dim, Number>::fill_matrix_free_data(
     auto &       cell_categories = matrix_free_data.data.cell_vectorization_category;
     cell_categories.resize(tria.n_active_cells());
 
+    // TODO: automatically categorize the cells for lts + pml
+    // auto const & mapping = *get_mapping();
     for(const auto & cell : tria.active_cell_iterators())
     {
       if(cell->is_locally_owned())
       {
-        AssertIndexRange(cell->active_cell_index(), tria.n_active_cells());
-
-        // TODO: automatically categorize the cells for lts + pml
-        if(cell->material_id() == numbers::pml_material_id)
-        {
-          auto const p = cell->center();
-          if(p[0] > 0.375 && p[0] < 0.625 && p[1] > 0.375 && p[1] < 0.625)
-          {
-            cell_categories[cell->active_cell_index()] = 1;
-          }
-          else if(p[0] > 0.3125 && p[0] < 0.6875 && p[1] > 0.3125 && p[1] < 0.6875)
-          {
-            cell_categories[cell->active_cell_index()] = 2;
-          }
-          else if(p[0] > 0.25 && p[0] < 0.75 && p[1] > 0.25 && p[1] < 0.75)
-          {
-            cell_categories[cell->active_cell_index()] = 3;
-          }
-          else if(p[0] > 0.125 && p[0] < 0.875 && p[1] > 0.125 && p[1] < 0.825)
-          {
-            cell_categories[cell->active_cell_index()] = 4;
-          }
-          else
-          {
-            cell_categories[cell->active_cell_index()] = 5;
-          }
-        }
+        // auto d = cell->diameter(mapping);
+        cell_categories[cell->active_cell_index()] = cell->material_id();
       }
     }
 
@@ -504,17 +481,20 @@ SpatialOperator<dim, Number>::calculate_time_step_cfl() const
   // a constant function to pass in the speed of sound, even though it is
   // possible to optimize calculate_time_step_cfl_local() for this case.
 
-  return this->param.cfl *
-         calculate_time_step_cfl_local<dim, Number>(
-           get_matrix_free(),
-           get_dof_index_velocity(),
-           get_quad_index_pressure_velocity(),
-           std::make_shared<dealii::Functions::ConstantFunction<dim>>(param.speed_of_sound, dim),
-           param.start_time /* will not be used (ConstantFunction) */,
-           std::max(param.degree_p, param.degree_u),
-           param.cfl_exponent_fe_degree,
-           CFLConditionType::VelocityNorm,
-           mpi_comm);
+  double const dt_cfl_global =
+    this->param.cfl *
+    calculate_time_step_cfl_local<dim, Number>(
+      get_matrix_free(),
+      get_dof_index_velocity(),
+      get_quad_index_pressure_velocity(),
+      std::make_shared<dealii::Functions::ConstantFunction<dim>>(param.speed_of_sound, dim),
+      param.start_time /* will not be used (ConstantFunction) */,
+      std::max(param.degree_p, param.degree_u),
+      param.cfl_exponent_fe_degree,
+      CFLConditionType::VelocityNorm,
+      mpi_comm);
+
+  return param.local_time_stepping ? dt_cfl_global * param.lts_batch_info.size() : dt_cfl_global;
 }
 
 

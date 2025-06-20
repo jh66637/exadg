@@ -133,6 +133,16 @@ public:
   bool adaptive_time_stepping;
   bool local_time_stepping;
 
+  // TODO: Corrector step?
+  // TODO: Convergence study?
+  // TODO: Automatic cell categorization
+  // can be removed once cell categorization is done automatically
+  // vector contains cell_categories and attached_cell_category.
+  // cell categories are sorted from smallest dt to largest dt.
+  using mat =  dealii::types::material_id;
+  std::vector<std::pair<std::vector<mat>,mat>> lts_batch_info;
+
+
   // restart
   RestartData restart_data;
 

@@ -96,6 +96,17 @@ private:
       print_parameter(this->pcout, "time step size", initial_time_step_size);
     }
 
+    std::vector<LTSBatchInfo> lts_info;
+    for(std::size_t i = 0; i < param.lts_batch_info.size(); ++i)
+    {
+      auto const & [cells, attached] = param.lts_batch_info[i];
+      lts_info.push_back(
+        LTSBatchInfo{initial_time_step_size / (std::pow(2, param.lts_batch_info.size() - i - 1)),
+                     cells,
+                     attached});
+    }
+    this->set_lts_batch_info(lts_info);
+
     return initial_time_step_size;
   }
 

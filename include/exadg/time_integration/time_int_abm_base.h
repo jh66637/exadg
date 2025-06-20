@@ -31,6 +31,14 @@
 
 namespace ExaDG
 {
+
+struct LTSBatchInfo
+{
+  double                                  dt;
+  std::vector<dealii::types::material_id> cell_categories;
+  dealii::types::material_id              attached_cell_category;
+};
+
 /**
  * This class implements the purely explicit Adams--Bashforth--Moulton predictor corrector method.
  */
@@ -90,6 +98,12 @@ public:
     return solution;
   }
 
+  void
+  set_lts_batch_info(std::vector<LTSBatchInfo> const & info)
+  {
+    lts_batch_info = info;
+  }
+
 protected:
   Operator const &
   get_underlying_operator() const
@@ -145,20 +159,12 @@ private:
       }
       else
       {
-        std::vector<CellBatchInfo> infos;
-        infos.push_back({get_time_step_size() / 4.0, {1}, 2});
-        infos.push_back({get_time_step_size() / 2.0, {2, 3}, 4});
-        infos.push_back({get_time_step_size() / 1.0, {4, 5}, dealii::numbers::invalid_material_id});
-        std::sort(infos.begin(),
-                  infos.end(),
-                  [](auto const & a, auto const & b) { return a.dt < b.dt; });
-
         // fill evaluated operators
         VectorType temp_sol;
         pde_operator->initialize_dof_vector(temp_sol);
         for(unsigned int i = 0; i < vec_evaluated_operators.size(); ++i)
         {
-          for(auto info : infos)
+          for(auto info : lts_batch_info)
           {
             double const previous_time = get_time() - i * info.dt;
             pde_operator->prescribe_initial_conditions(temp_sol, previous_time);
@@ -239,13 +245,6 @@ private:
     pde_operator->evaluate(evaluated_operator_np, s, next_time, cell_category);
   }
 
-  struct CellBatchInfo
-  {
-    double                                  dt;
-    std::vector<dealii::types::material_id> cell_categories;
-    dealii::types::material_id              attached_cell_category;
-  };
-
   void
   do_lts_sub_timestep_solve(VectorType &                                    dst,
                             VectorType const &                              src,
@@ -275,13 +274,13 @@ private:
   }
 
   void
-  do_lts_sub_timesteps_recursively(VectorType &                       dst,
-                                   VectorType const &                 src,
-                                   double                             t,
-                                   double const                       dt,
-                                   unsigned int                       index,
-                                   std::vector<CellBatchInfo> const & infos,
-                                   ABTimeIntegratorConstants          ab_intermediate)
+  do_lts_sub_timesteps_recursively(VectorType &                      dst,
+                                   VectorType const &                src,
+                                   double                            t,
+                                   double const                      dt,
+                                   unsigned int                      index,
+                                   std::vector<LTSBatchInfo> const & infos,
+                                   ABTimeIntegratorConstants         ab_intermediate)
   {
     if(index > 0)
     {
@@ -349,28 +348,25 @@ private:
 
       VectorType solution_old = solution;
 
-      std::vector<CellBatchInfo> infos;
-      infos.push_back({get_time_step_size() / 4.0, {1}, 2});
-      infos.push_back({get_time_step_size() / 2.0, {2, 3}, 4});
-      infos.push_back({get_time_step_size() / 1.0, {4, 5}, dealii::numbers::invalid_material_id});
-      std::sort(infos.begin(),
-                infos.end(),
-                [](auto const & a, auto const & b) { return a.dt < b.dt; });
-
       auto ts = get_time_step_vector();
       ts[0] *= 0.5;
       auto ab_intermediate = ab;
       ab_intermediate.update(get_current_order(), true, ts);
 
-      do_lts_sub_timesteps_recursively(
-        solution, solution_old, t, 0.5 * dt, infos.size() - 2, infos, ab_intermediate);
+      do_lts_sub_timesteps_recursively(solution,
+                                       solution_old,
+                                       t,
+                                       0.5 * dt,
+                                       lts_batch_info.size() - 2,
+                                       lts_batch_info,
+                                       ab_intermediate);
 
       do_lts_sub_timestep_solve(solution,
                                 solution_old,
                                 solution_old,
                                 t,
                                 dt,
-                                infos.back().cell_categories,
+                                lts_batch_info.back().cell_categories,
                                 dealii::numbers::invalid_material_id,
                                 ab);
     }
@@ -500,7 +496,8 @@ private:
   VectorType              evaluated_operator_np;
   std::vector<VectorType> vec_evaluated_operators;
 
-  bool const local_time_stepping;
+  bool const                local_time_stepping;
+  std::vector<LTSBatchInfo> lts_batch_info;
 };
 
 } // namespace ExaDG

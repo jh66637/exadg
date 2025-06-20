@@ -85,7 +85,7 @@ Parameters::check() const
 
   if(local_time_stepping)
   {
-    AssertThrow(calculation_of_time_step_size != TimeStepCalculation::CFL,
+    AssertThrow(calculation_of_time_step_size == TimeStepCalculation::CFL,
             dealii::ExcMessage("local timestepping only implemented with CFL"));
   }
 
