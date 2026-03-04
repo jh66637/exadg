@@ -327,6 +327,12 @@ public:
   set_temperature(VectorType const & temperature);
 
   /*
+   *  Aeroacoustic feedback
+   */
+  void
+  set_aero_acoustic_feedback_term(VectorType const & temperature);
+
+  /*
    * Computation of derived quantities needed for postprocessing but some of them are also needed,
    * e.g., for special splitting-type time integration schemes.
    */

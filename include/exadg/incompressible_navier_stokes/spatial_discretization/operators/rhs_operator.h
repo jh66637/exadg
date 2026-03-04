@@ -165,6 +165,9 @@ public:
   void
   set_temperature(VectorType const & T);
 
+  void
+  set_aero_acoustic_feedback_term(VectorType const & feedback_term);
+
 private:
   void
   do_cell_integral(Integrator & integrator, IntegratorScalar & integrator_temperature) const;
@@ -184,6 +187,7 @@ private:
   Operators::RHSKernel<dim, Number> kernel;
 
   VectorType const * temperature;
+  VectorType const * aero_acoustic_feedback_term;
 };
 
 } // namespace IncNS

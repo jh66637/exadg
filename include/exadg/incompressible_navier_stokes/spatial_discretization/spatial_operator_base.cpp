@@ -1429,6 +1429,15 @@ SpatialOperatorBase<dim, Number>::set_temperature(VectorType const & temperature
 
 template<int dim, typename Number>
 void
+SpatialOperatorBase<dim, Number>::set_aero_acoustic_feedback_term(VectorType const & feedback_term)
+{
+  //TODO: AssertThrow(param.aero_acoustic_feedback_term, dealii::ExcMessage("Invalid parameters detected."));
+
+  rhs_operator.set_aero_acoustic_feedback_term(feedback_term);
+}
+
+template<int dim, typename Number>
+void
 SpatialOperatorBase<dim, Number>::compute_vorticity(VectorType & dst, VectorType const & src) const
 {
   vorticity_calculator.compute_projection_rhs(dst, src);

@@ -54,7 +54,10 @@ public:
     field_functions = field_functions_in;
 
     acoustic_solver_in->pde_operator->initialize_dof_vector_pressure(source_term_acoustic);
+    acoustic_solver_in->pde_operator->initialize_dof_vector_pressure(feedback_term_acoustic);
+    acoustic_solver_in->pde_operator->initialize_dof_vector_pressure(convection_acoustic);
     fluid_solver_in->pde_operator->initialize_vector_pressure(source_term_fluid);
+    fluid_solver_in->pde_operator->initialize_vector_pressure(feedback_term_fluid);
 
     // setup the transfer operator
     if(parameters.fluid_to_acoustic_coupling_strategy ==
@@ -82,6 +85,10 @@ public:
     data.blend_in_function   = field_functions_in->source_term_blend_in;
 
     source_term_calculator.setup(fluid_solver_in->pde_operator->get_matrix_free(), data);
+
+    //TODO:
+    // FeedbackTermCalculatorData<dim> data_feedback;
+    // feedback_term_calculator.setup(acoustic_solver_in->pde_operator->get_matrix_free(), data_feedback);
   }
 
   void
@@ -123,6 +130,22 @@ public:
     acoustic_solver->pde_operator->set_aero_acoustic_source_term(source_term_acoustic);
   }
 
+  void
+  acoustic_to_fluid()
+  {
+    non_nested_grid_transfer.interpolate(convection_acoustic,fluid_solver->time_integrator->get_velocity());
+
+    //TODO:
+    // feedback_term_calculator.evaluate_integrate(feedback_term_acoustic,
+    //                                       convection_acoustic,
+    //                                       acoustic_solver->time_integrator->get_velocity());
+
+    feedback_term_fluid = 0.0;
+    non_nested_grid_transfer.prolongate_and_add(feedback_term_fluid, feedback_term_acoustic);
+
+    fluid_solver->pde_operator->set_aero_acoustic_feedback_term(feedback_term_fluid);
+  }
+
 private:
   Parameters parameters;
 
@@ -148,6 +171,15 @@ private:
 
   // Aeroacoustic source term defined on the fluid mesh
   VectorType source_term_fluid;
+
+  // Aeroacoustic feedback term defined on the acoustic mesh
+  VectorType feedback_term_acoustic;
+
+  // Aeroacoustic feedback term defined on the fluid mesh
+  VectorType feedback_term_fluid;
+
+  // Hydrodynamic velocity defined on the acoustic mesh
+  VectorType convection_acoustic;
 };
 
 } // namespace AeroAcoustic
