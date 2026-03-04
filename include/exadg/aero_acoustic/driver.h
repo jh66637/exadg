@@ -66,6 +66,9 @@ private:
   void
   couple_fluid_to_acoustic();
 
+  void
+  couple_acoustic_to_fluid();
+
   MPI_Comm const mpi_comm;
 
   dealii::ConditionalOStream pcout;

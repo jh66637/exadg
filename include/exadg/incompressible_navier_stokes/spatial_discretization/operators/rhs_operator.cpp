@@ -26,7 +26,8 @@ namespace ExaDG
 namespace IncNS
 {
 template<int dim, typename Number>
-RHSOperator<dim, Number>::RHSOperator() : matrix_free(nullptr), time(0.0), temperature(nullptr)
+RHSOperator<dim, Number>::RHSOperator()
+  : matrix_free(nullptr), time(0.0), temperature(nullptr), aero_acoustic_feedback_term(nullptr)
 {
 }
 
@@ -59,6 +60,11 @@ RHSOperator<dim, Number>::evaluate_add(VectorType & dst, Number const evaluation
 
   VectorType src;
   matrix_free->cell_loop(&This::cell_loop, this, dst, src, false /*zero_dst_vector = false*/);
+
+  if(aero_acoustic_feedback_term)
+  {
+    dst += *aero_acoustic_feedback_term;
+  }
 }
 
 template<int dim, typename Number>
@@ -66,6 +72,13 @@ void
 RHSOperator<dim, Number>::set_temperature(VectorType const & T)
 {
   this->temperature = &T;
+}
+
+template<int dim, typename Number>
+void
+RHSOperator<dim, Number>::set_aero_acoustic_feedback_term(VectorType const & feedback_term)
+{
+  this->aero_acoustic_feedback_term = &feedback_term;
 }
 
 template<int dim, typename Number>

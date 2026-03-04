@@ -135,6 +135,18 @@ Driver<dim, Number>::couple_fluid_to_acoustic()
 
 template<int dim, typename Number>
 void
+Driver<dim, Number>::couple_acoustic_to_fluid()
+{
+  dealii::Timer sub_timer;
+  sub_timer.restart();
+
+  volume_coupling.acoustic_to_fluid();
+
+  timer_tree.insert({"AeroAcoustic", "Coupling acoustic -> fluid"}, sub_timer.wall_time());
+}
+
+template<int dim, typename Number>
+void
 Driver<dim, Number>::solve()
 {
   std::pair<bool, dealii::Timer> timer = std::make_pair(false, dealii::Timer());
@@ -145,39 +157,64 @@ Driver<dim, Number>::solve()
                        application->acoustic->get_parameters().end_time) < 1.0e-12,
               dealii::ExcMessage("Acoustic and fluid simulation need the same end time."));
 
-  while(not fluid->time_integrator->finished())
+  if(true)
   {
-    if(timer.first == false and acoustic->time_integrator->started())
+    while(not fluid->time_integrator->finished())
     {
-      timer.first = true;
-      timer.second.restart();
+      double dt_min = std::min(fluid->time_integrator->get_time_step_size(),
+                               acoustic->time_integrator->get_time_step_size());
+      fluid->time_integrator->set_current_time_step_size(dt_min);
+      acoustic->time_integrator->set_current_time_step_size(dt_min);
+
+      if(acoustic->time_integrator->started())
+        couple_fluid_to_acoustic(); // f^n(p_ic^n, u_ic^n)
+
+      acoustic->time_integrator->advance_one_timestep();
+
+      // f^n+1(u_a^n+1, u_ic^n) // on the same mesh? u_ic^n will be roughly u_ic^n+1 because dt <<
+      // dt_cfl assume that u_ic and u_a have the same DoFs, this way the coupling is much easier.
+      if(acoustic->time_integrator->started())
+        couple_acoustic_to_fluid();
+
+      fluid->advance_one_timestep_and_compute_pressure_time_derivative(true);
     }
+  }
+  else
+  {
+    while(not fluid->time_integrator->finished())
+    {
+      if(timer.first == false and acoustic->time_integrator->started())
+      {
+        timer.first = true;
+        timer.second.restart();
+      }
 
-    // To check if acoustics starts during the following sub-stepping sweep we
-    // can not simply check acoustic->time_integrator->started(). Instead we
-    // compute this information as follows:
-    bool const acoustic_starts_during_present_timestep =
-      fluid->time_integrator->get_next_time() + fluid->time_integrator->get_time_step_size() >
-      application->acoustic->get_parameters().start_time;
+      // To check if acoustics starts during the following sub-stepping sweep we
+      // can not simply check acoustic->time_integrator->started(). Instead we
+      // compute this information as follows:
+      bool const acoustic_starts_during_present_timestep =
+        fluid->time_integrator->get_next_time() + fluid->time_integrator->get_time_step_size() >
+        application->acoustic->get_parameters().start_time;
 
-    // The acoustic simulation uses explicit time-stepping while the fluid solver
-    // uses implicit time-stepping. Therefore, we advance the acoustic solver to
-    // t^(n+1) first and directly use the result in the fluid solver.
-    if(acoustic_starts_during_present_timestep)
-      couple_fluid_to_acoustic();
-    acoustic->advance_multiple_timesteps(fluid->time_integrator->get_time_step_size());
+      // The acoustic simulation uses explicit time-stepping while the fluid solver
+      // uses implicit time-stepping. Therefore, we advance the acoustic solver to
+      // t^(n+1) first and directly use the result in the fluid solver.
+      if(acoustic_starts_during_present_timestep)
+        couple_fluid_to_acoustic();
+      acoustic->advance_multiple_timesteps(fluid->time_integrator->get_time_step_size());
 
-    // We can not simply check acoustic->time_integrator->started() since acoustic might start
-    // during a sub-stepping sweep. To check if the acoustic might be started during the next
-    // sub-stepping BEFORE performing the current fluid time step we have to check if dt_{n+2}
-    // is larger than the acoustic start time. We need this information BEFORE the fluid
-    // time-step since we have to know if we have to compute dp/dt.
-    bool const acoustic_might_start_during_next_timestep =
-      fluid->time_integrator->get_next_time() + fluid->max_next_time_step_size() >
-      application->acoustic->get_parameters().start_time;
+      // We can not simply check acoustic->time_integrator->started() since acoustic might start
+      // during a sub-stepping sweep. To check if the acoustic might be started during the next
+      // sub-stepping BEFORE performing the current fluid time step we have to check if dt_{n+2}
+      // is larger than the acoustic start time. We need this information BEFORE the fluid
+      // time-step since we have to know if we have to compute dp/dt.
+      bool const acoustic_might_start_during_next_timestep =
+        fluid->time_integrator->get_next_time() + fluid->max_next_time_step_size() >
+        application->acoustic->get_parameters().start_time;
 
-    fluid->advance_one_timestep_and_compute_pressure_time_derivative(
-      acoustic_might_start_during_next_timestep);
+      fluid->advance_one_timestep_and_compute_pressure_time_derivative(
+        acoustic_might_start_during_next_timestep);
+    }
   }
 
   time_solvers_side_by_side = timer.second.wall_time();
