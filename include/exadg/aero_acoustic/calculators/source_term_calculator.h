@@ -45,7 +45,7 @@ class FeedbackTermCalculator
 
 
 public:
-  FeedbackTermCalculator() : matrix_free(nullptr), time(std::numeric_limits<double>::min())
+  FeedbackTermCalculator() : matrix_free(nullptr)
   {
   }
 
@@ -68,6 +68,26 @@ public:
     velocity_cfd->update_ghost_values();
 
     matrix_free->cell_loop(&This::compute_feedback_term, this, dst, velocity_acoustic, true);
+  }
+
+  template<typename vector_type1, typename vector_type2>
+  static inline DEAL_II_ALWAYS_INLINE //
+    vector_type2
+    cross_product(vector_type1 const & omega, vector_type2 const & u_a)
+  {
+    static_assert(dim == 3 || dim == 2, "feedback term only possible for dimensions 2 and 3");
+
+    if constexpr(dim == 3)
+    {
+      return dealii::cross_product_3d(omega, u_a);
+    }
+    else if constexpr(dim == 2)
+    {
+      // vorticity is a scalar (stored in component 0)
+      // cross_product_2d() rotates vector clockwise, we need it counterclockwise since
+      // [omega,omega,omega]^T x [u1, u2, u3] = [-omega*u2, omega*u1, ...]
+      return omega[0] * (-1.0 * dealii::cross_product_2d(u_a));
+    }
   }
 
 
