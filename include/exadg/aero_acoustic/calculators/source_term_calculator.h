@@ -30,6 +30,87 @@ namespace ExaDG
 {
 namespace AeroAcoustic
 {
+struct FeedbackTermCalculatorData
+{
+  unsigned int dof_index;
+  unsigned int quad_index;
+};
+
+template<int dim, typename Number>
+class FeedbackTermCalculator
+{
+  using This                 = FeedbackTermCalculator<dim, Number>;
+  using VectorType           = dealii::LinearAlgebra::distributed::Vector<Number>;
+  using CellIntegratorVector = CellIntegrator<dim, dim, Number>;
+
+
+public:
+  FeedbackTermCalculator() : matrix_free(nullptr), time(std::numeric_limits<double>::min())
+  {
+  }
+
+  void
+  setup(dealii::MatrixFree<dim, Number> const & matrix_free_in,
+        FeedbackTermCalculatorData const &      data_in)
+  {
+    matrix_free = &matrix_free_in;
+    data        = data_in;
+  }
+
+  void
+  evaluate_integrate(VectorType &       dst,
+                     VectorType const & velocity_cfd_in,
+                     VectorType const & velocity_acoustic)
+  {
+    dst.zero_out_ghost_values();
+
+    velocity_cfd.reset(velocity_cfd_in);
+    velocity_cfd->update_ghost_values();
+
+    matrix_free->cell_loop(&This::compute_feedback_term, this, dst, velocity_acoustic, true);
+  }
+
+
+  void
+  compute_feedback_term(dealii::MatrixFree<dim, Number> const &       matrix_free_in,
+                        VectorType &                                  dst,
+                        VectorType const &                            velocity_acoustic,
+                        std::pair<unsigned int, unsigned int> const & cell_range) const
+  {
+    // − (∇ × u ic ) × u a
+    CellIntegratorVector feedback_term(matrix_free_in, data.dof_index, data.quad_index);
+    CellIntegratorVector acoustic_particle_velocity(matrix_free_in,
+                                                    data.dof_index,
+                                                    data.quad_index);
+
+    for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
+    {
+      acoustic_particle_velocity.reinit(cell);
+      acoustic_particle_velocity.gather_evaluate(velocity_acoustic,
+                                                 dealii::EvaluationFlags::values);
+
+      feedback_term.reinit(cell);
+      feedback_term.gather_evaluate(*velocity_cfd, dealii::EvaluationFlags::gradients);
+
+      for(unsigned int q = 0; q < feedback_term.n_q_points; ++q)
+      {
+        auto const u_a   = acoustic_particle_velocity.get_value(q);
+        auto const omega = feedback_term.get_curl(q);
+        feedback_term.submit_value(-1.0 * cross_product(omega, u_a), q);
+      }
+
+      feedback_term.integrate_scatter(dealii::EvaluationFlags::values, dst);
+    }
+  }
+
+  dealii::MatrixFree<dim, Number> const * matrix_free;
+
+  FeedbackTermCalculatorData data;
+
+  lazy_ptr<VectorType> velocity_cfd;
+};
+
+
 template<int dim>
 struct SourceTermCalculatorData
 {
@@ -228,15 +309,14 @@ private:
 
     if(space_dependent_scaling)
     {
-      return [&](qpoint const & q) {
-        return FunctionEvaluator<0, dim, Number>::value(*data.blend_in_function, q, time);
-      };
+      return [&](qpoint const & q)
+      { return FunctionEvaluator<0, dim, Number>::value(*data.blend_in_function, q, time); };
     }
     else
     {
       // capture scaling factor by copy
-      return
-        [pure_temporal_scaling_factor](qpoint const &) { return pure_temporal_scaling_factor; };
+      return [pure_temporal_scaling_factor](qpoint const &)
+      { return pure_temporal_scaling_factor; };
     }
   }
 

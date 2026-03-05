@@ -86,9 +86,12 @@ public:
 
     source_term_calculator.setup(fluid_solver_in->pde_operator->get_matrix_free(), data);
 
-    //TODO:
-    // FeedbackTermCalculatorData<dim> data_feedback;
-    // feedback_term_calculator.setup(acoustic_solver_in->pde_operator->get_matrix_free(), data_feedback);
+
+    FeedbackTermCalculatorData data_feedback;
+    data_feedback.dof_index  = acoustic_solver_in->pde_operator->get_dof_index_velocity();
+    data_feedback.quad_index = acoustic_solver_in->pde_operator->get_quad_index_velocity();
+
+    feedback_term_calculator.setup(acoustic_solver_in->pde_operator->get_matrix_free(), data_feedback);
   }
 
   void
@@ -135,10 +138,9 @@ public:
   {
     non_nested_grid_transfer.interpolate(convection_acoustic,fluid_solver->time_integrator->get_velocity());
 
-    //TODO:
-    // feedback_term_calculator.evaluate_integrate(feedback_term_acoustic,
-    //                                       convection_acoustic,
-    //                                       acoustic_solver->time_integrator->get_velocity());
+    feedback_term_calculator.evaluate_integrate(feedback_term_acoustic,
+                                          convection_acoustic,
+                                          acoustic_solver->time_integrator->get_velocity());
 
     feedback_term_fluid = 0.0;
     non_nested_grid_transfer.prolongate_and_add(feedback_term_fluid, feedback_term_acoustic);
@@ -165,6 +167,8 @@ private:
 
   // Class that knows how to compute the source term
   SourceTermCalculator<dim, Number> source_term_calculator;
+
+  FeedbackTermCalculator<dim, Number> feedback_term_calculator;
 
   // Aeroacoustic source term defined on the acoustic mesh
   VectorType source_term_acoustic;
