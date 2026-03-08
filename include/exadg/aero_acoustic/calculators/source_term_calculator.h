@@ -34,6 +34,7 @@ struct FeedbackTermCalculatorData
 {
   unsigned int dof_index;
   unsigned int quad_index;
+  double       density;
 };
 
 template<int dim, typename Number>
@@ -97,11 +98,13 @@ public:
                         VectorType const &                            velocity_acoustic,
                         std::pair<unsigned int, unsigned int> const & cell_range) const
   {
-    // − (∇ × u ic ) × u a
+    // − (∇ × u ic ) × u a, we solve for rho*ua
     CellIntegratorVector feedback_term(matrix_free_in, data.dof_index, data.quad_index);
     CellIntegratorVector acoustic_particle_velocity(matrix_free_in,
                                                     data.dof_index,
                                                     data.quad_index);
+
+    double m_rho_inv = -1.0 / data.density;
 
     for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
     {
@@ -116,7 +119,7 @@ public:
       {
         auto const u_a   = acoustic_particle_velocity.get_value(q);
         auto const omega = feedback_term.get_curl(q);
-        feedback_term.submit_value(-1.0 * cross_product(omega, u_a), q);
+        feedback_term.submit_value(m_rho_inv * cross_product(omega, u_a), q);
       }
 
       feedback_term.integrate_scatter(dealii::EvaluationFlags::values, dst);
