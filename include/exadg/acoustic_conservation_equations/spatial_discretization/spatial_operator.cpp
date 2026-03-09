@@ -287,6 +287,13 @@ SpatialOperator<dim, Number>::initialize_dof_vector_pressure(VectorType & dst) c
 
 template<int dim, typename Number>
 void
+SpatialOperator<dim, Number>::initialize_dof_vector_velocity(VectorType & dst) const
+{
+  matrix_free->initialize_dof_vector(dst, get_dof_index_velocity());
+}
+
+template<int dim, typename Number>
+void
 SpatialOperator<dim, Number>::prescribe_initial_conditions(BlockVectorType & dst,
                                                            double const      time) const
 {

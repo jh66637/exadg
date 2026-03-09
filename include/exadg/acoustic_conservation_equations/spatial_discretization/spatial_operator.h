@@ -152,6 +152,9 @@ public:
   void
   initialize_dof_vector_pressure(VectorType & dst) const;
 
+  void
+  initialize_dof_vector_velocity(VectorType & dst) const;
+
   /*
    * Prescribe initial conditions using a specified analytical/initial solution function.
    */
