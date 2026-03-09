@@ -26,6 +26,95 @@
 #include <exadg/matrix_free/integrators.h>
 #include <exadg/utilities/lazy_ptr.h>
 
+#include <deal.II/matrix_free/fe_remote_evaluation.h>
+
+template<int dim, typename Number, typename VectorizedArrayType>
+dealii::FERemoteEvaluationCommunicator<dim>
+compute_remote_communicator_cells_point_to_point_interpolation(
+  const dealii::MatrixFree<dim, Number, VectorizedArrayType> & matrix_free_dst,
+  const dealii::MatrixFree<dim, Number, VectorizedArrayType> & matrix_free_src,
+  const unsigned int                                           quad_no_dst = 0,
+  const unsigned int                                           dof_no_dst  = 0,
+  const unsigned int                                           dof_no_src  = 0,
+  const double                                                 tolerance   = 1e-9)
+{
+  const auto & dof_handler_dst = matrix_free_dst.get_dof_handler(dof_no_dst);
+  const auto & tria_dst        = dof_handler_dst.get_triangulation();
+  const auto & mapping_dst     = *matrix_free_dst.get_mapping_info().mapping;
+
+  const auto & dof_handler_src = matrix_free_src.get_dof_handler(dof_no_src);
+  const auto & tria_src        = dof_handler_src.get_triangulation();
+  const auto & mapping_src     = *matrix_free_src.get_mapping_info().mapping;
+
+  dealii::FERemoteCommunicationObjectEntityBatches<dim> comm_object;
+
+  std::vector<unsigned int> global_quadrature_sizes(matrix_free_dst.n_cell_batches(),
+                                                    dealii::numbers::invalid_unsigned_int);
+
+  auto rpe =
+    std::make_shared<dealii::Utilities::MPI::RemotePointEvaluation<dim>>(tolerance, false, 0);
+
+  std::vector<std::pair<unsigned int, unsigned int>> cell_batch_id_n_cells;
+
+  // Points that are searched by rpe.
+  std::vector<dealii::Point<dim>> points;
+
+  // Temporarily set up FEFaceEvaluation to access the quadrature points
+  // at the faces on the non-matching interface.
+  dealii::FEEvaluation<dim, -1, 0, 1, Number> phi(matrix_free_dst, dof_no_dst, quad_no_dst);
+
+  std::pair<unsigned int, unsigned int> cell_batch_range{0, matrix_free_dst.n_cell_batches()};
+
+  // Iterate over the boundary faces.
+  for(unsigned int cell = 0; cell < matrix_free_dst.n_cell_batches(); ++cell)
+  {
+    phi.reinit(cell);
+
+    // If @c face is on the current side of the non-matching
+    // interface. Add the face batch ID and the number of faces in
+    // the batch to the corresponding data structure.
+    const unsigned int n_cells = matrix_free_dst.n_active_entries_per_cell_batch(cell);
+    cell_batch_id_n_cells.emplace_back(std::make_pair(cell, n_cells));
+
+    // Append the quadrature points to the points we need to search
+    // for.
+    for(unsigned int v = 0; v < n_cells; ++v)
+    {
+      for(unsigned int q : phi.quadrature_point_indices())
+      {
+        const auto         point = phi.quadrature_point(q);
+        dealii::Point<dim> temp;
+        for(unsigned int i = 0; i < dim; ++i)
+          temp[i] = point[i][v];
+
+        points.push_back(temp);
+      }
+    }
+
+    // Insert the quadrature size into the global vector.
+    // First check that each face is only considered once.
+    Assert(global_quadrature_sizes[cell] == numbers::invalid_unsigned_int,
+           ExcMessage("Quadrature for given face already provided."));
+
+    global_quadrature_sizes[cell] = phi.n_q_points;
+  }
+
+  // Reinit RPE and ensure all points are found.
+  rpe->reinit(points, tria_src, mapping_src);
+  Assert(rpe->all_points_found(), ExcMessage("Not all remote points found."));
+
+  comm_object.batch_id_n_entities = cell_batch_id_n_cells;
+  comm_object.rpe                 = rpe;
+
+  dealii::FERemoteEvaluationCommunicator<dim> remote_communicator;
+
+  remote_communicator.reinit_cells(comm_object, cell_batch_range, global_quadrature_sizes);
+
+  return remote_communicator;
+}
+
+
+
 namespace ExaDG
 {
 namespace AeroAcoustic
