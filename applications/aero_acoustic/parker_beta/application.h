@@ -164,30 +164,7 @@ private:
     pp_data.pointwise_output_data.update_points_before_evaluation = false;
 
     pp_data.pointwise_output_data.evaluation_points.push_back(
-      {0.5 * Parker::plate_length, 0.5 * Parker::channel_height, 0.5 * Parker::channel_width});
-    pp_data.pointwise_output_data.evaluation_points.push_back(
-      {0.5 * Parker::plate_length, -0.5 * Parker::channel_height, 0.5 * Parker::channel_width});
-
-    double const       probe_x   = 20e-3;
-    double const       probe_y   = 2.0 * Parker::r;
-    double const       probe_z   = 20e-3;
-    unsigned int const samples_z = 3;
-    unsigned int const samples_x = 3;
-    unsigned int const samples_y = 3;
-    for(unsigned int i = 0; i <= samples_z; ++i)
-    {
-      double const z =
-        0.5 * Parker::channel_width - 0.5 * probe_z + (double)i * probe_z / (double)samples_z;
-      for(unsigned int j = 0; j <= samples_y; ++j)
-      {
-        double const y = -0.5 * probe_y + (double)j * probe_y / (double)samples_y;
-        for(unsigned int k = 0; k <= samples_x; ++k)
-        {
-          double const x = Parker::plate_length + 3.25e-3 + (double)k * probe_x / (double)samples_x;
-          pp_data.pointwise_output_data.evaluation_points.push_back({x, y, z});
-        }
-      }
-    }
+      {0.5 * Parker::plate_length, 0.49 * Parker::channel_height, 0.5 * Parker::channel_width});
 
     std::shared_ptr<PostProcessorBase<dim, Number>> pp;
     pp.reset(new PostProcessor<dim, Number>(pp_data, this->mpi_comm));
