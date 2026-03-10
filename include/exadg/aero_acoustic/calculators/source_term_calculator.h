@@ -119,6 +119,7 @@ struct FeedbackTermCalculatorData
 {
   unsigned int dof_index;
   unsigned int quad_index;
+  unsigned int dof_index_acoustic;
   double       density;
 };
 
@@ -128,6 +129,8 @@ class FeedbackTermCalculator
   using This                 = FeedbackTermCalculator<dim, Number>;
   using VectorType           = dealii::LinearAlgebra::distributed::Vector<Number>;
   using CellIntegratorVector = CellIntegrator<dim, dim, Number>;
+  using RemoteCellIntegratorVector =
+    dealii::FERemoteEvaluation<dim, dim, dealii::VectorizedArray<Number>>;
 
 
 public:
