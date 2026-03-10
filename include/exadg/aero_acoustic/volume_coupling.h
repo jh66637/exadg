@@ -54,8 +54,6 @@ public:
     field_functions = field_functions_in;
 
     acoustic_solver_in->pde_operator->initialize_dof_vector_pressure(source_term_acoustic);
-    acoustic_solver_in->pde_operator->initialize_dof_vector_pressure(feedback_term_acoustic);
-    acoustic_solver_in->pde_operator->initialize_dof_vector_pressure(convection_acoustic);
     fluid_solver_in->pde_operator->initialize_vector_pressure(source_term_fluid);
     fluid_solver_in->pde_operator->initialize_vector_pressure(feedback_term_fluid);
 
@@ -142,13 +140,10 @@ public:
                                          fluid_solver->time_integrator->get_velocity());
 
     feedback_term_calculator.evaluate_integrate(
-      feedback_term_acoustic,
-      convection_acoustic,
+      feedback_term_fluid,
+      fluid_solver->time_integrator->get_velocity(),
       acoustic_solver->time_integrator->get_solution().block(
         ExaDG::Acoustics::SpatialOperator<dim, Number>::block_index_velocity));
-
-    feedback_term_fluid = 0.0;
-    non_nested_grid_transfer.prolongate_and_add(feedback_term_fluid, feedback_term_acoustic);
 
     fluid_solver->pde_operator->set_aero_acoustic_feedback_term(feedback_term_fluid);
   }
@@ -181,14 +176,8 @@ private:
   // Aeroacoustic source term defined on the fluid mesh
   VectorType source_term_fluid;
 
-  // Aeroacoustic feedback term defined on the acoustic mesh
-  VectorType feedback_term_acoustic;
-
   // Aeroacoustic feedback term defined on the fluid mesh
   VectorType feedback_term_fluid;
-
-  // Hydrodynamic velocity defined on the acoustic mesh
-  VectorType convection_acoustic;
 };
 
 } // namespace AeroAcoustic
