@@ -86,11 +86,13 @@ public:
 
 
     FeedbackTermCalculatorData data_feedback;
-    data_feedback.dof_index  = acoustic_solver_in->pde_operator->get_dof_index_velocity();
-    data_feedback.quad_index = acoustic_solver_in->pde_operator->get_quad_index_velocity();
+    data_feedback.dof_index          = fluid_solver_in->pde_operator->get_dof_index_velocity();
+    data_feedback.dof_index_acoustic = acoustic_solver_in->pde_operator->get_dof_index_velocity();
+    data_feedback.quad_index = fluid_solver_in->pde_operator->get_quad_index_velocity_standard();
     data_feedback.density    = parameters_in.density;
 
-    feedback_term_calculator.setup(acoustic_solver_in->pde_operator->get_matrix_free(),
+    feedback_term_calculator.setup(fluid_solver_in->pde_operator->get_matrix_free(),
+                                   acoustic_solver_in->pde_operator->get_matrix_free(),
                                    data_feedback);
   }
 
