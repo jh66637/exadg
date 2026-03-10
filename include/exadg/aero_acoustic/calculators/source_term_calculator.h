@@ -16,10 +16,6 @@ compute_remote_communicator_cells_point_to_point_interpolation(
   const unsigned int                                           dof_no_src  = 0,
   const double                                                 tolerance   = 1e-9)
 {
-  const auto & dof_handler_dst = matrix_free_dst.get_dof_handler(dof_no_dst);
-  const auto & tria_dst        = dof_handler_dst.get_triangulation();
-  const auto & mapping_dst     = *matrix_free_dst.get_mapping_info().mapping;
-
   const auto & dof_handler_src = matrix_free_src.get_dof_handler(dof_no_src);
   const auto & tria_src        = dof_handler_src.get_triangulation();
   const auto & mapping_src     = *matrix_free_src.get_mapping_info().mapping;
@@ -118,30 +114,41 @@ public:
   }
 
   void
-  setup(dealii::MatrixFree<dim, Number> const & matrix_free_in,
+  setup(dealii::MatrixFree<dim, Number> const & matrix_free_fluid,
+        dealii::MatrixFree<dim, Number> const & matrix_free_acoustic,
         FeedbackTermCalculatorData const &      data_in)
   {
-    matrix_free = &matrix_free_in;
+    matrix_free = &matrix_free_fluid;
     data        = data_in;
+
+    communicator =
+      compute_remote_communicator_cells_point_to_point_interpolation(matrix_free_fluid,
+                                                                     matrix_free_acoustic,
+                                                                     data_in.quad_index,
+                                                                     data_in.dof_index,
+                                                                     data_in.dof_index_acoustic);
+
+    acoustic_particle_velocity =
+      std::make_unique<RemoteCellIntegratorVector>(communicator,
+                                                   matrix_free->get_dof_handler(data_in.dof_index));
   }
 
   void
   evaluate_integrate(VectorType &       dst,
-                     VectorType const & velocity_cfd_in,
+                     VectorType const & velocity_cfd,
                      VectorType const & velocity_acoustic)
   {
     dst.zero_out_ghost_values();
 
-    velocity_cfd.reset(velocity_cfd_in);
-    velocity_cfd->update_ghost_values();
+    acoustic_particle_velocity->gather_evaluate(velocity_acoustic, dealii::EvaluationFlags::values);
 
-    matrix_free->cell_loop(&This::compute_feedback_term, this, dst, velocity_acoustic, true);
+    matrix_free->cell_loop(&This::compute_feedback_term, this, dst, velocity_cfd, true);
   }
 
-  template<typename vector_type1, typename vector_type2>
+  template<typename T1, typename T2>
   static inline DEAL_II_ALWAYS_INLINE //
-    vector_type2
-    cross_product(vector_type1 const & omega, vector_type2 const & u_a)
+    T2
+    cross_product(T1 const & omega, T2 const & u_a)
   {
     static_assert(dim == 3 || dim == 2, "feedback term only possible for dimensions 2 and 3");
 
@@ -149,42 +156,41 @@ public:
     {
       return dealii::cross_product_3d(omega, u_a);
     }
-    else if constexpr(dim == 2)
+
+    if constexpr(dim == 2)
     {
       // vorticity is a scalar (stored in component 0)
       // cross_product_2d() rotates vector clockwise, we need it counterclockwise since
       // [omega,omega,omega]^T x [u1, u2, u3] = [-omega*u2, omega*u1, ...]
       return omega[0] * (-1.0 * dealii::cross_product_2d(u_a));
     }
+
+    return {};
   }
 
 
   void
   compute_feedback_term(dealii::MatrixFree<dim, Number> const &       matrix_free_in,
                         VectorType &                                  dst,
-                        VectorType const &                            velocity_acoustic,
+                        VectorType const &                            velocity_cfd,
                         std::pair<unsigned int, unsigned int> const & cell_range) const
   {
     // − (∇ × u ic ) × u a, we solve for rho*ua
     CellIntegratorVector feedback_term(matrix_free_in, data.dof_index, data.quad_index);
-    CellIntegratorVector acoustic_particle_velocity(matrix_free_in,
-                                                    data.dof_index,
-                                                    data.quad_index);
+    auto                 u_acoustic = acoustic_particle_velocity->get_data_accessor();
 
     double m_rho_inv = -1.0 / data.density;
 
     for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
     {
-      acoustic_particle_velocity.reinit(cell);
-      acoustic_particle_velocity.gather_evaluate(velocity_acoustic,
-                                                 dealii::EvaluationFlags::values);
+      u_acoustic.reinit(cell);
 
       feedback_term.reinit(cell);
-      feedback_term.gather_evaluate(*velocity_cfd, dealii::EvaluationFlags::gradients);
+      feedback_term.gather_evaluate(velocity_cfd, dealii::EvaluationFlags::gradients);
 
       for(unsigned int q = 0; q < feedback_term.n_q_points; ++q)
       {
-        auto const u_a   = acoustic_particle_velocity.get_value(q);
+        auto const u_a   = u_acoustic.get_value(q);
         auto const omega = feedback_term.get_curl(q);
         feedback_term.submit_value(m_rho_inv * cross_product(omega, u_a), q);
       }
@@ -197,7 +203,8 @@ public:
 
   FeedbackTermCalculatorData data;
 
-  lazy_ptr<VectorType> velocity_cfd;
+  dealii::FERemoteEvaluationCommunicator<dim> communicator;
+  std::unique_ptr<RemoteCellIntegratorVector> acoustic_particle_velocity;
 };
 
 
