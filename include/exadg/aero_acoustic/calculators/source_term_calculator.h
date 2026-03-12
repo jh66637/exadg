@@ -67,15 +67,15 @@ compute_remote_communicator_cells_point_to_point_interpolation(
 
     // Insert the quadrature size into the global vector.
     // First check that each face is only considered once.
-    Assert(global_quadrature_sizes[cell] == numbers::invalid_unsigned_int,
-           ExcMessage("Quadrature for given face already provided."));
+    Assert(global_quadrature_sizes[cell] == dealii::numbers::invalid_unsigned_int,
+           dealii::ExcMessage("Quadrature for given face already provided."));
 
     global_quadrature_sizes[cell] = phi.n_q_points;
   }
 
   // Reinit RPE and ensure all points are found.
   rpe->reinit(points, tria_src, mapping_src);
-  Assert(rpe->all_points_found(), ExcMessage("Not all remote points found."));
+  Assert(rpe->all_points_found(), dealii::ExcMessage("Not all remote points found."));
 
   comm_object.batch_id_n_entities = cell_batch_id_n_cells;
   comm_object.rpe                 = rpe;
@@ -131,9 +131,8 @@ public:
                                                                      data_in.dof_index,
                                                                      data_in.dof_index_acoustic);
 
-    acoustic_particle_velocity =
-      std::make_unique<RemoteCellIntegratorVector>(communicator,
-                                                   matrix_free->get_dof_handler(data_in.dof_index));
+    acoustic_particle_velocity = std::make_unique<RemoteCellIntegratorVector>(
+      communicator, matrix_free_acoustic.get_dof_handler(data_in.dof_index_acoustic));
   }
 
   void
