@@ -55,7 +55,7 @@ public:
 
     acoustic_solver_in->pde_operator->initialize_dof_vector_pressure(source_term_acoustic);
     fluid_solver_in->pde_operator->initialize_vector_pressure(source_term_fluid);
-    fluid_solver_in->pde_operator->initialize_vector_pressure(feedback_term_fluid);
+    fluid_solver_in->pde_operator->initialize_vector_velocity(feedback_term_fluid);
 
     // setup the transfer operator
     if(parameters.fluid_to_acoustic_coupling_strategy ==
