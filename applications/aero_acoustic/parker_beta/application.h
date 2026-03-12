@@ -33,7 +33,7 @@ double const start_acoustic  = 0.1;
 double const end_time        = start_acoustic + rampup_duration + 0.5;
 double const dt_max          = 1e-5;
 
-bool const         CONSIDER_BACKCOUPLING = false;
+bool const         CONSIDER_BACKCOUPLING = true;
 unsigned int const REFINEMENTS_BND_LAYER = 1;
 
 namespace AcousticsAeroAcoustic
@@ -164,7 +164,7 @@ private:
     pp_data.pointwise_output_data.update_points_before_evaluation = false;
 
     pp_data.pointwise_output_data.evaluation_points.push_back(
-      {0.5 * Parker::plate_length, 0.49 * Parker::channel_height, 0.5 * Parker::channel_width});
+      {0.5 * Parker::plate_length, 0.5 * Parker::channel_height, 0.5 * Parker::channel_width});
 
     std::shared_ptr<PostProcessorBase<dim, Number>> pp;
     pp.reset(new PostProcessor<dim, Number>(pp_data, this->mpi_comm));
