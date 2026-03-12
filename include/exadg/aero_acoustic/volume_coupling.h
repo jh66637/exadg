@@ -137,9 +137,6 @@ public:
   void
   acoustic_to_fluid()
   {
-    non_nested_grid_transfer.interpolate(convection_acoustic,
-                                         fluid_solver->time_integrator->get_velocity());
-
     feedback_term_calculator.evaluate_integrate(
       feedback_term_fluid,
       fluid_solver->time_integrator->get_velocity(),
