@@ -17,7 +17,7 @@
     "SpeedOfSound": "345.07",
     "CFLAcoustics": "0.125",
     "CFLFluid": "0.5",
-    "TemporalDiscretizationFluid": "BDFDualSplittingScheme",
+    "TemporalDiscretizationFluid": "BDFDualSplitting",
     "ConsiderAcousticFeedback": "true"
   },
   "AeroAcoustic": {
