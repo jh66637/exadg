@@ -26,7 +26,7 @@
 #include <exadg/matrix_free/integrators.h>
 #include <exadg/utilities/lazy_ptr.h>
 
-#include <deal.II/matrix_free/fe_remote_evaluation.h>
+#include <exadg/temp/fe_remote_evaluation.h>
 
 template<int dim, typename Number, typename VectorizedArrayType>
 dealii::FERemoteEvaluationCommunicator<dim>
