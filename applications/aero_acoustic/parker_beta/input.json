@@ -5,19 +5,20 @@
     "IsTest": "false"
   },
   "SpatialResolutionFluid": {
-    "Degree": "2",
+    "Degree": "4",
     "RefineSpace": "0"
   },
   "SpatialResolutionAcoustics": {
-    "Degree": "1",
+    "Degree": "3",
     "RefineSpace": "0"
   },
   "Application": {
     "BulkVelocity": "30.0",
     "SpeedOfSound": "345.07",
-    "CFLAcoustics": "0.25",
+    "CFLAcoustics": "0.125",
     "CFLFluid": "0.5",
-    "TemporalDiscretizationFluid": "BDFDualSplittingScheme"
+    "TemporalDiscretizationFluid": "BDFDualSplittingScheme",
+    "ConsiderAcousticFeedback": "true"
   },
   "AeroAcoustic": {
     "Density": "1.18",
@@ -27,7 +28,7 @@
     "AcousticSourceTermComputation": "FromFluid"
   },
   "Output": {
-    "OutputDirectory": "output/parker/",
+    "OutputDirectory": "output/parker_feedback/",
     "OutputName": "parker",
     "WriteOutput": "true"
   }

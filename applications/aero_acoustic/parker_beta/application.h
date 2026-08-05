@@ -33,8 +33,7 @@ double const start_acoustic  = 0.1;
 double const end_time        = start_acoustic + rampup_duration + 0.5;
 double const dt_max          = 1e-5;
 
-bool const         CONSIDER_BACKCOUPLING = true;
-unsigned int const REFINEMENTS_BND_LAYER = 1;
+unsigned int const REFINEMENTS_BND_LAYER = 0;
 
 namespace AcousticsAeroAcoustic
 {
@@ -221,6 +220,9 @@ public:
     prm.enter_subsection("Application");
     prm.add_parameter("BulkVelocity", bulk_velocity);
     prm.add_parameter("CFLFluid", this->param.cfl, "Courant Number.");
+    prm.add_parameter("ConsiderAcousticFeedback",
+                      this->param.right_hand_side,
+                      "Acoustic Feedback.");
     prm.add_parameter("TemporalDiscretizationFluid",
                       this->param.temporal_discretization,
                       "Temporal discretization of the fluid.");
@@ -236,9 +238,6 @@ private:
     this->param.equation_type               = EquationType::NavierStokes;
     this->param.formulation_viscous_term    = FormulationViscousTerm::LaplaceFormulation;
     this->param.formulation_convective_term = FormulationConvectiveTerm::DivergenceFormulation;
-    this->param.right_hand_side             = CONSIDER_BACKCOUPLING;
-
-
 
     // PHYSICAL QUANTITIES
     this->param.start_time = 0.0;
