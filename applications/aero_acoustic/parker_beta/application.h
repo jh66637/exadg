@@ -290,27 +290,17 @@ private:
     // PROJECTION METHODS
 
     // pressure Poisson equation
-    this->param.solver_pressure_poisson              = SolverPressurePoisson::CG;
-    this->param.solver_data_pressure_poisson         = SolverData(1000, ABS_TOL, REL_TOL, 30);
+    this->param.solver_data_pressure_poisson = SolverData(1000, ABS_TOL, REL_TOL, LinearSolver::CG);
     this->param.preconditioner_pressure_poisson      = PreconditionerPressurePoisson::Multigrid;
     this->param.multigrid_data_pressure_poisson.type = MultigridType::cphMG;
-
-    this->param.multigrid_data_pressure_poisson.smoother_data.smoother =
-      MultigridSmoother::Chebyshev;
-    this->param.multigrid_data_pressure_poisson.p_sequence = PSequenceType::Bisect;
-
-    this->param.multigrid_data_pressure_poisson.smoother_data.iterations = 5;
     this->param.multigrid_data_pressure_poisson.coarse_problem.solver =
       MultigridCoarseGridSolver::CG;
     this->param.multigrid_data_pressure_poisson.coarse_problem.preconditioner =
       MultigridCoarseGridPreconditioner::AMG;
-    this->param.update_preconditioner_pressure_poisson = false;
 
     // projection step
-    this->param.solver_projection                = SolverProjection::CG;
-    this->param.solver_data_projection           = SolverData(1000, ABS_TOL, REL_TOL);
-    this->param.preconditioner_projection        = PreconditionerProjection::InverseMassMatrix;
-    this->param.update_preconditioner_projection = false;
+    this->param.solver_data_projection    = SolverData(1000, ABS_TOL, REL_TOL, LinearSolver::CG);
+    this->param.preconditioner_projection = PreconditionerProjection::InverseMassMatrix;
 
     // HIGH-ORDER DUAL SPLITTING SCHEME
 
@@ -332,11 +322,12 @@ private:
       this->param.newton_solver_data_momentum = Newton::SolverData(100, ABS_TOL, REL_TOL);
 
       // linear solver
-      this->param.solver_momentum = SolverMomentum::GMRES;
       if(this->param.treatment_of_convective_term == TreatmentOfConvectiveTerm::Implicit)
-        this->param.solver_data_momentum = SolverData(1e4, ABS_TOL_LINEAR, REL_TOL_LINEAR, 100);
+        this->param.solver_data_momentum =
+          SolverData(1e4, ABS_TOL_LINEAR, REL_TOL_LINEAR, LinearSolver::GMRES, 100);
       else
-        this->param.solver_data_momentum = SolverData(1e4, ABS_TOL, REL_TOL, 100);
+        this->param.solver_data_momentum =
+          SolverData(1e4, ABS_TOL, REL_TOL, LinearSolver::GMRES, 100);
 
       this->param.preconditioner_momentum = MomentumPreconditioner::InverseMassMatrix;
     }
@@ -348,11 +339,11 @@ private:
     this->param.newton_solver_data_coupled = Newton::SolverData(100, ABS_TOL, REL_TOL);
 
     // linear solver
-    this->param.solver_coupled = SolverCoupled::GMRES;
     if(this->param.treatment_of_convective_term == TreatmentOfConvectiveTerm::Implicit)
-      this->param.solver_data_coupled = SolverData(1e3, ABS_TOL_LINEAR, REL_TOL_LINEAR, 100);
+      this->param.solver_data_coupled =
+        SolverData(1e3, ABS_TOL_LINEAR, REL_TOL_LINEAR, LinearSolver::GMRES, 100);
     else
-      this->param.solver_data_coupled = SolverData(1e3, ABS_TOL, REL_TOL, 100);
+      this->param.solver_data_coupled = SolverData(1e3, ABS_TOL, REL_TOL, LinearSolver::GMRES, 100);
 
     // preconditioning linear solver
     this->param.preconditioner_coupled = PreconditionerCoupled::BlockTriangular;
@@ -526,12 +517,6 @@ class Application : public ApplicationBase<dim, Number>
 public:
   Application(std::string input_file, MPI_Comm const & comm)
     : ApplicationBase<dim, Number>(input_file, comm)
-  {
-  }
-
-private:
-  void
-  set_single_field_solvers(std::string input_file, MPI_Comm const & comm) final
   {
     this->acoustic =
       std::make_shared<AcousticsAeroAcoustic::Application<dim, Number>>(input_file, comm);
